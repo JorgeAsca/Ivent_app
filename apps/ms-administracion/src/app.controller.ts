@@ -6,13 +6,14 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return 'Hello from ms-administracion!';
+  @MessagePattern('crear_empresa') 
+  async createEmpresa(@Payload() data: any) {
+    console.log('Microservicio recibiendo data:', data); 
+    return this.appService.createEmpresa(data);
   }
-  
-  @MessagePattern({ cmd: 'crear_rol' })
-  crearRol(@Payload() data: any) {
-    return this.appService.crearRol(data);
+
+  @MessagePattern('crear_usuario')
+  async createUsuario(@Payload() data: any) {
+    return this.appService.createEmpresa(data);
   }
 }

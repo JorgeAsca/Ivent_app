@@ -24,10 +24,12 @@ export class AppService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async crearEmpresa(data: any) {
-    return this.empresa.create({ data });
+  async createEmpresa(data: any) {
+    // Asegúrate de que los campos de 'data' coincidan con tu schema.prisma
+    return this.empresa.create({
+      data: data,
+    });
   }
-
   async crearRol(data: any) {
     const nuevoRol = await this.rol.create({
       data: {

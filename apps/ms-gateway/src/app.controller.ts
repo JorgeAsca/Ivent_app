@@ -15,7 +15,7 @@ export class AppController {
   }
 
   // NUEVO: Endpoint para crear Rol
-  @Post('rol')
+  @Post('rol')  
   crearRol(@Body() datos: any) {
     
     console.log('Gateway recibiendo rol:', datos);
