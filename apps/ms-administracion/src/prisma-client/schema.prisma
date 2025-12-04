@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Empresa {
+  id_empresa       String    @id @default(uuid())
+  nombre_legal     String
+  nombre_comercial String?
+  nif_cif          String    @unique
+  roles            Rol[]
+  usuarios         Usuario[]
+}
+
+model Usuario {
+  id_usuario String  @id @default(uuid())
+  email      String  @unique
+  password   String
+  nombre     String
+  empresaId  String
+  empresa    Empresa @relation(fields: [empresaId], references: [id_empresa])
+}
+
+model Rol {
+  id_rol    String       @id @default(uuid())
+  nombre    String
+  empresaId String
+  empresa   Empresa      @relation(fields: [empresaId], references: [id_empresa])
+  permisos  RolPermiso[]
+}
+
+model Permiso {
+  id_permiso String       @id @default(uuid())
+  recurso    String
+  accion     String
+  roles      RolPermiso[]
+}
+
+model RolPermiso {
+  id_rol     String
+  id_permiso String
+  permiso    Permiso @relation(fields: [id_permiso], references: [id_permiso])
+  rol        Rol     @relation(fields: [id_rol], references: [id_rol])
+
+  @@id([id_rol, id_permiso])
+}
