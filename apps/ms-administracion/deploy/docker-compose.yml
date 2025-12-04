@@ -1,0 +1,18 @@
+version: '3.8' 
+
+services:
+  db-administracion:
+    image: postgres:15-alpine
+    container_name: db_administracion
+    restart: always
+    ports:
+      - "5433:5432" 
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: platano@345  
+      POSTGRES_DB: db_administracion
+    volumes:
+      - postgres_admin_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_admin_data:
