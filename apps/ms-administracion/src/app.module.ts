@@ -1,18 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config'; 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { EmpresasModule } from './empresas/empresas.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { PermisosModule } from './permisos/permisos.module';
 
 @Module({
   imports: [
-    // Agregamos esto para habilitar las variables de entorno
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['apps/ms-administracion/.env', '.env'], 
     }),
+    PrismaModule,   
+    EmpresasModule, 
+    UsuariosModule,
+    PermisosModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [], 
+  providers: [],   
 })
 export class AdministracionModule {}
 export { AdministracionModule as AppModule };
