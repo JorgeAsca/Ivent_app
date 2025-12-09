@@ -15,5 +15,4 @@ import { AppService } from './app.service';
   providers: [AppService],
 })
 export class AdministracionModule {}
-// Mantén tu export como lo tenías
 export { AdministracionModule as AppModule };
