@@ -16,4 +16,8 @@ export class CreateUsuarioDto {
   @IsUUID()
   @IsNotEmpty()
   empresaId: string;
+
+  @IsUUID()
+  @IsOptional() 
+  rolId?: string;
 }

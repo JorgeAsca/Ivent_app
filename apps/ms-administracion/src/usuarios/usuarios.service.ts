@@ -1,6 +1,7 @@
 import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUsuarioDto } from '@app/common';
+import { AsignarPermisoRolDto } from '@app/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -22,7 +23,11 @@ export class UsuariosService {
         nombre: data.nombre,
         email: data.email,
         password: hashedPassword,
-        empresaId: data.empresaId, 
+        empresaId: data.empresaId,
+        rolId: data.rolId,
+      },
+      include: {
+        rol: true,
       },
     });
   }

@@ -7,3 +7,6 @@ export * from './constants/admin-patterns.constant';
 
 export * from './common.module';
 export * from './common.service';
+
+export * from './Dto/rol/create-rol.dto';
+export * from './Dto/rol/asignar-permiso.dto';

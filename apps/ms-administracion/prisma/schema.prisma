@@ -23,6 +23,8 @@ model Usuario {
   nombre     String
   empresaId  String
   empresa    Empresa @relation(fields: [empresaId], references: [id_empresa])
+  rolId      String? 
+  rol        Rol?    @relation(fields: [rolId], references: [id_rol])
 }
 
 model Rol {
@@ -30,7 +32,9 @@ model Rol {
   nombre    String
   empresaId String
   empresa   Empresa      @relation(fields: [empresaId], references: [id_empresa])
+  
   permisos  RolPermiso[]
+  usuarios  Usuario[]   
 }
 
 model Permiso {

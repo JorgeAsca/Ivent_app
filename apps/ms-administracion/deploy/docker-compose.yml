@@ -4,8 +4,10 @@ services:
   db-administracion:
     image: postgres:15-alpine
     container_name: db_administracion
+    # PostgreSQL_Host : Nombre del contenedor || puerto de conexión
     restart: always
     ports:
+      # ${PORT_DB_ADMIN:-3000
       - "5433:5432" 
     environment:
       POSTGRES_USER: postgres
