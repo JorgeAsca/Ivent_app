@@ -13,22 +13,18 @@ npm install -g pnpm
 # 2. Configurar PNPM
 pnpm config set ignore-scripts false
 
-# 3. Instalar Dependencias Generales
+# 3. Instalar Dependencias
 echo "Instalando dependencias..." >> ${INFORME}
-# Instalamos también los tipos para evitar errores de TS
 pnpm add -D @types/pg @types/bcrypt
 pnpm install --frozen-lockfile
 
-# --- FIX SUPREMO: INSTALAR BCRYPT CON NPM ---
-# Esto fuerza a que bcrypt se descargue, compile y se coloque en la raíz
-# saltándose la complejidad de enlaces de pnpm para este módulo nativo.
-echo "Forzando instalación nativa de bcrypt..." >> ${INFORME}
-npm uninstall bcrypt
-npm install bcrypt
-# --------------------------------------------
+# --- FIX 1: Reconstruir bcrypt ---
+echo "Reconstruyendo bcrypt..." >> ${INFORME}
+pnpm rebuild bcrypt
 
-# --- FIX 2: Ocultar prisma.config.ts problemático ---
+
 echo "Ocultando prisma.config.ts..." >> ${INFORME}
+
 if [ -f "/app/apps/${MICROSERVICIO}/prisma.config.ts" ]; then
     mv /app/apps/${MICROSERVICIO}/prisma.config.ts /app/apps/${MICROSERVICIO}/prisma.config.ts.bak
 fi
