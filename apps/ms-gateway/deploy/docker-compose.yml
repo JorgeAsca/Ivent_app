@@ -9,9 +9,9 @@ services:
       args:
         - MICROSERVICIO=ms-gateway
     
-    volumes:
-      - ../../../:/app
-      - /app/node_modules
+    # volumes:
+      
+    #   - ./logs:/root/logs
     env_file:
       - .env
     ports:
