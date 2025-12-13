@@ -1,35 +1,32 @@
 #!/bin/bash
 set -e
 
-# Definimos log para ver qué pasa si el contenedor falla
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
 
-echo "*** Iniciando instalación de ${MICROSERVICIO} ***" > ${INFORME}
+echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***" > ${INFORME}
 
-# 1. Instalamos PNPM (Igual que el profesor)
-# Nota: Es mejor hacer esto en el Dockerfile, pero seguimos el patrón del video/repo.
+# 1. Instalar PNPM
 echo "Instalando pnpm..." >> ${INFORME}
 npm install -g pnpm
-if [ $? -ne 0 ]; then
-    echo "Error al instalar pnpm. Abortando." >> ${INFORME}
-    exit 1
-fi
 
-# 2. Instalamos dependencias del proyecto (node_modules)
-echo "Instalando dependencias (pnpm install)..." >> ${INFORME}
-# --frozen-lockfile asegura que se usen versiones exactas del pnpm-lock.yaml
+# 2. Configurar PNPM para permitir scripts de Prisma (¡Vital para el build!)
+echo "Configurando permisos de pnpm..." >> ${INFORME}
+pnpm config set ignore-scripts false
+
+# 3. Instalar Dependencias
+echo "Instalando dependencias..." >> ${INFORME}
 pnpm install --frozen-lockfile
-if [ $? -ne 0 ]; then
-    echo "Error al instalar dependencias. Abortando." >> ${INFORME}
-    exit 1
-fi
 
-# 3. Generamos el cliente de Prisma (Necesario si usas Prisma)
+# 4. PRISMA (CORREGIDO)
+# Usamos --filter para ejecutar prisma DENTRO del contexto del microservicio
 echo "Generando Prisma Client..." >> ${INFORME}
-pnpm prisma generate --schema=./apps/${MICROSERVICIO}/prisma/schema.prisma
+pnpm --filter ${MICROSERVICIO} exec prisma generate
 
-# 4. Arrancamos la aplicación
-echo "Iniciando ${MICROSERVICIO} en puerto 3000..." >> ${INFORME}
-# Usamos exec para que el proceso de Node sea el PID 1 (reciba señales de apagado)
+# Opcional: Migraciones (Descomenta si lo necesitas, usando también --filter)
+echo "Ejecutando migraciones..." >> ${INFORME}
+pnpm --filter ${MICROSERVICIO} exec prisma migrate deploy
+
+# 5. Arrancar
+echo "Iniciando ${MICROSERVICIO}..." >> ${INFORME}
 exec pnpm run start:dev ${MICROSERVICIO}
