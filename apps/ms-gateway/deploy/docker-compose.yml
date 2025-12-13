@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ms-gateway:
+    container_name: ms-gateway
+    build:
+      context: ../../../
+      dockerfile: ./apps/ms-gateway/deploy/Dockerfile
+      args:
+        - MICROSERVICIO=ms-gateway
+    
+    volumes:
+      - ../../../:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    ports:
+      
+        - "${PORT_EXPOSED}:${PORT}"
+    networks:
+      - ivent-network
+    
+    command: pnpm start:dev ms-gateway
+
+
+networks:
+  ivent-network:
+    driver: bridge
