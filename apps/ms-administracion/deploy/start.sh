@@ -4,29 +4,27 @@ set -e
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
 
-echo "*** Iniciando reparación y despliegue de ${MICROSERVICIO} ***" > ${INFORME}
+echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***" > ${INFORME}
 
 # 1. Instalar PNPM
 echo "Instalando pnpm..." >> ${INFORME}
 npm install -g pnpm
 
-# 2. Configurar PNPM
+# 2. Configurar PNPM para permitir scripts de construcción
 pnpm config set ignore-scripts false
 
 # 3. Instalar Dependencias
 echo "Instalando dependencias..." >> ${INFORME}
-# Instalamos tipos necesarios
-pnpm add -D @types/pg @types/bcrypt
 pnpm install --frozen-lockfile
 
-# --- FIX CRÍTICO: RECONSTRUIR BCRYPT PARA ALPINE ---
+# --- FIX CRÍTICO: Reconstruir bcrypt para Alpine ---
 echo "Reconstruyendo bcrypt..." >> ${INFORME}
-# Esto usa el python3 y make que pusimos en el Dockerfile para compilar el binario correcto
 pnpm rebuild bcrypt
 # ---------------------------------------------------
 
 # 4. Generar Prisma
 echo "Generando Prisma Client..." >> ${INFORME}
+# Entramos al directorio específico para asegurar que Prisma encuentre el schema
 cd /app/apps/${MICROSERVICIO}
 npx prisma generate
 cd /app
