@@ -15,14 +15,15 @@ pnpm config set ignore-scripts false
 
 # 3. Instalar Dependencias
 echo "Instalando dependencias..." >> ${INFORME}
-# Instalamos dependencias normales y tipos
+# Instalamos tipos necesarios
 pnpm add -D @types/pg @types/bcrypt
 pnpm install --frozen-lockfile
 
-# --- FIX: RECONSTRUIR BCRYPT ---
-echo "Reconstruyendo bcrypt para Alpine..." >> ${INFORME}
+# --- FIX CRÍTICO: RECONSTRUIR BCRYPT PARA ALPINE ---
+echo "Reconstruyendo bcrypt..." >> ${INFORME}
+# Esto usa el python3 y make que pusimos en el Dockerfile para compilar el binario correcto
 pnpm rebuild bcrypt
-# -------------------------------
+# ---------------------------------------------------
 
 # 4. Generar Prisma
 echo "Generando Prisma Client..." >> ${INFORME}
