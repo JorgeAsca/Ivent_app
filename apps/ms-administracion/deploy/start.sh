@@ -10,18 +10,22 @@ echo "*** Iniciando reparación y despliegue de ${MICROSERVICIO} ***" > ${INFORM
 echo "Instalando pnpm..." >> ${INFORME}
 npm install -g pnpm
 
-# 2. Configurar PNPM (Vital para Prisma)
+# 2. Configurar PNPM
 pnpm config set ignore-scripts false
 
-# 3. Instalar Dependencias (Incluyendo tipos faltantes)
+# 3. Instalar Dependencias
 echo "Instalando dependencias..." >> ${INFORME}
-# Forzamos la instalación de tipos de PG por si no estaban en el package.json
+# Instalamos dependencias normales y tipos
 pnpm add -D @types/pg @types/bcrypt
 pnpm install --frozen-lockfile
 
-# 4. Generar Prisma (En el lugar correcto)
+# --- FIX: RECONSTRUIR BCRYPT ---
+echo "Reconstruyendo bcrypt para Alpine..." >> ${INFORME}
+pnpm rebuild bcrypt
+# -------------------------------
+
+# 4. Generar Prisma
 echo "Generando Prisma Client..." >> ${INFORME}
-# Ejecutamos generate DENTRO del microservicio
 cd /app/apps/${MICROSERVICIO}
 npx prisma generate
 cd /app
