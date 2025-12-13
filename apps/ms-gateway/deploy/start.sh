@@ -15,9 +15,9 @@ if [ $? -ne 0 ]; then
    exit 1
 fi
 
-# 2. Instalamos dependencias
+
 echo "Instalando dependencias (pnpm install)..." >> ${INFORME}
-# --frozen-lockfile usa versiones exactas del pnpm-lock.yaml para estabilidad
+
 pnpm install --frozen-lockfile
 if [ $? -ne 0 ]; then
    echo "Error al instalar dependencias. Abortando." >> ${INFORME}
