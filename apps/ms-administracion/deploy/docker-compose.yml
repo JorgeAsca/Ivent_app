@@ -1,20 +1,49 @@
-version: '3.8' 
-
 services:
+
   db-administracion:
     image: postgres:15-alpine
     container_name: db_administracion
-    # PostgreSQL_Host : Nombre del contenedor || puerto de conexión
     restart: always
-    ports:
-      # ${PORT_DB_ADMIN:-3000
-      - "5433:5432" 
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: platano@345  
-      POSTGRES_DB: db_administracion
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
+    networks:
+      - ivent-network
+
+ 
+  ms-administracion:
+    container_name: ms-administracion
+    build:
+      
+      context: ../../../
+      dockerfile: ./apps/ms-administracion/deploy/Dockerfile
+      args:
+        - MICROSERVICIO=ms-administracion
+    env_file:
+      - .env
+    environment:
+      
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-administracion:5432/${DB_NAME}?schema=public
+    ports:
+      
+
+      - "${PORT}:${PORT}"
+    depends_on:
+      - db-administracion
+    networks:
+      - ivent-network
+ 
 
 volumes:
   postgres_admin_data:
+
+networks:
+  ivent-network:
+    driver: bridge
