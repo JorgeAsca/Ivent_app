@@ -43,5 +43,5 @@ volumes:
 
 networks:
   ivent-network:
-    name: ivent-network # Asegura que se una a la red existente
+    name: ivent-network 
     driver: bridge

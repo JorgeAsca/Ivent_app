@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 ARG MICROSERVICIO=ms-inventario
-# IMPORTANTE: Esto pasa la variable del build al entorno de ejecución
+
 ENV MICROSERVICIO=${MICROSERVICIO} 
 
 WORKDIR /app
@@ -16,9 +16,9 @@ COPY package.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 COPY tsconfig.json .
-# --- AQUI ESTABA EL ERROR: FALTABA ESTA LINEA ---
+
 COPY tsconfig.build.json . 
-# ------------------------------------------------
+
 COPY nest-cli.json .
 
 COPY ./libs ./libs
