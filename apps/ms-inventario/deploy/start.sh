@@ -2,27 +2,21 @@
 set -e
 
 
-INFORME=/root/logs/informe.log
-mkdir -p /root/logs
+echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***"
 
-echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***" > ${INFORME}
-
-
-echo "Instalando pnpm..." >> ${INFORME}
+echo "Instalando pnpm..."
 npm install -g pnpm
 if [ $? -ne 0 ]; then
-    echo "Error al instalar pnpm. Abortando." >> ${INFORME}
-    exit 1
+   echo "Error al instalar pnpm. Abortando."
+   exit 1
 fi
 
-echo "Instalando dependencias (pnpm install)..." >> ${INFORME}
-
+echo "Instalando dependencias (pnpm install)..."
 pnpm install --frozen-lockfile
 if [ $? -ne 0 ]; then
-    echo "Error al instalar dependencias. Abortando." >> ${INFORME}
-    exit 1
+   echo "Error al instalar dependencias. Abortando."
+   exit 1
 fi
 
-
-echo "Iniciando ${MICROSERVICIO} en modo desarrollo..." >> ${INFORME}
+echo "Iniciando ${MICROSERVICIO} en modo desarrollo..."
 exec pnpm run start:dev ${MICROSERVICIO}
