@@ -11,7 +11,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Instalando dependencias (pnpm install)..."
-pnpm install --frozen-lockfile
+pnpm install
 if [ $? -ne 0 ]; then
    echo "Error al instalar dependencias. Abortando."
    exit 1
