@@ -8,10 +8,6 @@ services:
       dockerfile: ./apps/ms-gateway/deploy/Dockerfile
       args:
         - MICROSERVICIO=ms-gateway
-    
-    # volumes:
-      
-    #   - ./logs:/root/logs
     env_file:
       - .env
     ports:

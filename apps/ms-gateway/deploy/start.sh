@@ -24,7 +24,7 @@ if [ $? -ne 0 ]; then
    exit 1
 fi
 
-# 3. Arrancamos el Gateway
+
 echo "Iniciando ${MICROSERVICIO} en modo desarrollo..." >> ${INFORME}
-# Usamos exec para que el proceso reciba señales del sistema correctamente
+
 exec pnpm run start:dev ${MICROSERVICIO}

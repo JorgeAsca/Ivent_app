@@ -13,7 +13,7 @@ export class AdministracionController {
 
   @Post('empresas')
   createEmpresa(@Body() createEmpresaDto: CreateEmpresaDto) {
-    // Usamos el patrón exacto que ya tenías
+    
     return this.adminClient.send(ADMIN_PATTERNS.CREAR_EMPRESA, createEmpresaDto);
   }
 }

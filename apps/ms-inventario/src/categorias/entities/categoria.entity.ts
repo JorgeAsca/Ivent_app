@@ -15,7 +15,7 @@ export class Categoria {
     @Column('boolean', { default: true })
     activo: boolean;
 
-    // Relación: Una categoría tiene muchos productos
+    
     @OneToMany(() => Producto, (producto) => producto.categoria)
     productos: Producto[];
 

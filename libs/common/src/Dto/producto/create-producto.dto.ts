@@ -8,7 +8,7 @@ export class CreateProductoDto {
 
     @IsNumber()
     @IsPositive()
-    @Type(() => Number) // Asegura que se transforme a número si viene como string
+    @Type(() => Number) 
     public precio: number;
 
     @IsNumber()
@@ -22,5 +22,5 @@ export class CreateProductoDto {
 
     @IsUUID()
     @IsNotEmpty()
-    public categoriaId: string; // Relación con categoría
+    public categoriaId: string;
 }
