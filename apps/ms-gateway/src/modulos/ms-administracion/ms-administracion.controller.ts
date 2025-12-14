@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { 
   CreateEmpresaDto, 
   ADMIN_PATTERNS 
-} from '@app/common'; // Asegúrate de que esta importación sea correcta según tu monorepo
+} from '@app/common';
 
 @Controller('administracion') 
 export class AdministracionController {

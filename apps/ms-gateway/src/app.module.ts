@@ -1,34 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { ConfigModule } from '@nestjs/config';
+import { AdministracionModule } from './modulos/ms-administracion/ms-administracion.module';
 
 @Module({
   imports: [
-   
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
     
-    
-    ClientsModule.registerAsync([
-      {
-        name: 'ADMINISTRACION_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            
-            host: configService.get('MS_ADMINISTRACION_HOST'), 
-          
-            port: configService.get('MS_ADMINISTRACION_PORT'), 
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+    AdministracionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
