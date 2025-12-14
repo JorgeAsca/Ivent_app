@@ -7,14 +7,14 @@ import { InventarioController } from './ms-inventario.controller';
   imports: [
     ClientsModule.registerAsync([
       {
-        name: 'INVENTARIO_SERVICE', // Token para inyectar
+        name: 'INVENTARIO_SERVICE',
         imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            // El gateway buscará estas variables en SU .env
             host: configService.get('MS_INVENTARIO_HOST'), 
-            port: configService.get('MS_INVENTARIO_PORT'),
+            
+            port: Number(configService.get('MS_INVENTARIO_PORT')), 
           },
         }),
         inject: [ConfigService],

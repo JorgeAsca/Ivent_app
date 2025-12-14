@@ -4,9 +4,9 @@ ARG MICROSERVICIO=ms-administracion
 
 WORKDIR /app
 
-# --- FIX: Herramientas para compilar bcrypt (C++) ---
+
 RUN apk add --no-cache python3 make g++ git bash
-# ---------------------------------------------------
+
 
 COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
 RUN chmod +x start.sh
