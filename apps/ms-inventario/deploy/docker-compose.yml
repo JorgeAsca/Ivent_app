@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db-inventario:
+    image: postgres:15-alpine
+    container_name: db_inventario
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_inventario_data:/var/lib/postgresql/data
+    ports:
+      
+        - "${DB_PORT}:5432"
+    networks:
+      - ivent-network
+
+  ms-inventario:
+    container_name: ms-inventario
+    build:
+      context: ../../../
+      dockerfile: ./apps/ms-inventario/deploy/Dockerfile
+      args:
+        - MICROSERVICIO=ms-inventario
+    env_file:
+      - .env
+    environment:
+      
+        DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-inventario:5432/${DB_NAME}?schema=public
+        
+        PORT: 3000
+    expose:
+      - "3000"
+    depends_on:
+      - db-inventario
+    networks:
+      - ivent-network
+
+volumes:
+  postgres_inventario_data:
+
+networks:
+  ivent-network:
+    name: ivent-network # Asegura que se una a la red existente
+    driver: bridge
