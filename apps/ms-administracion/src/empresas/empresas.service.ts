@@ -10,7 +10,6 @@ export class EmpresasService {
 
   async createEmpresa(data: CreateEmpresaDto) {
     this.logger.log(`Creando empresa: ${data.nombre_legal}`);
-    // Nota el uso de this.prisma.empresa
     return this.prisma.empresa.create({
       data: {
         nombre_legal: data.nombre_legal,

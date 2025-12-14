@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    // Añadimos ConfigModule para leer el .env
+   
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -20,9 +20,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            // Leemos el host del .env
+            
             host: configService.get('MS_ADMINISTRACION_HOST'), 
-            // Leemos el puerto interno (3000)
+          
             port: configService.get('MS_ADMINISTRACION_PORT'), 
           },
         }),
