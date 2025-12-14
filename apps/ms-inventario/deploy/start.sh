@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-
 echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***"
 
 echo "Instalando pnpm..."
