@@ -1,18 +1,18 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductosService } from './productos.service';
-import { CreateProductoDto } from './dto/create-producto.dto';
+import { CreateProductoDto, INVENTARIO_PATTERNS } from '@app/common'; 
 
 @Controller()
 export class ProductosController {
     constructor(private readonly productosService: ProductosService) { }
 
-    @MessagePattern('crear_producto')
+    @MessagePattern(INVENTARIO_PATTERNS.CREAR_PRODUCTO)
     create(@Payload() createProductoDto: CreateProductoDto) {
         return this.productosService.create(createProductoDto);
     }
 
-    @MessagePattern('listar_productos')
+    @MessagePattern(INVENTARIO_PATTERNS.LISTAR_PRODUCTOS)
     findAll() {
         return this.productosService.findAll();
     }

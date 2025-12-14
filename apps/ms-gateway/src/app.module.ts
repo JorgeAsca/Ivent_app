@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AdministracionModule } from './modulos/ms-administracion/ms-administracion.module';
+import { InventarioModule } from './modulos/ms-inventario/ms-inventario.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AdministracionModule } from './modulos/ms-administracion/ms-administrac
     }),
     
     AdministracionModule,
+    InventarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
