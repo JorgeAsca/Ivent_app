@@ -4,33 +4,38 @@ set -e
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
 
-echo "*** Iniciando despliegue LIMPIO de ${MICROSERVICIO} ***" > ${INFORME}
+echo "*** Despliegue PRISMA 7 (Native) - ${MICROSERVICIO} ***" > ${INFORME}
 
-# 1. Instalar PNPM
-echo "Instalando pnpm..." >> ${INFORME}
+# 1. Instalar Herramientas Globales
+echo "Instalando herramientas globales (pnpm, tsx)..." >> ${INFORME}
 npm install -g pnpm
+# --- FIX: Instalar tsx para que Prisma pueda leer prisma.config.ts ---
+npm install -g tsx
+# ---------------------------------------------------------------------
 
-# 2. Configurar PNPM
 pnpm config set ignore-scripts false
 
-# 3. Instalar Dependencias
+# 2. Instalar Dependencias
 echo "Instalando dependencias..." >> ${INFORME}
-# Instalamos bcryptjs y sus tipos explícitamente por si acaso no se pillaron antes
+# Aseguramos bcryptjs y types
 pnpm add bcryptjs
 pnpm add -D @types/bcryptjs @types/pg
 pnpm install --frozen-lockfile
 
-# 4. Generar Prisma
+# 3. Generar Cliente y Migrar
 echo "Generando Prisma Client..." >> ${INFORME}
-# Ocultar config problemática si existe
-if [ -f "/app/apps/${MICROSERVICIO}/prisma.config.ts" ]; then
-    mv /app/apps/${MICROSERVICIO}/prisma.config.ts /app/apps/${MICROSERVICIO}/prisma.config.ts.bak
-fi
-
 cd /app/apps/${MICROSERVICIO}
+
+# Prisma 7 usará 'tsx' automáticamente si está instalado para leer prisma.config.ts
 npx prisma generate
+
+echo "Ejecutando Migraciones..." >> ${INFORME}
+# Forzamos la variable de entorno justo antes del comando por seguridad
+export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@db-administracion:5432/${DB_NAME}?schema=public"
+npx prisma migrate deploy
+
 cd /app
 
-# 5. Arrancar
+# 4. Arrancar
 echo "Iniciando ${MICROSERVICIO}..." >> ${INFORME}
 exec pnpm run start:dev ${MICROSERVICIO}
