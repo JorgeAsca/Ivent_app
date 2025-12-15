@@ -17,7 +17,7 @@ services:
     networks:
       - ivent-network
 
- 
+        
   ms-administracion:
     container_name: ms-administracion
     build:
@@ -37,7 +37,7 @@ services:
       - db-administracion
     networks:
       - ivent-network
- 
+        
 
 volumes:
   postgres_admin_data:
