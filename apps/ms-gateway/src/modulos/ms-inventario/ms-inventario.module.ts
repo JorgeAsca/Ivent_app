@@ -22,4 +22,4 @@ import { InventarioController } from './ms-inventario.controller';
     ],
     controllers: [InventarioController],
 })
-export class AdministracionModule { }
+export class InventarioModule { }
