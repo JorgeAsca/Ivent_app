@@ -13,8 +13,12 @@ npm install -g tsx
 pnpm config set ignore-scripts false
 
 echo "Instalando dependencias..." >> ${INFORME}
-pnpm add bcryptjs
-pnpm add -D @types/bcryptjs @types/pg
+# --- LÍNEAS ELIMINADAS AQUÍ ---
+# pnpm add bcryptjs  <-- ESTO CAUSABA EL ERROR
+# pnpm add -D @types/bcryptjs @types/pg <-- ESTO TAMBIÉN
+# ------------------------------
+
+# Esto instalará todo lo que esté en tu package.json (que ya incluye bcryptjs)
 pnpm install --frozen-lockfile
 
 echo "Generando Prisma Client..." >> ${INFORME}
