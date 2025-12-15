@@ -45,3 +45,4 @@ volumes:
 networks:
   ivent-network:
     driver: bridge
+    external: true
