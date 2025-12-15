@@ -25,4 +25,5 @@ services:
 
 networks:
   ivent-network:
-    driver: bridge
+    external: true
+    name: ivent-network
