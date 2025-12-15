@@ -45,3 +45,4 @@ networks:
   ivent-network:
     name: ivent-network 
     driver: bridge
+    external: true
