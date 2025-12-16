@@ -50,7 +50,7 @@ export class CategoriasService {
 
     async remove(id: string) {
         const categoria = await this.findOne(id);
-        // Soft Delete (Cambiar estado a inactivo)
+        
         categoria.activo = false;
         return this.categoriaRepository.save(categoria);
         
