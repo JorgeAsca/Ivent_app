@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
-// Asegúrate de exportar CreateCategoriaDto en tu librería @app/common
 import { CreateProductoDto, INVENTARIO_PATTERNS, CreateCategoriaDto } from '@app/common'; 
 
 @Controller('inventario')
