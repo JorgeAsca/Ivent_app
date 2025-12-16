@@ -14,3 +14,6 @@ export * from './Dto/rol/asignar-permiso.dto';
 
 export * from './Dto/producto/create-producto.dto';
 export * from './Dto/categoria/create-categoria.dto';
+
+export * from './Dto/producto/update-producto.dto';
+export * from './Dto/categoria/update-categoria.dto';
