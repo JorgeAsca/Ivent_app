@@ -3,7 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CategoriasService } from './categorias.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
-import { INVENTARIO_PATTERNS } from '@app/common'; // Importa tus patterns
+import { INVENTARIO_PATTERNS } from '@app/common';
 
 @Controller()
 export class CategoriasController {
