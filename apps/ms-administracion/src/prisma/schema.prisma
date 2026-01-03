@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+model Empresa {
+  id_empresa       String   @id @default(uuid())
+  nombre_legal     String
+  nombre_comercial String?
+  nif_cif          String   @unique
+}
