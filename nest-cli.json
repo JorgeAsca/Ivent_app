@@ -36,6 +36,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/ms-inventario/tsconfig.app.json"
       }
+    },
+    "ms-usuarios": {
+      "type": "application",
+      "root": "apps/ms-usuarios",
+      "entryFile": "main",
+      "sourceRoot": "apps/ms-usuarios/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ms-usuarios/tsconfig.app.json"
+      }
     }
   }
 }
