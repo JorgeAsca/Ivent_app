@@ -27,6 +27,7 @@ import { Permission } from './permisos/entities/permission.entity';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [User, Role, Permission],
+      autoLoadEntities: true,
       synchronize: true, // Crea tablas automáticamente en la VPS
       logging: true,
     }),
