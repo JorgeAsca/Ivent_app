@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db-usuarios:
+    image: postgres:15-alpine
+    container_name: db_usuarios
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata_usuarios:/var/lib/postgresql/data
+    networks:
+      - ivent_network
+
+  ms-usuarios:
+    build:
+      context: ../../../
+      dockerfile: apps/ms-usuarios/deploy/Dockerfile
+    container_name: ms-usuarios
+    restart: always
+    environment:
+      - MICROSERVICIO=ms-usuarios
+      - DB_HOST=db-usuarios
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      - db-usuarios
+    networks:
+      - ivent_network
+
+networks:
+  ivent_network:
+    external: true
+
+volumes:
+  pgdata_usuarios:
