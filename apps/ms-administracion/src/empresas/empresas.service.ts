@@ -18,4 +18,14 @@ export class EmpresasService {
       },
     });
   }
+
+  async findOne(id_empresa: string) {
+  try {
+    return await this.prisma.empresa.findUnique({
+      where: { id_empresa },
+    });
+  } catch (error) {
+    return null;
+  }
+}
 }
