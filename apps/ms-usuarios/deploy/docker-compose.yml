@@ -4,6 +4,9 @@ services:
   db-usuarios:
     image: postgres:15-alpine
     container_name: db_usuarios
+    restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -13,14 +16,18 @@ services:
     volumes:
       - pgdata_usuarios:/var/lib/postgresql/data
     networks:
-      - ivent_network
+      - ivent-network 
 
   ms-usuarios:
     build:
       context: ../../../
       dockerfile: apps/ms-usuarios/deploy/Dockerfile
+      args:
+        - MICROSERVICIO=ms-usuarios
     container_name: ms-usuarios
     restart: always
+    env_file:
+      - .env
     environment:
       - MICROSERVICIO=ms-usuarios
       - DB_HOST=db-usuarios
@@ -30,10 +37,10 @@ services:
     depends_on:
       - db-usuarios
     networks:
-      - ivent_network
+      - ivent-network
 
 networks:
-  ivent_network:
+  ivent-network:
     external: true
 
 volumes:
