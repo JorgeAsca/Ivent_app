@@ -25,4 +25,13 @@ export class RolesService {
         rol.permisos.push(permiso);
         return await this.roleRepo.save(rol);
     }
+
+    async crear(data: any) {
+        const nuevoRol = this.roleRepo.create(data);
+        return await this.roleRepo.save(nuevoRol);
+    }
+
+    async listar() {
+        return await this.roleRepo.find({ relations: ['permisos'] });
+    }
 }
