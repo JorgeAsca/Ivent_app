@@ -11,17 +11,14 @@ services:
     env_file:
       - .env
     environment:
-      - MS_INVENTARIO_HOST=ms-inventario
-      - MS_INVENTARIO_PORT=3000
-      - PORT=3000
-    ports:
       
-        - "${PORT_EXPOSED}:${PORT}"
+      - NATS_SERVERS=${NATS_SERVERS}
+      - PORT=${PORT}
+    ports:
+      - "${PORT_EXPOSED}:${PORT}"
     networks:
-      - ivent-network
-    
+      - ivent-network 
     command: pnpm start:dev ms-gateway
-
 
 networks:
   ivent-network:
