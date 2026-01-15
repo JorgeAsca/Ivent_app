@@ -17,3 +17,5 @@ export * from './Dto/categoria/create-categoria.dto';
 
 export * from './Dto/producto/update-producto.dto';
 export * from './Dto/categoria/update-categoria.dto';
+
+// export * from '../config/envs';

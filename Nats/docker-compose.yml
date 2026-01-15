@@ -13,7 +13,7 @@ services:
     volumes:
       - nats_data:/data
     networks:
-      - ukiyo-network
+      - ivent-network
 volumes:
   nats_data:
 networks:

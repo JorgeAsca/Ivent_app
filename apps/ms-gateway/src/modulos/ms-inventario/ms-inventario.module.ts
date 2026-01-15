@@ -1,26 +1,24 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { InventarioController } from './ms-inventario.controller';
+import { envs } from '../../../config/envs'; 
 
 @Module({
   imports: [
-    ClientsModule.registerAsync([
+    // Usamos register para simplicidad si ya tienes los envs cargados globalmente
+    ClientsModule.register([
       {
         name: 'INVENTARIO_SERVICE',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService.get('MS_INVENTARIO_HOST'), 
-            
-            port: Number(configService.get('MS_INVENTARIO_PORT')) || 3000, 
-          },
-        }),
-        inject: [ConfigService],
+        transport: Transport.NATS,
+        options: {
+          
+          servers: envs.natsServers, 
+        },
       },
     ]),
   ],
   controllers: [InventarioController],
+  
+  exports: [ClientsModule], 
 })
 export class InventarioModule {}
