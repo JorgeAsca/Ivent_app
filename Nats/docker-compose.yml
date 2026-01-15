@@ -17,5 +17,5 @@ services:
 volumes:
   nats_data:
 networks:
-  invet-network:
+  ivent-network:
     external: true
