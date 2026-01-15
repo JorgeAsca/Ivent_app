@@ -14,8 +14,7 @@ services:
     volumes:
       - postgres_inventario_data:/var/lib/postgresql/data
     ports:
-      
-        - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432"
     networks:
       - ivent-network
 
@@ -29,8 +28,8 @@ services:
     env_file:
       - .env
     environment:
-      
-        DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-inventario:5432/${DB_NAME}?schema=public
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-inventario:5432/${DB_NAME}?schema=public
+      NATS_SERVERS: ${NATS_SERVERS} 
     expose:
       - "3000"
     depends_on:
@@ -43,6 +42,4 @@ volumes:
 
 networks:
   ivent-network:
-    name: ivent-network 
-    driver: bridge
-    external: true
+    external: true 
