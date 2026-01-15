@@ -5,7 +5,7 @@ import { envs } from '../../../config/envs';
 
 @Module({
   imports: [
-    // Usamos register para simplicidad si ya tienes los envs cargados globalmente
+    
     ClientsModule.register([
       {
         name: 'INVENTARIO_SERVICE',
