@@ -20,11 +20,8 @@ services:
 
   ms-inventario:
     container_name: ms-inventario
-    build:
-      context: ../../../
-      dockerfile: ./apps/ms-inventario/deploy/Dockerfile
-      args:
-        - MICROSERVICIO=ms-inventario
+    image: gaabriel05/ms-inventario:latest 
+    restart: always
     env_file:
       - .env
     environment:

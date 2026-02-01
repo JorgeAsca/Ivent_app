@@ -3,11 +3,8 @@ version: '3.8'
 services:
   ms-gateway:
     container_name: ms-gateway
-    build:
-      context: ../../../
-      dockerfile: ./apps/ms-gateway/deploy/Dockerfile
-      args:
-        - MICROSERVICIO=ms-gateway
+    image: gaabriel05/ms-gateway:latest
+    restart: always
     env_file:
       - .env
     environment:
