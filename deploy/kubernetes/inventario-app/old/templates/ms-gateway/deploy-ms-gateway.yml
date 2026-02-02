@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caronte-ms-gateway-deployment
+  namespace: caronte-tienda
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: caronte-ms-gateway
+  template:
+    metadata:
+      labels:
+        app: caronte-ms-gateway
+    spec:
+      containers:
+        - name: caronte-mes-gateway
+          image: morgadoberruezo/caronte-ms-gateway
+          # imagePullPolicy: Never
+          ports:
+            - containerPort: 80
