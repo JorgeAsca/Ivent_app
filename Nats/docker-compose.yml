@@ -10,7 +10,7 @@ services:
     ports:
       - "4222:4222" # Cliente NATS
       - "8222:8222" # Monitoring HTTP
-      - "6242:6242" # Clustering
+      - "6242:6242" # Clusteringk
     volumes:
       - nats_data:/data
     networks:
