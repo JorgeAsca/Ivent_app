@@ -4,7 +4,6 @@ global:
     url: "nats://nats:4222"
   env:
     PORT: 3000
-  # Datos sensibles (en un entorno real usarías un archivo externo o secret management)
   database:
     postgres:
       user: "jorge_admin"
