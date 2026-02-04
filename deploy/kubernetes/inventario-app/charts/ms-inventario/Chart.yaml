@@ -1,0 +1,5 @@
+apiVersion: v2
+name: ms-inventario
+description: Sub-chart para el microservicio de inventario
+type: application
+version: 0.1.0

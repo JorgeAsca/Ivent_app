@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-inventario
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-inventario
+  template:
+    metadata:
+      labels:
+        app: ms-inventario
+    spec:
+      containers:
+        - name: ms-inventario
+          image: jorgeas/ivent-ms-inventario:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ .Values.global.env.PORT }}
+          env:
+            - name: PORT
+              value: {{ .Values.global.env.PORT | quote }}
+            - name: NATS_URL
+              value: {{ .Values.global.nats.url | quote }}
+            # Variables de base de datos desde el Secret global
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ivent-global-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ivent-global-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: ivent-global-secrets
+                  key: POSTGRES_DB

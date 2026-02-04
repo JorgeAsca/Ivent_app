@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-gateway
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-gateway
+  template:
+    metadata:
+      labels:
+        app: ms-gateway
+    spec:
+      containers:
+        - name: ms-gateway
+          image: jorgeas/ivent-ms-gateway:latest
+          ports:
+            - containerPort: {{ .Values.global.env.PORT }}
+          env:
+            - name: PORT
+              value: {{ .Values.global.env.PORT | quote }}
+            - name: NATS_URL
+              value: {{ .Values.global.nats.url | quote }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ivent-global-secrets
+                  key: JWT_SECRET
