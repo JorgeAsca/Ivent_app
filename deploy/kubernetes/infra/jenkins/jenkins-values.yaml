@@ -1,15 +1,23 @@
 controller:
-  installPlugins:
-    - kubernetes:4029.v5712230ccb_f8
-    - workflow-aggregator:596.v8c21c963d92d
-    - git:5.2.1
-    - docker-workflow:572.v5e2142da_2183
-  serviceType: NodePort
-  nodePort: 32000
+  
+  installPlugins: false 
+  
   admin:
     password: "admin"
-  runAsUser: 1000
-  fsGroup: 1000
+  
+  serviceType: NodePort
+  nodePort: 32000
+
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  
+  
+  sidecars:
+    configAutoReload:
+      enabled: false
+
 persistence:
   enabled: true
   size: 10Gi
+  storageClass: "microk8s-hostpath"
