@@ -6,9 +6,16 @@ image:
   repository: jorgeas/ivent-ms-inventario
   tag: latest
 
+# Añade esto para resolver el error del puntero nil
 global:
   namespace: "inventario-app"
   env:
     PORT: 3000
   nats:
     url: "nats://nats:4222"
+  database:
+    postgres:
+      user: "jorge_admin"
+      pass: "ivent_secure_pass_2024"
+      dbName: "inventario_db"
+      host: "postgres-service"

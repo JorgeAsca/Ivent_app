@@ -1,11 +1,10 @@
 apiVersion: v1
-kind: Service
+kind: Secret
 metadata:
-  name: postgres-service
-  namespace: inventario-app
-spec:
-  selector:
-    app: postgres-db
-  ports:
-    - port: 5432
-      targetPort: 5432
+  name: ivent-db-secrets
+  namespace: {{ .Values.global.namespace }}
+type: Opaque
+data:
+  POSTGRES_USER: {{ .Values.global.database.postgres.user | b64enc | quote }}
+  POSTGRES_PASSWORD: {{ .Values.global.database.postgres.pass | b64enc | quote }}
+  POSTGRES_DB: {{ .Values.global.database.postgres.dbName | b64enc | quote }}
