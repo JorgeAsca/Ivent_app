@@ -5,19 +5,21 @@ WORKDIR /app
 
 RUN npm install -g pnpm
 
-# Copiamos archivos de estructura
+# Copiar archivos base
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
+# Copiar TODO el código necesario para las dependencias internas
 COPY ./libs ./libs
 COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
 
-# Instalamos dependencias de TODO el monorepo
+# Instalar dependencias
 RUN pnpm install
 
-# COMPILAMOS PRIMERO LAS LIBS Y LUEGO EL MS
+# Compilar: Primero common, luego el microservicio
+# Usamos 'nest build' directamente para asegurar que lea bien las rutas
 RUN pnpm --filter common build
 RUN pnpm --filter ${MICROSERVICIO} build
 
-# --- Fase final ---
+# --- Fase Runner ---
 FROM node:20-alpine AS runner
 WORKDIR /app
 ARG MICROSERVICIO=ms-gateway
