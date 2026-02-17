@@ -1,0 +1,12 @@
+controller:
+  installPlugins:
+    - kubernetes:4029.v5712230ccb_f8
+    - workflow-aggregator:596.v8c21c963d92d
+    - git:5.2.1
+    - docker-workflow:572.v5e2142da_2183
+  serviceType: NodePort
+  nodePort: 32000
+  adminPassword: "admin" # Puedes fijar una contraseña aquí para no tener que buscarla
+persistence:
+  enabled: true
+  size: 10Gi
