@@ -1,30 +1,29 @@
+{{- if .Values.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-inventario
+  name: {{ .Values.msName }}-deployment
   namespace: {{ .Values.global.namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: ms-inventario
+      app: {{ .Values.msName }}
   template:
     metadata:
       labels:
-        app: ms-inventario
+        app: {{ .Values.msName }}
     spec:
       containers:
-        - name: ms-inventario
-          image: jorgeas/ivent-ms-inventario:latest
+        - name: {{ .Values.msName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.global.env.PORT }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.msName }}-config
           env:
-            - name: PORT
-              value: {{ .Values.global.env.PORT | quote }}
-            - name: NATS_URL
-              value: {{ .Values.global.nats.url | quote }}
-            # Variables de base de datos desde el Secret global
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -40,3 +39,4 @@ spec:
                 secretKeyRef:
                   name: ivent-global-secrets
                   key: POSTGRES_DB
+{{- end }}

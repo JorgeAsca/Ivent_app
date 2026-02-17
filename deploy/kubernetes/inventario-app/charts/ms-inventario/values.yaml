@@ -1,0 +1,6 @@
+enabled: true
+msName: ms-inventario
+replicaCount: 1
+image:
+  repository: jorgeas/ivent-ms-inventario
+  tag: latest
