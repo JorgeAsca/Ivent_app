@@ -1,0 +1,5 @@
+apiVersion: v2
+name: infra-nats
+description: Bus de mensajes NATS para Ivent App
+type: application
+version: 0.1.0
