@@ -15,7 +15,7 @@ COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
 
 
 RUN pnpm install
-RUN pnpm --filter ${MICROSERVICIO} run build
+RUN pnpm run build
 
 
 FROM node:20-alpine AS runner

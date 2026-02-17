@@ -19,6 +19,12 @@
         "tsConfigPath": "apps/ms-gateway/tsconfig.app.json"
       }
     },
+    "common": {
+      "type": "library",
+      "root": "libs/common",
+      "entryFile": "index",
+      "sourceRoot": "libs/common/src"
+    },
     "ms-administracion": {
       "type": "application",
       "root": "apps/ms-administracion",
