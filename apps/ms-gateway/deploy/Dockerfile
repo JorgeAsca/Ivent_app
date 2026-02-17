@@ -15,7 +15,7 @@ COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
 
 
 RUN pnpm install
-RUN pnpm run build
+RUN pnpm --filter ms-gateway run build
 
 
 FROM node:20-alpine AS runner
