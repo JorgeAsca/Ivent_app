@@ -7,6 +7,7 @@ metadata:
 data:
   PORT: {{ .Values.global.env.PORT | quote }}
   NATS_URL: {{ .Values.global.nats.url | quote }}
-  DB_HOST: {{ .Values.global.database.postgres.host | quote }}
+  # Host del servicio de base de datos que definiremos abajo
+  DB_HOST: "postgres-service"
   DB_PORT: "5432"
 {{- end }}

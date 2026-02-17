@@ -24,17 +24,18 @@ spec:
             - configMapRef:
                 name: {{ .Values.msName }}-config
           env:
-            - name: POSTGRES_USER
+            # Variables que TypeORM leerá del Secret Global
+            - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: ivent-global-secrets
                   key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: ivent-global-secrets
                   key: POSTGRES_PASSWORD
-            - name: POSTGRES_DB
+            - name: DB_NAME
               valueFrom:
                 secretKeyRef:
                   name: ivent-global-secrets
