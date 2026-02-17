@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: nats
-  namespace: { { .Values.global.namespace } }
+  namespace: {{ .Values.global.namespace }}
 spec:
   serviceName: 'nats'
   replicas: 1
