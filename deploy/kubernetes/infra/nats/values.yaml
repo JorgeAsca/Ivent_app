@@ -23,3 +23,6 @@ persistence:
   storageClassName: ""
 
 resources: {}
+
+global:
+  namespace: "inventario-app"
