@@ -1,29 +1,35 @@
-FROM node:20-alpine
-
+# Fase 1: Instalación y Compilación
+FROM node:20-alpine AS build
 
 ARG MICROSERVICIO=ms-gateway
 
 WORKDIR /app
 
 
-COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
-RUN chmod +x start.sh
+RUN npm install -g pnpm
 
 
-COPY package.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
-COPY tsconfig.json .
-COPY nest-cli.json .
-
-
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
 COPY ./libs ./libs
 COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
 
 
-RUN apk add --no-cache git bash
+RUN pnpm install
+RUN pnpm --filter ${MICROSERVICIO} run build
 
 
+FROM node:20-alpine AS runner
+
+ARG MICROSERVICIO=ms-gateway
+WORKDIR /app
+
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/${MICROSERVICIO}/dist ./dist
+COPY --from=build /app/package.json ./package.json
+
+# Exponer puerto
 EXPOSE 3000
 
-ENTRYPOINT [ "./start.sh" ]
+
+CMD ["node", "dist/main.js"]s
