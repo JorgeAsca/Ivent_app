@@ -6,7 +6,8 @@ controller:
     - docker-workflow:572.v5e2142da_2183
   serviceType: NodePort
   nodePort: 32000
-  adminPassword: "admin" # Puedes fijar una contraseña aquí para no tener que buscarla
+  admin:
+    password: "admin"
 persistence:
   enabled: true
   size: 10Gi
