@@ -8,6 +8,8 @@ controller:
   nodePort: 32000
   admin:
     password: "admin"
+  runAsUser: 1000
+  fsGroup: 1000
 persistence:
   enabled: true
   size: 10Gi
