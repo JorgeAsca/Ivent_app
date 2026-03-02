@@ -19,6 +19,7 @@ RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 
+RUN sed -i 's/\r$//' ./apps/${MICROSERVICIO}/deploy/start.sh
 
 RUN chmod +x ./apps/${MICROSERVICIO}/deploy/start.sh
 
