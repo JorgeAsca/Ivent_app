@@ -1,7 +1,8 @@
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@nuxt/icon'
   ],
 
 
@@ -11,15 +12,21 @@ export default defineNuxtConfig({
     }
   },
 
+  icon: {
+  serverBundle: 'local'
+},
+
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
 
 
   routeRules: {
     '/': { prerender: true },
-    '/api/**': { proxy: 'http://38.242.141.205:3000/api/**' }
+    // Solo redirigir las llamadas que NO sean de recursos internos de Nuxt
+    '/api/inventario/**': { proxy: 'http://38.242.141.205:3000/api/inventario/**' },
+    '/api/usuarios/**': { proxy: 'http://38.242.141.205:3000/api/usuarios/**' },
+    // Agrega aquí otros microservicios si los necesitas (administracion, etc.)
   },
-
   compatibilityDate: '2025-01-15',
 
   eslint: {

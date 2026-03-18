@@ -1,13 +1,10 @@
-export default eventHandler(async (event) => {
-  const config = useRuntimeConfig();
-  const method = getMethod(event);
-
+// server/api/inventario.get.ts
+export default defineEventHandler(async (event) => {
   try {
-    return await $fetch(`${config.public.apiBase}/inventario/productos`, {
-      method,
-      body: method !== 'GET' ? await readBody(event) : undefined
-    });
-  } catch (error: any) {
-    throw createError({ statusCode: error.statusCode, statusMessage: 'Error de Microservicio' });
+    // Usamos la IP de la VPS directamente para evitar bucles de proxy en el servidor
+    const data = await $fetch('http://38.242.141.205:3000/api/inventario/productos');
+    return data;
+  } catch (error) {
+    return { error: 'No se pudieron cargar los productos' };
   }
 });
