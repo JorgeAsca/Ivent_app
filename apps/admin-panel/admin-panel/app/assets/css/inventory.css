@@ -1,0 +1,17 @@
+@layer components {
+  .admin-page-container {
+    @apply py-8 px-4 sm:px-6 lg:px-8;
+  }
+
+  .admin-card-table {
+    @apply overflow-hidden shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 rounded-xl bg-white dark:bg-gray-900;
+  }
+
+  .price-text {
+    @apply font-mono font-semibold text-emerald-600 dark:text-emerald-400;
+  }
+
+  .product-name-text {
+    @apply font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors;
+  }
+}

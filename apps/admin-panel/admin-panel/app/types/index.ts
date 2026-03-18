@@ -6,6 +6,7 @@ export interface Categoria {
 
 export interface Producto {
   id: string;
+  sku: string;
   nombre: string;
   precio: number;
   stock: number;
