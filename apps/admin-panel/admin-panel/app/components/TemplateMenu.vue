@@ -1,21 +1,18 @@
 <script setup lang="ts">
-// Definición de los ítems del menú de navegación
 const items = [
-  [
-    {
-      label: 'Inicio',
-      icon: 'i-lucide-house',
-      to: '/'
-    },
-    {
-      label: 'Productos',
-      icon: 'i-lucide-package',
-      to: '/productos'
-    }
-  ]
+  {
+    label: 'Inicio',
+    icon: 'i-lucide-house',
+    to: '/'
+  },
+  {
+    label: 'Productos',
+    icon: 'i-lucide-package',
+    to: '/productos'
+  }
 ]
 </script>
 
 <template>
-  <UNavigationMenu :items="items" class="w-full" />
+  <UHorizontalNavigation :links="items" class="border-b border-gray-200 dark:border-gray-800" />
 </template>

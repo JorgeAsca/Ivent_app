@@ -1,8 +1,47 @@
-/* apps/admin-panel/admin-panel/app/assets/css/main.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Asegúrate de que las rutas sean correctas y existan los archivos */
-@import './layout.css';
-@import './inventory.css';
+@layer components {
+  /* --- Estilos de Layout --- */
+  .admin-header {
+    @apply border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-50;
+  }
+
+  .logo-text {
+    @apply font-bold text-xl tracking-tight text-gray-900 dark:text-white;
+  }
+
+  .admin-main-content {
+    @apply bg-gray-50 dark:bg-black min-h-[calc(100vh-120px)];
+  }
+
+  .admin-footer {
+    @apply border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-4 px-6;
+  }
+
+  .footer-copy {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  .divider-vertical {
+    @apply h-6 w-[1px] bg-gray-200 dark:bg-gray-800;
+  }
+
+  /* --- Estilos de Inventario --- */
+  .admin-page-container {
+    @apply py-8 px-4 sm:px-6 lg:px-8;
+  }
+
+  .admin-card-table {
+    @apply overflow-hidden shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 rounded-xl bg-white dark:bg-gray-900;
+  }
+
+  .price-text {
+    @apply font-mono font-semibold text-emerald-600 dark:text-emerald-400;
+  }
+
+  .product-name-text {
+    @apply font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors;
+  }
+}

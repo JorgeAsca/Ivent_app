@@ -5,9 +5,11 @@ export default defineNuxtConfig({
     '@nuxt/icon'
   ],
 
-  future: {
+ future: {
     compatibilityVersion: 4,
   },
+
+  srcDir: 'app/',
 
 
   runtimeConfig: {
@@ -16,19 +18,15 @@ export default defineNuxtConfig({
     }
   },
 
-  icon: {
-  serverBundle: 'local'
-},
-
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
 
 
   routeRules: {
     '/': { prerender: true },
-    '/api/inventario/**': { proxy: 'http://38.242.141.205:3000/api/inventario/**' },
-    '/api/usuarios/**': { proxy: 'http://38.242.141.205:3000/api/usuarios/**' },
+    '/api/**': { proxy: 'http://38.242.141.205:3000/api/**' }
   },
+
   compatibilityDate: '2025-01-15',
 
   eslint: {

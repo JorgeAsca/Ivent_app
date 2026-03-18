@@ -1,43 +1,23 @@
 <template>
-  <UApp>
-    <UHeader class="admin-header">
-      <template #left>
-        <NuxtLink to="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <AppLogo class="w-auto h-8"></AppLogo>
+  <div class="min-h-screen bg-gray-50 dark:bg-black">
+    <header class="admin-header">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <NuxtLink to="/" class="flex items-center gap-2">
+          <AppLogo class="w-8 h-8" />
           <span class="logo-text">IventApp</span>
         </NuxtLink>
-      </template>
-
-      <template #right>
         <div class="flex items-center gap-4">
           <TemplateMenu />
-          <div class="divider-vertical"></div>
           <UColorModeButton />
         </div>
-      </template>
-    </UHeader>
+      </div>
+    </header>
 
-    <UMain class="admin-main-content">
-      <NuxtPage />
-    </UMain>
-
-    <UFooter class="admin-footer">
-      <template #left>
-        <p class="footer-copy">
-          © {{ new Date().getFullYear() }} - IventApp Business Intelligence
-        </p>
-      </template>
-      <template #right>
-        <UButton
-          to="https://github.com/jorgeasca/ivent_app"
-          target="_blank"
-          icon="i-simple-icons-github"
-          color="neutral"
-          variant="ghost"
-        />
-      </template>
-    </UFooter>
-
+    <main class="admin-main-content">
+      <UContainer class="py-6">
+        <NuxtPage />
+      </UContainer>
+    </main>
     <UNotifications />
-  </UApp>
+  </div>
 </template>
