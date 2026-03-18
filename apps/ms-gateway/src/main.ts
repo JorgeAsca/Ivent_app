@@ -6,6 +6,11 @@ import { envs } from '../config/envs';
 async function bootstrap() {
   const logger = new Logger('Gateway');
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: 'http://localhost:3001',
+    credentials: true,
+  });
   
   app.setGlobalPrefix('api'); 
   

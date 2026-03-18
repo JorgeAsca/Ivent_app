@@ -13,7 +13,7 @@ controller:
     fsGroup: 1000
   
   
-  sidecars:
+    sidecars:
     configAutoReload:
       enabled: false
 
