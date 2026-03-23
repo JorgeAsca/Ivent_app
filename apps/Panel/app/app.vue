@@ -62,6 +62,8 @@
         <input v-model.number="formProd.precio" type="number" step="0.01" placeholder="Precio" required class="input-field">
         <input v-model.number="formProd.stock" type="number" placeholder="Stock inicial" required class="input-field">
         
+        <input v-model="formProd.sku" placeholder="SKU del producto" required class="input-field">
+        
         <select v-model="formProd.categoriaId" required class="input-field">
           <option value="" disabled>Seleccionar Categoría</option>
           <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
@@ -78,40 +80,30 @@
 </template>
 
 <script setup>
-const config = useRuntimeConfig()
-const loading = ref(false)
+// Extraemos las funciones de nuestro composable
+const { getCategorias, getProductos, createCategoria, createProducto } = useInventario()
 
-// --- ESTADOS PARA MODALES Y FORMULARIOS ---
+const loading = ref(false)
 const showModalCat = ref(false)
 const showModalProd = ref(false)
 
 const formCat = reactive({ nombre: '', descripcion: '' })
-const formProd = reactive({ nombre: '', precio: 0, stock: 0, categoriaId: '' })
+const formProd = reactive({ nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
 
-// --- CONSUMO DE DATOS (EXISTENTE) ---
-const { data: categorias, pending: pendingCat, refresh: refreshCat } = await useFetch('api/inventario/categorias', {
-  baseURL: config.public.apiBase
-})
-
-const { data: productos, pending: pendingProd, refresh: refreshProd } = await useFetch('api/inventario/productos', {
-  baseURL: config.public.apiBase
-})
-
-// --- LÓGICA DE ENVÍO ---
+// Obtenemos los datos sin bloquear la pantalla (sin el await)
+const { data: categorias, pending: pendingCat, refresh: refreshCat } = getCategorias()
+const { data: productos, pending: pendingProd, refresh: refreshProd } = getProductos()
 
 const saveCategoria = async () => {
   loading.value = true
   try {
-    await $fetch('api/inventario/categorias', {
-      method: 'POST',
-      baseURL: config.public.apiBase,
-      body: formCat
-    })
-    await refreshCat() // Actualiza la lista sin recargar página
+    await createCategoria(formCat)
+    await refreshCat() 
     showModalCat.value = false
     Object.assign(formCat, { nombre: '', descripcion: '' })
   } catch (e) {
     alert('Error al guardar categoría')
+    console.error(e)
   } finally {
     loading.value = false
   }
@@ -120,16 +112,13 @@ const saveCategoria = async () => {
 const saveProducto = async () => {
   loading.value = true
   try {
-    await $fetch('api/inventario/productos', {
-      method: 'POST',
-      baseURL: config.public.apiBase,
-      body: formProd
-    })
+    await createProducto(formProd)
     await refreshProd()
     showModalProd.value = false
-    Object.assign(formProd, { nombre: '', precio: 0, stock: 0, categoriaId: '' })
+    Object.assign(formProd, { nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
   } catch (e) {
-    alert('Error al guardar producto')
+    alert('Error al guardar producto. Revisa la consola.')
+    console.error(e)
   } finally {
     loading.value = false
   }
