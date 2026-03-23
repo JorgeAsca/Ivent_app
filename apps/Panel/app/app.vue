@@ -4,7 +4,7 @@
     
     <main class="main-content">
       <header class="top-bar">
-        <h1>Administración iVent</h1>
+        <h1>Administración</h1>
       </header>
 
       <div class="content-padding">

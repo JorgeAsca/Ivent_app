@@ -9,14 +9,14 @@
             </div>
 
             <div class="tables-grid">
-                <InventoryTable title="Resumen Categorías" :headers="['Nombre', 'Descripción']">
+                <InventoryTable title="Resumen Categorías" :headers="['Nombre', 'Descripción']" hide-add>
                     <tr v-for="cat in categorias" :key="cat.id">
                         <td>{{ cat.nombre }}</td>
                         <td>{{ cat.descripcion || 'Sin descripción' }}</td>
                     </tr>
                 </InventoryTable>
 
-                <InventoryTable title="Resumen Productos" :headers="['Producto', 'Precio', 'Stock']">
+                <InventoryTable title="Resumen Productos" :headers="['Producto', 'Precio', 'Stock']" hide-add>
                     <tr v-for="prod in productos" :key="prod.id">
                         <td>{{ prod.nombre }}</td>
                         <td>${{ prod.precio }}</td>
