@@ -72,12 +72,12 @@ import { computed } from 'vue'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 
-// Registrar elementos de Chart.js
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { getCategorias, getProductos } = useInventario()
-const { data: categorias, pending: pendingCat, refresh: refreshCat } = getCategorias()
-const { data: productos, pending: pendingProd, refresh: refreshProd } = getProductos()
+
+const { data: categorias, pending: pendingCat, refresh: refreshCat } = await getCategorias()
+const { data: productos, pending: pendingProd, refresh: refreshProd } = await getProductos()
 
 const pending = computed(() => pendingCat.value || pendingProd.value)
 
@@ -85,85 +85,71 @@ const refreshAll = async () => {
     await Promise.all([refreshCat(), refreshProd()])
 }
 
-// Utilidad para formatear dinero de forma segura
 const formatoMoneda = (valor) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(valor || 0)
 }
 
-// MÉTRICA 1: Valor Total Seguro (Forzando números)
 const valorTotalInventario = computed(() => {
     if (!productos.value) return 0
-    return productos.value.reduce((total, producto) => {
-        return total + (Number(producto.precio) * Number(producto.stock))
-    }, 0)
+    return productos.value.reduce((total, p) => total + (Number(p.precio) * Number(p.stock)), 0)
 })
 
-// MÉTRICA 2: Riesgo Seguro (Forzando números)
 const productosEnRiesgo = computed(() => {
     if (!productos.value) return []
-    return productos.value
-        .filter(p => Number(p.stock) <= 5)
-        .sort((a, b) => Number(a.stock) - Number(b.stock))
+    return productos.value.filter(p => Number(p.stock) <= 5).sort((a, b) => Number(a.stock) - Number(b.stock))
 })
 
-// MÉTRICA 3: Datos para el Gráfico Circular Blindados
 const chartData = computed(() => {
-    const defaultData = { labels: [], datasets: [{ data: [], backgroundColor: [] }] }
+    const defaultData = { labels: [], datasets: [{ data: [] }] }
     if (!productos.value || !categorias.value) return defaultData
 
     const conteoPorCategoria = {}
 
-    // 1. Inicializamos categorías reales
+    // Inicializamos las categorías reales
     categorias.value.forEach(cat => {
-        conteoPorCategoria[cat.id] = { nombre: cat.nombre, cantidad: 0 }
+        const id = String(cat.id).trim()
+        conteoPorCategoria[id] = { nombre: cat.nombre, cantidad: 0 }
     })
 
-    // 2. Creamos un salvavidas por si un producto no tiene categoría válida
+    // Inicializamos el contador de huérfanos
     conteoPorCategoria['sin_categoria'] = { nombre: 'Sin Categoría', cantidad: 0 }
 
-    // 3. Contamos los productos
+    // Contamos productos con la lógica de detección múltiple
     productos.value.forEach(prod => {
-    // LLAVE MAESTRA: Intenta ambas variantes y limpia espacios
-    const rawId = prod.categoria_id || prod.categoriaId;
-    const cId = rawId ? String(rawId).trim() : null;
-    
-    if (cId && conteoPorCategoria[cId]) {
-      conteoPorCategoria[cId].cantidad += 1
-    } else {
-      conteoPorCategoria['sin_categoria'].cantidad += 1
-    }
-  })
+        // Buscamos el ID en categoria_id o categoriaId o un objeto anidado
+        const rawId = prod.categoria_id || prod.categoriaId || (prod.categoria && prod.categoria.id);
+        const cId = rawId ? String(rawId).trim() : 'sin_categoria';
 
-    // 4. Solo mostramos los que tienen más de 0
+        if (conteoPorCategoria[cId]) {
+            conteoPorCategoria[cId].cantidad += 1
+        } else {
+            conteoPorCategoria['sin_categoria'].cantidad += 1
+        }
+    })
+
+    // Filtramos para no mostrar rebanadas de 0%
     const categoriasActivas = Object.values(conteoPorCategoria).filter(cat => cat.cantidad > 0)
 
     if (categoriasActivas.length === 0) return defaultData
 
     return {
         labels: categoriasActivas.map(cat => cat.nombre),
-        datasets: [
-            {
-                backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#F39C12', '#9B59B6', '#34495E', '#95A5A6'],
-                data: categoriasActivas.map(cat => cat.cantidad),
-                hoverOffset: 4
-            }
-        ]
+        datasets: [{
+            backgroundColor: ['#41B883', '#E46651', '#00D8FF', '#F39C12', '#9B59B6', '#34495E', '#95A5A6'],
+            data: categoriasActivas.map(cat => cat.cantidad),
+            hoverOffset: 4
+        }]
     }
 })
 
-// Lógica segura para renderizar el gráfico
 const hasChartData = computed(() => {
-    return chartData.value.datasets[0].data.length > 0 && chartData.value.datasets[0].data.some(val => val > 0)
+    return chartData.value.datasets[0].data.length > 0 &&
+        chartData.value.datasets[0].data.some(val => val > 0)
 })
 
-// Opciones visuales
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            position: 'bottom'
-        }
-    }
+    plugins: { legend: { position: 'bottom' } }
 }
 </script>
