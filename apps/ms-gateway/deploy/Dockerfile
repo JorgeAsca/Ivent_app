@@ -33,4 +33,4 @@ COPY --from=build /app/dist ./dist
 EXPOSE 3000
 
 # ¡Aquí está la ruta exacta que descubrimos!
-CMD node dist/apps/${APP_NAME}/apps/${APP_NAME}/src/main.js"
+CMD ["node", "dist/apps/ms-gateway/apps/ms-gateway/src/main.js"]
