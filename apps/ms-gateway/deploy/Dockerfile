@@ -23,16 +23,14 @@ RUN npx nest build ${MICROSERVICIO}
 FROM node:20-alpine AS runner
 WORKDIR /app
 ARG MICROSERVICIO=ms-gateway
-
-# Pasamos el ARG a variable de entorno para poder usarlo en el comando shell final
 ENV APP_NAME=${MICROSERVICIO}
 
-# Copiamos dependencias y TODO el directorio dist sin alterar su estructura
+# Copiamos dependencias y el directorio dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
 
-# 5. EL COMANDO INTELIGENTE: Busca el archivo main.js en las 3 rutas posibles de NestJS y lo ejecuta.
-CMD sh -c "if [ -f dist/apps/${APP_NAME}/main.js ]; then node dist/apps/${APP_NAME}/main.js; elif [ -f dist/apps/${APP_NAME}/src/main.js ]; then node dist/apps/${APP_NAME}/src/main.js; elif [ -f dist/main.js ]; then node dist/main.js; else echo '❌ Error: No se encontró main.js. Mostrando contenido de dist:' && ls -R dist && exit 1; fi"
+# ¡Aquí está la ruta exacta que descubrimos!
+CMD node dist/apps/${APP_NAME}/apps/${APP_NAME}/src/main.js"
