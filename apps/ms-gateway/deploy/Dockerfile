@@ -29,6 +29,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ARG MICROSERVICIO=ms-gateway
 
+RUN npm install -g pnpm
+
 # Copiamos las dependencias
 COPY --from=build /app/node_modules ./node_modules
 
