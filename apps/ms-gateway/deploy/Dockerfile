@@ -15,10 +15,8 @@ COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
 # 3. Instalamos dependencias
 RUN pnpm install
 
-# 4. Compilamos common primero
+# 4. Compilamos primero las librerías comunes y luego el microservicio desde la raíz
 RUN pnpm --filter common build
-
-# 5. EL TRUCO: Compilar DESDE LA RAÍZ usando nest CLI para no perder el contexto de TS
 RUN npx nest build ${MICROSERVICIO}
 
 # --- Fase Runner ---
@@ -26,12 +24,15 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ARG MICROSERVICIO=ms-gateway
 
-# Copiamos dependencias de producción
-COPY --from=build /app/node_modules ./node_modules
+# Pasamos el ARG a variable de entorno para poder usarlo en el comando shell final
+ENV APP_NAME=${MICROSERVICIO}
 
-# 6. NestJS genera el build en una subcarpeta global, la copiamos directo al ./dist final
-COPY --from=build /app/dist/apps/${MICROSERVICIO} ./dist
-COPY --from=build /app/apps/${MICROSERVICIO}/package.json ./package.json
+# Copiamos dependencias y TODO el directorio dist sin alterar su estructura
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+
+# 5. EL COMANDO INTELIGENTE: Busca el archivo main.js en las 3 rutas posibles de NestJS y lo ejecuta.
+CMD sh -c "if [ -f dist/apps/${APP_NAME}/main.js ]; then node dist/apps/${APP_NAME}/main.js; elif [ -f dist/apps/${APP_NAME}/src/main.js ]; then node dist/apps/${APP_NAME}/src/main.js; elif [ -f dist/main.js ]; then node dist/main.js; else echo '❌ Error: No se encontró main.js. Mostrando contenido de dist:' && ls -R dist && exit 1; fi"
