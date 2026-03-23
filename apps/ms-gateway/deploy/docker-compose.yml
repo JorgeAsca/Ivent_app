@@ -18,7 +18,7 @@ services:
       - "${PORT_EXPOSED}:${PORT}"
     networks:
       - ivent-network 
-    command: pnpm start:dev ms-gateway
+    # command: pnpm start:dev ms-gateway
 
 networks:
   ivent-network:
