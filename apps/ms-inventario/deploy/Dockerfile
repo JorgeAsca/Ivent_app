@@ -16,7 +16,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json tsconfig.buil
 
 
 COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
-RUN sed -i 's/\r$//' start.sh && chmod +x start.sh [cite: 2]
+RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
 
 EXPOSE 3000
 
