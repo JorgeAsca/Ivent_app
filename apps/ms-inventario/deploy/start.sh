@@ -1,27 +1,21 @@
 #!/bin/bash
 set -e
 
+# Archivo para monitorear el progreso
 INFORME=/app/informe.log
 
-config_git() {
-   echo "Configurando entorno de Git y estructuras..." >> ${INFORME}
-
-}
-
 main(){
-   echo "*** Iniciando instalación en caliente para: ${MICROSERVICIO} ***" > ${INFORME}
+   echo "*** Iniciando instalación para: ${MICROSERVICIO} ***" > ${INFORME}
    
-   config_git 
-   
-   echo "Instalando dependencias (Esto puede tardar unos minutos)..." >> ${INFORME}
-   
+   # 1. Instalación de dependencias
+   echo "Instalando paquetes..." >> ${INFORME}
    pnpm install --no-frozen-lockfile 
 
-   echo "Lanzando microservicio con TypeORM..." >> ${INFORME}
+   echo "Lanzando microservicio ${MICROSERVICIO}..." >> ${INFORME}
    
-.
+
    exec pnpm run start:dev ${MICROSERVICIO}
 }
 
-
+# Llamamos a la función
 main
