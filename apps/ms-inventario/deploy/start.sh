@@ -1,21 +1,27 @@
 #!/bin/bash
 set -e
 
-echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***"
+INFORME=/app/informe.log
 
-echo "Instalando pnpm..."
-npm install -g pnpm
-if [ $? -ne 0 ]; then
-   echo "Error al instalar pnpm. Abortando."
-   exit 1
-fi
+config_git() {
+   echo "Configurando entorno de Git y estructuras..." >> ${INFORME}
 
-echo "Instalando dependencias (pnpm install)..."
-pnpm install
-if [ $? -ne 0 ]; then
-   echo "Error al instalar dependencias. Abortando."
-   exit 1
-fi
+}
 
-echo "Iniciando ${MICROSERVICIO} en modo desarrollo..."
-exec node dist/apps/ms-inventario/src/main.js ${MICROSERVICIO}
+main(){
+   echo "*** Iniciando instalación en caliente para: ${MICROSERVICIO} ***" > ${INFORME}
+   
+   config_git 
+   
+   echo "Instalando dependencias (Esto puede tardar unos minutos)..." >> ${INFORME}
+   
+   pnpm install --no-frozen-lockfile 
+
+   echo "Lanzando microservicio con TypeORM..." >> ${INFORME}
+   
+.
+   exec pnpm run start:dev ${MICROSERVICIO}
+}
+
+
+main
