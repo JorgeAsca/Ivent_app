@@ -18,4 +18,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Iniciando ${MICROSERVICIO} en modo desarrollo..."
-exec pnpm run start:dev ${MICROSERVICIO}
+exec node dist/apps/ms-inventario/src/main.js ${MICROSERVICIO}
