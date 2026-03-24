@@ -1,44 +1,47 @@
 #!/bin/bash
 set -e
 
-# Archivo para monitorear el progreso
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
 
 config_git(){
-   echo "--- Clonando repositorio en /app/repo_temp ---" >> ${INFORME}
+   echo "--- Iniciando configuración de Git ---" >> ${INFORME}
    
-   # Clonamos el repositorio
-   git clone --filter=blob:none --no-checkout ${REPO_GIT} /app/repo_temp
-   cd /app/repo_temp
    
-   # Configuración de sparse-checkout
+   git clone --filter=blob:none --no-checkout ${REPO_GIT} Ivent_app
+   
+   
+   cd Ivent_app
+   
+   
    git sparse-checkout init --cone
+   
+   # Trae solo el microservicio actual y las librerías compartidas
    git sparse-checkout set apps/${MICROSERVICIO} libs
    
-   # Descargamos los archivos de la rama master
+   # Activar los archivos
    git checkout master
    git pull origin master
-   echo "--- Código descargado exitosamente ---" >> ${INFORME}
 }
 
 main(){
-   echo "*** Iniciando instalación para: ${MICROSERVICIO} ***" > ${INFORME}
+   echo "*** Instalacion del micro servicio ${MICROSERVICIO} ***" > ${INFORME}
    
-   # 1. Clonar el código
+   # 1. Ejecutar clonación y entrar a la carpeta
    config_git
    
-   # IMPORTANTE: Ahora estamos en /app/repo_temp. 
-   # Toda la ejecución debe ser desde AQUÍ.
-
-   # 2. Instalar dependencias dentro de la carpeta del proyecto
-   echo "Instalando paquetes en $(pwd)..." >> ${INFORME}
-   pnpm install --no-frozen-lockfile 
-
-   echo "Lanzando microservicio ${MICROSERVICIO}..." >> ${INFORME}
+   # IMPORTANTE: Ahora el script ya está dentro de /app/Ivent_app
    
-   # 3. Ejecución con Nest CLI
-   # Al estar en /app/repo_temp, Nest encontrará el nest-cli.json y los tsconfig automáticamente
+   echo "Instalando pnpm..." >> ${INFORME}
+   npm install -g pnpm
+   
+   echo "Instalando dependencias node_modules..." >> ${INFORME}
+   # Se ejecuta dentro de /app/Ivent_app donde están los archivos tsconfig y package.json
+   pnpm install --no-frozen-lockfile
+   
+   echo "Iniciando ${MICROSERVICIO} en modo desarrollo..." >> ${INFORME}
+   
+   # Ejecución directa: Nest encontrará el nest-cli.json porque estamos en la raíz del repo
    exec pnpm run start:dev ${MICROSERVICIO}
 }
 
