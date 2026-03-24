@@ -20,8 +20,8 @@ config_git(){
    git sparse-checkout set apps/${MICROSERVICIO} libs
    
    # Activar los archivos
-   git checkout master
-   git pull origin master
+   git checkout main
+   git pull origin main
 }
 
 main(){
