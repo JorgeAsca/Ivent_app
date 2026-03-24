@@ -14,7 +14,7 @@ main(){
    echo "Lanzando microservicio ${MICROSERVICIO}..." >> ${INFORME}
    
 
-   exec pnpm run start:dev ${MICROSERVICIO}
+   exec pnpm run start:dev ${MICROSERVICIO} -- -p nest-cli.json
 }
 
 # Llamamos a la función
