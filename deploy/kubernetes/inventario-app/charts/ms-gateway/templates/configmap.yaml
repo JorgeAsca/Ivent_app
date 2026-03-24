@@ -6,5 +6,5 @@ metadata:
   namespace: {{ .Values.global.namespace }}
 data:
   PORT: {{ .Values.global.env.PORT | quote }}
-  NATS_URL: {{ .Values.global.nats.url | quote }}
+  NATS_SERVERS: {{ .Values.global.nats.url | quote }}
 {{- end }}
