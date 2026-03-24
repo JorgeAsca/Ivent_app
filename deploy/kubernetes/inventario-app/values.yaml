@@ -1,5 +1,8 @@
 global:
   namespace: "inventario-app"
+  repoGit: "https://github.com/jorgeasca/ivent_app.git"
+  gitUser: "jorgeasca"
+  repoUrl: "github.com/jorgeasca/ivent_app.git"
   nats:
     url: "nats://nats:4222"
   env:

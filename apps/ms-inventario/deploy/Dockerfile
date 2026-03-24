@@ -5,19 +5,14 @@ ENV MICROSERVICIO=${MICROSERVICIO}
 
 WORKDIR /app
 
+# Herramientas necesarias para clonar y compilar
+RUN apk update && apk add --no-cache git python3 make g++ bash
 
-RUN apk add --no-cache python3 make g++ git bash
-
-
-RUN npm install -g pnpm
-
-
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json tsconfig.build.json nest-cli.json ./
-
-
+# Copiamos el script corregido arriba
 COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
-RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
+RUN chmod +x ./start.sh
+RUN mkdir -p /root/logs
 
 EXPOSE 3000
 
-ENTRYPOINT [ "./start.sh" ]
+CMD ["/bin/bash", "/app/start.sh"]

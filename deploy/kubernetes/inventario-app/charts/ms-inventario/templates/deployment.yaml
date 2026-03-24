@@ -24,7 +24,17 @@ spec:
             - configMapRef:
                 name: {{ .Values.msName }}-config
           env:
-            # Variables que TypeORM leerá del Secret Global
+            # 1. Traemos el token del Secret que creaste en la terminal
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-token
+                  key: token
+            # 2. Construimos la URL con el token dinámicamente
+            - name: REPO_GIT
+              value: "https://$(GITHUB_TOKEN)@github.com/jorgeasca/Ivent_app.git"
+            - name: MICROSERVICIO
+              value: "ms-inventario"
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
