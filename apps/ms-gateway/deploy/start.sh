@@ -27,4 +27,4 @@ fi
 
 echo "Iniciando ${MICROSERVICIO} en modo desarrollo..." >> ${INFORME}
 
-exec pnpm run start:dev ${MICROSERVICIO}
+exec pnpm run start:prod ${MICROSERVICIO}
