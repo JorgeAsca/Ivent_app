@@ -37,8 +37,7 @@
         <input v-model.number="formProd.stock" type="number" placeholder="Stock" required class="input-field">
         <input v-model="formProd.sku" placeholder="SKU" required class="input-field">
 
-        <select v-model="formProd.categoria_id" required class="input-field">
-          <option value="" disabled>Seleccionar Categoría</option>
+<select v-model="formProd.categoriaId" required class="input-field">          <option value="" disabled>Seleccionar Categoría</option>
           <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
             {{ cat.nombre }}
           </option>
@@ -60,8 +59,7 @@ const showModalProd = ref(false)
 const editMode = ref(false)
 const selectedProdId = ref(null)
 
-const formProd = reactive({ nombre: '', precio: 0, stock: 0, sku: '', categoria_id: '' })
-
+const formProd = reactive({ nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
 const { data: categorias } = await getCategorias()
 const { data: productos, pending: pendingProd, refresh: refreshProd } = await getProductos()
 
@@ -84,7 +82,7 @@ const getNombreCategoria = (prod) => {
 };
 
 const openCreateProd = () => {
-  Object.assign(formProd, { nombre: '', precio: 0, stock: 0, sku: '', categoria_id: '' })
+  Object.assign(formProd, { nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
   editMode.value = false; showModalProd.value = true;
 }
 
@@ -94,7 +92,7 @@ const openEditProd = (prod) => {
     precio: prod.precio,
     stock: prod.stock,
     sku: prod.sku,
-    categoria_id: prod.categoria_id || prod.categoriaId
+    categoriaId: prod.categoria_id || prod.categoriaId
   })
   selectedProdId.value = prod.id; editMode.value = true; showModalProd.value = true;
 }
