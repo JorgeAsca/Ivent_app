@@ -1,0 +1,248 @@
+version: '3.8'
+
+services:
+  nats-1:
+    image: nats:2.10-alpine
+    container_name: nats-server1
+    restart: unless-stopped
+    command:
+      - "-js"   
+      - "-m"    
+      - "8222"
+    ports:
+      - "4222:4222" # Cliente NATS
+      - "8222:8222" # Monitoring HTTP
+      - "6242:6242" # Clustering
+    volumes:
+      - nats_data:/data
+    networks:
+      - ivent-network
+
+  # ==============================
+  # BASES DE DATOS INDEPENDIENTES
+  # ==============================
+  db-administracion:
+    image: postgres:15-alpine
+    container_name: db-administracion
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_administracion:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  db-analytics:
+    image: postgres:15-alpine
+    container_name: db-analytics
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata_analytics:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  db-configuracion:
+    image: postgres:15-alpine
+    container_name: db-configuracion
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata_configuracion:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  db-logistica:
+    image: postgres:15-alpine
+    container_name: db-logistica
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - pgdata_logistica:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  db-terceros:
+    image: postgres:15-alpine
+    container_name: db-terceros
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - pgdata_terceros:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  db-ventas:
+    image: postgres:15-alpine
+    container_name: db-ventas
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ivent_user
+      POSTGRES_PASSWORD: ivent_password
+      POSTGRES_DB: ivent_db
+    ports:
+      - "5439:5432"
+    volumes:
+      - pgdata_ventas:/var/lib/postgresql/data
+    networks:
+      - ivent-network
+
+  # ==============================
+  # MICROSERVICIOS
+  # ==============================
+  ms-administracion:
+    build:
+      context: .
+      dockerfile: ./apps/ms-administracion/deploy/Dockerfile
+    image: iventapp/ms-administracion:latest
+    container_name: ms-administracion
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-administracion
+      - DB_HOST=db-administracion
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-administracion
+
+  ms-analytics:
+    build:
+      context: .
+      dockerfile: ./apps/ms-analytics/deploy/Dockerfile
+    image: iventapp/ms-analytics:latest
+    container_name: ms-analytics
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-analytics
+      - DB_HOST=db-analytics
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-analytics
+
+  ms-configuracion:
+    build:
+      context: .
+      dockerfile: ./apps/ms-configuracion/deploy/Dockerfile
+    image: iventapp/ms-configuracion:latest
+    container_name: ms-configuracion
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-configuracion
+      - DB_HOST=db-configuracion
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-configuracion
+
+  ms-logistica:
+    build:
+      context: .
+      dockerfile: ./apps/ms-logistica/deploy/Dockerfile
+    image: iventapp/ms-logistica:latest
+    container_name: ms-logistica
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-logistica
+      - DB_HOST=db-logistica
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-logistica
+
+  ms-terceros:
+    build:
+      context: .
+      dockerfile: ./apps/ms-terceros/deploy/Dockerfile
+    image: iventapp/ms-terceros:latest
+    container_name: ms-terceros
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-terceros
+      - DB_HOST=db-terceros
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-terceros
+
+  ms-ventas:
+    build:
+      context: .
+      dockerfile: ./apps/ms-ventas/deploy/Dockerfile
+    image: iventapp/ms-ventas:latest
+    container_name: ms-ventas
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-ventas
+      - DB_HOST=db-ventas
+      - DB_USER=ivent_user
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - nats-1
+      - db-ventas
+
+volumes:
+  nats_data:
+  pgdata_administracion:
+  pgdata_analytics:
+  pgdata_configuracion:
+  pgdata_logistica:
+  pgdata_terceros:
+  pgdata_ventas:
+
+networks:
+  ivent-network:
+    external: true
