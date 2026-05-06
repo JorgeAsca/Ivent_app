@@ -1,8 +1,8 @@
 services:
 
-  db-administracion:
+  db-terceros:
     image: postgres:15-alpine
-    container_name: db_administracion
+    container_name: db_terceros
     restart: always
     env_file:
       - .env
@@ -11,36 +11,33 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_admin_data:/var/lib/postgresql/data
+      - postgres_terceros_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "5439:5432"
     networks:
       - ivent-network
 
-        
-  ms-administracion:
-    container_name: ms-administracion
+  ms-terceros:
+    container_name: ms-terceros
     build:
-      
       context: ../../../
-      dockerfile: ./apps/ms-administracion/deploy/Dockerfile
+      dockerfile: ./apps/ms-terceros/deploy/Dockerfile
       args:
-        - MICROSERVICIO=ms-administracion
+        - MICROSERVICIO=ms-terceros
     env_file:
       - .env
     environment:
-      
-      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-administracion:5432/${DB_NAME}?schema=public
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-terceros:5432/${DB_NAME}?schema=public
+      DB_HOST: db-terceros
     expose:     
-    - "3000"
+      - "3000"
     depends_on:
-      - db-administracion
+      - db-terceros
     networks:
       - ivent-network
-        
 
 volumes:
-  postgres_admin_data:
+  postgres_terceros_data:
 
 networks:
   ivent-network:

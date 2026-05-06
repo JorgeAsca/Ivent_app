@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_analytics_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "5436:5432"
     networks:
       - ivent-network
 
@@ -27,8 +27,9 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db-analytics:5432/${DB_NAME}?schema=public
+      DB_HOST: db-analytics
       NATS_SERVERS: ${NATS_SERVERS}
-    expose:
+    expose:     
       - "3000"
     depends_on:
       - db-analytics

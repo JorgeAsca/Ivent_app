@@ -10,9 +10,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_config_data:/var/lib/postgresql/data
+      - postgres_configuracion_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "5437:5432"
     networks:
       - ivent-network
 
@@ -27,6 +27,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db-configuracion:5432/${DB_NAME}?schema=public
+      DB_HOST: db-configuracion
       NATS_SERVERS: ${NATS_SERVERS}
     expose:
       - "3000"
@@ -36,7 +37,7 @@ services:
       - ivent-network
 
 volumes:
-  postgres_config_data:
+  postgres_configuracion_data:
 
 networks:
   ivent-network:
