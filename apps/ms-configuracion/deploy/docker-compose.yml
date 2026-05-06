@@ -1,5 +1,4 @@
 services:
-
   db-configuracion:
     image: postgres:15-alpine
     container_name: db_configuracion
@@ -27,9 +26,10 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-configuracion:5432/${DB_NAME}?schema=public
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db-configuracion:5432/${DB_NAME}?schema=public
       DB_HOST: db-configuracion
-    expose:     
+      NATS_SERVERS: ${NATS_SERVERS}
+    expose:
       - "3000"
     depends_on:
       - db-configuracion
@@ -41,5 +41,4 @@ volumes:
 
 networks:
   ivent-network:
-    driver: bridge
     external: true
