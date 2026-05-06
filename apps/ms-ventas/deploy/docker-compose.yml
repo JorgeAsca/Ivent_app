@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_ventas_data:/var/lib/postgresql/data
     ports:
-      - "5440:5432"
+      - "5443:5432"
     networks:
       - ivent-network
 
