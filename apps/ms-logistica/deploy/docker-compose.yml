@@ -1,8 +1,8 @@
 services:
 
-  db-administracion:
+  db-logistica:
     image: postgres:15-alpine
-    container_name: db_administracion
+    container_name: db_logistica
     restart: always
     env_file:
       - .env
@@ -11,36 +11,33 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_admin_data:/var/lib/postgresql/data
+      - postgres_logistica_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "5438:5432"
     networks:
       - ivent-network
 
-        
-  ms-administracion:
-    container_name: ms-administracion
+  ms-logistica:
+    container_name: ms-logistica
     build:
-      
       context: ../../../
-      dockerfile: ./apps/ms-administracion/deploy/Dockerfile
+      dockerfile: ./apps/ms-logistica/deploy/Dockerfile
       args:
-        - MICROSERVICIO=ms-administracion
+        - MICROSERVICIO=ms-logistica
     env_file:
       - .env
     environment:
-      
-      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-administracion:5432/${DB_NAME}?schema=public
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db-logistica:5432/${DB_NAME}?schema=public
+      DB_HOST: db-logistica
     expose:     
-    - "3000"
+      - "3000"
     depends_on:
-      - db-administracion
+      - db-logistica
     networks:
       - ivent-network
-        
 
 volumes:
-  postgres_admin_data:
+  postgres_logistica_data:
 
 networks:
   ivent-network:
