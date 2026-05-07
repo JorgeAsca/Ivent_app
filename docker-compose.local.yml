@@ -142,10 +142,11 @@ services:
     container_name: ms-analytics
     restart: unless-stopped
     environment:
-      - DB_HOST=${ANALYTICS_DB_HOST}
-      - DB_USER=${ANALYTICS_DB_USER}
-      - DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
-      - DB_NAME=${ANALYTICS_DB_NAME}
+      - MICROSERVICIO=ms-analytics
+      - DB_HOST=db-analytics
+      - DB_USER=ivent_user    
+      - DB_PASSWORD=ivent_password
+      - DB_NAME=ivent_db      
       - PORT=3000
     networks:
       - ivent-network
