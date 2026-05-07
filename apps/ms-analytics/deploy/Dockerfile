@@ -1,25 +1,36 @@
-FROM node:20-alpine
-
-ARG MICROSERVICIO=ms-analytics
+# Etapa 1: Construcción
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Instalamos pnpm
+RUN npm install -g pnpm
 
-RUN apk add --no-cache python3 make g++ git bash
-
-
-COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
-RUN chmod +x start.sh
-
-COPY package.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
-COPY tsconfig.json .
-COPY nest-cli.json .
-
+# Copiamos archivos de configuración de dependencias
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
 COPY ./libs ./libs
-COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
+COPY ./apps/ms-analytics ./apps/ms-analytics
 
-EXPOSE 3000
+# Instalamos dependencias y compilamos
+RUN pnpm install --frozen-lockfile
+RUN npx nest build ms-analytics
 
-ENTRYPOINT [ "./start.sh" ]
+# Etapa 2: Ejecución (Imagen ligera)
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN npm install -g pnpm
+
+# Copiamos solo lo necesario desde la etapa de build
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/apps/ms-analytics/deploy/start.sh ./start.sh
+
+RUN chmod +x ./start.sh
+
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+
+CMD ["./start.sh"]
