@@ -16,7 +16,7 @@ import { RendimientoModule } from './rendimiento/rendimiento.module';
       password: process.env.DB_PASSWORD,
       database: 'db_analytics',
       autoLoadEntities: true,
-      synchronize: true, // Solo en desarrollo
+      synchronize: true, 
     }),
     IndicadoresInventarioModule,
     HistorialVentasModule,
