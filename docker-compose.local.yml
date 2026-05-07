@@ -214,6 +214,26 @@ services:
       - nats-1
       - db-terceros
 
+
+  ms-inventario:
+    build:
+      context: .
+      dockerfile: ./apps/ms-inventario/deploy/Dockerfile
+    image: deploy-ms-inventario
+    container_name: ms-inventario
+    restart: unless-stopped
+    environment:
+      - MICROSERVICIO=ms-inventario
+      - DB_HOST=${INVENTARIO_DB_HOST}
+      - DB_USER=${INVENTARIO_DB_USER}
+      - DB_PASSWORD=${INVENTARIO_DB_PASSWORD}
+      - DB_NAME=${INVENTARIO_DB_NAME}
+      - PORT=3000
+    networks:
+      - ivent-network
+    depends_on:
+      - db-inventario
+
   ms-ventas:
     build:
       context: .

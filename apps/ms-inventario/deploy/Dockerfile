@@ -1,18 +1,19 @@
-FROM node:20-alpine
-
-ARG MICROSERVICIO=ms-inventario
-ENV MICROSERVICIO=${MICROSERVICIO} 
-
+FROM node:20-alpine AS build
 WORKDIR /app
+RUN npm install -g pnpm
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
+COPY ./libs ./libs
+COPY ./apps/ms-inventario ./apps/ms-inventario
+RUN pnpm install --no-frozen-lockfile
+RUN npx nest build ms-inventario
+RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
 
-# Herramientas necesarias para clonar y compilar
-RUN apk update && apk add --no-cache git python3 make g++ bash
-
-# Copiamos el script corregido arriba
-COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/apps/ms-inventario/deploy/start.sh ./start.sh
 RUN chmod +x ./start.sh
-RUN mkdir -p /root/logs
-
-EXPOSE 3000
-
-CMD ["/bin/bash", "/app/start.sh"]
+ENV NODE_ENV=production
+CMD ["sh", "/app/start.sh"]
