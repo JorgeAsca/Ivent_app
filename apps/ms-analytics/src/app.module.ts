@@ -10,13 +10,13 @@ import { RendimientoModule } from './rendimiento/rendimiento.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: 'db_analytics',
+      host: process.env.DB_HOST || 'db-analytics',
+      port: parseInt(process.env.DB_PORT, 10) || 5432,
+      username: process.env.DB_USER,      // <--- Esta es la clave
+      password: process.env.DB_PASSWORD,  // <--- Esta es la clave
+      database: process.env.DB_NAME,      // <--- Esta es la clave
       autoLoadEntities: true,
-      synchronize: true, 
+      synchronize: true
     }),
     IndicadoresInventarioModule,
     HistorialVentasModule,

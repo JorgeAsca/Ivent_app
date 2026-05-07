@@ -144,9 +144,14 @@ services:
     environment:
       - MICROSERVICIO=ms-analytics
       - DB_HOST=db-analytics
-      - DB_USER=ivent_user    
+      - DB_USER=ivent_user
       - DB_PASSWORD=ivent_password
-      - DB_NAME=ivent_db      
+      - DB_NAME=ivent_db
+      - DB_PORT=5432
+      # Añadimos estos por si el código busca el formato estándar de Postgres
+      - POSTGRES_USER=ivent_user
+      - POSTGRES_PASSWORD=ivent_password
+      - POSTGRES_DB=ivent_db
       - PORT=3000
     networks:
       - ivent-network
