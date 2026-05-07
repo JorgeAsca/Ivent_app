@@ -51,6 +51,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/ms-usuarios/tsconfig.app.json"
       }
+    },
+    "ms-configuracion": {
+      "type": "application",
+      "root": "apps/ms-configuracion",
+      "entryFile": "main",
+      "sourceRoot": "apps/ms-configuracion/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/ms-configuracion/tsconfig.app.json"
+      }
     }
   }
 }
