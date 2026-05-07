@@ -1,23 +1,23 @@
 #!/bin/bash
 set -e
 
+# Logs de arranque
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
+echo "*** Arrancando ms-analytics ***" > ${INFORME}
 
-echo "*** Despliegue - ${MICROSERVICIO} ***" > ${INFORME}
-
-echo "Instalando pnpm..." >> ${INFORME}
+# Instalación de herramientas
 npm install -g pnpm
-
-# CRÍTICO: Permitir scripts para que Prisma genere el cliente
 pnpm config set ignore-scripts false
 
+# Instalación de dependencias
 echo "Instalando dependencias..." >> ${INFORME}
 pnpm install --no-frozen-lockfile
 
-# NUEVO: Compilar el proyecto antes de ejecutarlo
-echo "Compilando ${MICROSERVICIO}..." >> ${INFORME}
-npx nest build ${MICROSERVICIO}
+# COMPILACIÓN MANUAL (Esto es lo que falta)
+echo "Compilando ms-analytics..." >> ${INFORME}
+npx nest build ms-analytics
 
-echo "Iniciando ${MICROSERVICIO}..." >> ${INFORME}
-exec node dist/apps/${MICROSERVICIO}/src/main.js
+# EJECUCIÓN CON RUTA FIJA
+echo "Iniciando proceso node..." >> ${INFORME}
+exec node dist/apps/ms-analytics/src/main.js
