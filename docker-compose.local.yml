@@ -142,7 +142,6 @@ services:
     container_name: ms-analytics
     restart: unless-stopped
     environment:
-      - MICROSERVICIO=ms-analytics
       - DB_HOST=${ANALYTICS_DB_HOST}
       - DB_USER=${ANALYTICS_DB_USER}
       - DB_PASSWORD=${ANALYTICS_DB_PASSWORD}
