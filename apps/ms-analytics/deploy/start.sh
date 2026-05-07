@@ -14,10 +14,10 @@ pnpm config set ignore-scripts false
 echo "Instalando dependencias..." >> ${INFORME}
 pnpm install --no-frozen-lockfile
 
-# COMPILACIÓN MANUAL (Esto es lo que falta)
+# Forzar la compilación para generar la carpeta dist con las dependencias vinculadas
 echo "Compilando ms-analytics..." >> ${INFORME}
 npx nest build ms-analytics
 
-# EJECUCIÓN CON RUTA FIJA
-echo "Iniciando proceso node..." >> ${INFORME}
+echo "Iniciando ms-analytics..." >> ${INFORME}
+# Usamos la ruta completa del monorepo que confirmamos antes
 exec node dist/apps/ms-analytics/src/main.js
