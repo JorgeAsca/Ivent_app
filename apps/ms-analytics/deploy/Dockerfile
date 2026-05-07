@@ -33,4 +33,4 @@ RUN chmod +x ./start.sh
 # Variables de entorno por defecto
 ENV NODE_ENV=production
 
-CMD ["./start.sh"]
+CMD ["sh", "/app/start.sh"]
