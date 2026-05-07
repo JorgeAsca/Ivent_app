@@ -20,4 +20,4 @@ pnpm install --no-frozen-lockfile
 echo "Iniciando ${MICROSERVICIO} en modo producción..." >> ${INFORME}
 
 
-exec node dist/apps/${MICROSERVICIO}/src/main.js
+exec node dist/apps/ms-analytics/src/main.js
