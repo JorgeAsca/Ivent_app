@@ -1,20 +1,23 @@
 #!/bin/bash
 set -e
 
+
 INFORME=/root/logs/informe.log
 mkdir -p /root/logs
 
-echo "*** Despliegue - \$\{MICROSERVICIO\} ***" > \$\{INFORME\}
+echo "*** Despliegue - ${MICROSERVICIO} ***" > ${INFORME}
 
-echo "Instalando herramientas globales (pnpm, tsx)..." >> \$\{INFORME\}
+echo "Instalando herramientas globales..." >> ${INFORME}
 npm install -g pnpm
-npm install -g tsx
+
 
 pnpm config set ignore-scripts false
 
-echo "Instalando dependencias..." >> \$\{INFORME\}
+echo "Instalando dependencias..." >> ${INFORME}
 
-pnpm install --frozen-lockfile
+pnpm install --no-frozen-lockfile
 
-echo "Iniciando \$\{MICROSERVICIO\}..." >> \$\{INFORME\}
-exec pnpm run start:dev \$\{MICROSERVICIO\}
+echo "Iniciando ${MICROSERVICIO} en modo producción..." >> ${INFORME}
+
+
+exec node dist/apps/${MICROSERVICIO}/src/main.js
