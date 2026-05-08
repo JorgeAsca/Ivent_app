@@ -17,8 +17,12 @@ services:
       - ivent-network 
 
   ms-usuarios:
-    image: gaabriel05/ms-usuarios:latest
     container_name: ms-usuarios
+    build:
+      context: ../../../
+      dockerfile: ./apps/ms-usuarios/deploy/Dockerfile
+      args:
+        - MICROSERVICIO=ms-usuarios
     restart: always
     env_file:
       - .env
