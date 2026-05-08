@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { StockModule } from '../stock/stock.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MovimientosService } from './movimientos.service';
 import { MovimientosController } from './movimientos.controller';
@@ -15,6 +16,7 @@ import { Movimiento } from './entities/movimiento.entity';
                 options: { host: 'ms-analytics', port: 3000 },
             },
         ]),
+        StockModule,
     ],
     controllers: [MovimientosController],
     providers: [MovimientosService],
