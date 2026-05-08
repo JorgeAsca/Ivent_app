@@ -21,6 +21,9 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter common build
 
 # 3. Build the specific microservice
+# Generate Prisma Client ONLY if the prisma directory exists in the app
+RUN if [ -d "./apps/${APP_NAME}/prisma" ]; then npx prisma generate --schema=./apps/${APP_NAME}/prisma/schema.prisma; fi
+
 RUN npx nest build ${APP_NAME}
 
 # 4. Clean up and fetch production dependencies only (using hoisted mode to prevent symlink issues)
