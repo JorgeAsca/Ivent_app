@@ -1,3 +1,5 @@
-#!/bin/sh
-# Execute the compiled application
-node dist/apps/ms-configuracion/main.js
+#!/bin/bash
+set -e
+
+echo "Arrancando microservicio ms-configuracion..."
+exec node dist/apps/ms-configuracion/main.js
