@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db-inventario:
     image: postgres:15-alpine
@@ -14,7 +12,7 @@ services:
     volumes:
       - postgres_inventario_data:/var/lib/postgresql/data
     ports:
-      - "${DB_PORT}:5432"
+      - "5436:5432"
     networks:
       - ivent-network
 
