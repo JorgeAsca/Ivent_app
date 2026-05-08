@@ -1,19 +1,35 @@
+# Stage 1: Build
 FROM node:20-alpine AS build
+
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
+
+RUN apk add --no-cache python3 make g++ git bash
 RUN npm install -g pnpm
+
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
 COPY ./libs ./libs
-COPY ./apps/ms-inventario ./apps/ms-inventario
+COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
+
 RUN pnpm install --no-frozen-lockfile
-RUN npx nest build ms-inventario
+RUN pnpm --filter common build
+RUN npx nest build ${APP_NAME}
 RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
 
+# Stage 2: Runner
 FROM node:20-alpine AS runner
+
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
+
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/apps/ms-inventario/deploy/start.sh ./start.sh
+COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
+
 RUN chmod +x ./start.sh
 ENV NODE_ENV=production
+
 CMD ["sh", "/app/start.sh"]

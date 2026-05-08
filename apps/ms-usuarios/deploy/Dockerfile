@@ -1,26 +1,35 @@
-FROM node:22.11.0-alpine
+# Stage 1: Build
+FROM node:20-alpine AS build
 
-# Instalamos pnpm globalmente
-RUN npm install -g pnpm
-
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
 
+RUN apk add --no-cache python3 make g++ git bash
+RUN npm install -g pnpm
 
-ARG MICROSERVICIO=ms-usuarios
-
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-COPY apps/${MICROSERVICIO}/package.json ./apps/${MICROSERVICIO}/
-
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
+COPY ./libs ./libs
+COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
 
 RUN pnpm install --no-frozen-lockfile
+RUN pnpm --filter common build
+RUN npx nest build ${APP_NAME}
+RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
 
+# Stage 2: Runner
+FROM node:20-alpine AS runner
 
-COPY . .
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
+WORKDIR /app
 
-RUN sed -i 's/\r$//' ./apps/${MICROSERVICIO}/deploy/start.sh
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
 
-RUN chmod +x ./apps/${MICROSERVICIO}/deploy/start.sh
+RUN chmod +x ./start.sh
+ENV NODE_ENV=production
 
-ENTRYPOINT ["./apps/ms-usuarios/deploy/start.sh"]
+CMD ["sh", "/app/start.sh"]

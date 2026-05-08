@@ -1,36 +1,35 @@
+# Stage 1: Build
 FROM node:20-alpine AS build
 
-ARG MICROSERVICIO=ms-gateway
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
 
+RUN apk add --no-cache python3 make g++ git bash
 RUN npm install -g pnpm
 
-# 1. Copiamos configuraciones del monorepo
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
-
-# 2. Copiamos librerías y la app específica
 COPY ./libs ./libs
-COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
+COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
 
-# 3. Instalamos dependencias
-RUN pnpm install
-
-# 4. Compilamos primero las librerías comunes y luego el microservicio desde la raíz
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter common build
-RUN npx nest build ${MICROSERVICIO}
+RUN npx nest build ${APP_NAME}
+RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
 
-# --- Fase Runner ---
+# Stage 2: Runner
 FROM node:20-alpine AS runner
-WORKDIR /app
-ARG MICROSERVICIO=ms-gateway
+
+ARG MICROSERVICIO
 ENV APP_NAME=${MICROSERVICIO}
+WORKDIR /app
 
-# Copiamos dependencias y el directorio dist
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
 
-EXPOSE 3000
+RUN chmod +x ./start.sh
+ENV NODE_ENV=production
 
-# ¡Aquí está la ruta exacta que descubrimos!
-CMD ["node", "dist/apps/ms-gateway/apps/ms-gateway/src/main.js"]
+CMD ["sh", "/app/start.sh"]

@@ -1,25 +1,35 @@
-FROM node:20-alpine
+# Stage 1: Build
+FROM node:20-alpine AS build
 
-ARG MICROSERVICIO=ms-terceros
-
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
 
-
 RUN apk add --no-cache python3 make g++ git bash
+RUN npm install -g pnpm
 
-
-COPY ./apps/${MICROSERVICIO}/deploy/start.sh .
-RUN chmod +x start.sh
-
-COPY package.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
-COPY tsconfig.json .
-COPY nest-cli.json .
-
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.json nest-cli.json ./
 COPY ./libs ./libs
-COPY ./apps/${MICROSERVICIO} ./apps/${MICROSERVICIO}
+COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
 
-EXPOSE 3000
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm --filter common build
+RUN npx nest build ${APP_NAME}
+RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
 
-ENTRYPOINT [ "./start.sh" ]
+# Stage 2: Runner
+FROM node:20-alpine AS runner
+
+ARG MICROSERVICIO
+ENV APP_NAME=${MICROSERVICIO}
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
+
+RUN chmod +x ./start.sh
+ENV NODE_ENV=production
+
+CMD ["sh", "/app/start.sh"]

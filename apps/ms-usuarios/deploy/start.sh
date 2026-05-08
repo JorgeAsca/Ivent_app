@@ -1,15 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-
-INFORME=/root/logs/ms-usuarios.log
-mkdir -p /root/logs
-
-echo "*** Iniciando Microservicio Usuarios ***" > ${INFORME}
-
-cd /app/apps/ms-usuarios
-
-
-
-echo "Iniciando NestJS en modo watch..." >> ${INFORME}
-exec pnpm run start:dev ms-usuarios
+echo "Starting microservice ms-usuarios..."
+exec node dist/apps/ms-usuarios/main.js
