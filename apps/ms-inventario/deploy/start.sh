@@ -1,5 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-echo "Starting microservice ms-inventario..."
-exec node dist/apps/ms-inventario/main.js
+echo "Starting microservice ${APP_NAME}..."
+
+FLAT_PATH="dist/apps/${APP_NAME}/main.js"
+NESTED_PATH="dist/apps/${APP_NAME}/apps/${APP_NAME}/src/main.js"
+
+if [ -f "$FLAT_PATH" ]; then
+  exec node "$FLAT_PATH"
+elif [ -f "$NESTED_PATH" ]; then
+  exec node "$NESTED_PATH"
+else
+  echo "Error: Could not find main.js for ${APP_NAME}"
+  exit 1
+fi
