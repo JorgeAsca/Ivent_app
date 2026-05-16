@@ -23,6 +23,13 @@ export class IndicadoresInventarioService {
         return await this.repo.save(indicador);
     }
 
+    async evaluarNivelesStock(productoId: string, nuevaCantidad: number) {
+        let indicador = await this.repo.findOneBy({ id_producto: productoId });
+        if (!indicador) return;
+        indicador.stock_actual = nuevaCantidad;
+        return await this.repo.save(indicador);
+    }
+
     // Responde a ms-terceros
     async obtenerStatusParaTerceros(id_producto: string) {
         return await this.repo.findOneBy({ id_producto });

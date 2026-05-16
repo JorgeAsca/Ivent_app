@@ -8,7 +8,6 @@ import { ReglaPedido } from './entities/regla-pedido.entity';
 @Module({
     imports: [
         TypeOrmModule.forFeature([ReglaPedido]),
-        // Importante: Registrar el cliente para hablar con el barril de analytics
         ClientsModule.register([
             {
                 name: 'ANALYTICS_SERVICE',

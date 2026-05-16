@@ -27,6 +27,7 @@ export class ProductosController {
     update(@Payload() updateProductoDto: UpdateProductoDto) {
         return this.productosService.update(updateProductoDto.id, updateProductoDto);
     }
+    
 
     @MessagePattern(INVENTARIO_PATTERNS.ELIMINAR_PRODUCTO)
     remove(@Payload() id: string) {
