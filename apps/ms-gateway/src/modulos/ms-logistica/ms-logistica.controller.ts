@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Inject } from '@nestjs/common';
+import { Controller, Get, Param, Inject, Post, Body } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('logistica')
@@ -14,4 +14,11 @@ export class MsLogisticaController {
     // CORREGIDO: Enviamos un objeto estructurado en lugar de un string suelto
     return this.natsClient.send({ cmd: 'obtener_stock' }, { productoId });
   } 
+
+  @Post('movimientos')
+  crearMovimiento(@Body() data: any) {
+    console.log('Recibiendo petición HTTP para crear movimiento de stock:', data);
+    // Redirigimos el JSON recibido directo al patrón que espera el microservicio
+    return this.natsClient.send({ cmd: 'crear_movimiento' }, data);
+  }
 }
