@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('terceros')
 export class TercerosController {
-    constructor(@Inject('MS__SERVICE') private client: ClientProxy) { }
+    constructor(@Inject('NATS_SERVICE') private client: ClientProxy) { }
 
     @Get()
     ping() {

@@ -6,7 +6,7 @@ import { CreateProductoDto, UpdateProductoDto, CreateCategoriaDto, UpdateCategor
 @Controller('inventario')
 export class InventarioController {
     constructor(
-        @Inject('INVENTARIO_SERVICE') private readonly clientInventario: ClientProxy,
+        @Inject('NATS_SERVICE') private readonly clientInventario: ClientProxy,
     ) { }
 
 

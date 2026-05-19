@@ -3,10 +3,11 @@ import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('configuracion')
 export class ConfiguracionController {
-    constructor(@Inject('MS__SERVICE') private client: ClientProxy) { }
+    // CAMBIA ESTO: De 'MS__SERVICE' a 'NATS_SERVICE'
+    constructor(@Inject('NATS_SERVICE') private readonly natsClient: ClientProxy) { }
 
     @Get()
     ping() {
-        return this.client.send({ cmd: 'ping_configuracion' }, {});
+        return this.natsClient.send({ cmd: 'ping_configuracion' }, {});
     }
 }
