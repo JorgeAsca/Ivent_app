@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { VentasController } from './ms-ventas.controller';
+import { MsVentasController } from './ms-ventas.controller';
+import { VentasController } from 'apps/ms-ventas/src/ventas/ventas.controller';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { VentasController } from './ms-ventas.controller';
       },
     ]),
   ],
-  controllers: [VentasController],
+  controllers: [MsVentasController],
 })
 export class MsVentasModule {}

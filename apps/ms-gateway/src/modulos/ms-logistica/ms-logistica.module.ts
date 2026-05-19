@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { LogisticaController } from './ms-logistica.controller';
+import { MsLogisticaController } from './ms-logistica.controller';
 
 @Module({
   imports: [
@@ -12,6 +12,6 @@ import { LogisticaController } from './ms-logistica.controller';
       },
     ]),
   ],
-  controllers: [LogisticaController],
+  controllers: [MsLogisticaController],
 })
 export class MsLogisticaModule {}
