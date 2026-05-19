@@ -1,12 +1,16 @@
-import { Controller, Post, Body, Get, Inject, Param } from '@nestjs/common';
+import { Controller, Post, Body, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('ventas')
-export class VentasController {
-    constructor(@Inject('MS__SERVICE') private client: ClientProxy) { }
+export class MsVentasController {
+  constructor(
+    @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
+  ) {}
 
-    @Get()
-    ping() {
-        return this.client.send({ cmd: 'ping_ventas' }, {});
-    }
+  @Post()
+  createVenta(@Body() createVentaDto: any) {
+    console.log('Recibiendo petición HTTP para crear venta...');
+    // Se lo pasamos a NATS para que ms-ventas lo procese
+    return this.natsClient.send({ cmd: 'create_venta' }, createVentaDto);
+  }
 }
