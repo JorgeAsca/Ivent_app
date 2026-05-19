@@ -1,5 +1,4 @@
 controller:
-  # Desactivamos la lista personalizada temporalmente para que levante limpio el core
   installPlugins: false
 
   admin:
@@ -12,8 +11,6 @@ controller:
     runAsUser: 1000
     fsGroup: 1000
   
-  # Al deshabilitar por completo las banderas internas del sidecar, 
-  # el Chart elimina al contenedor problemático del ciclo de vida del Pod.
   sidecars:
     configAutoReload:
       enabled: false
