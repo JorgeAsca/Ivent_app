@@ -1,127 +1,144 @@
-def microservices = [
-    'ms-gateway':       'jorgeasca/ms-gateway',
-    'ms-administracion':'jorgeasca/ms-administracion',
-    'ms-analytics':     'jorgeasca/ms-analytics',
-    'ms-configuracion': 'jorgeasca/ms-configuracion',
-    'ms-inventario':    'jorgeasca/ms-inventario',
-    'ms-logistica':     'jorgeasca/ms-logistica',
-    'ms-terceros':      'jorgeasca/ms-terceros',
-    'ms-usuarios':      'jorgeasca/ms-usuarios',
-    'ms-ventas':        'jorgeasca/ms-ventas',
-]
-
-def getKanikoPod() {
-    return """
-        apiVersion: v1
-        kind: Pod
-        spec:
-          containers:
-          - name: kaniko
-            image: gcr.io/kaniko-project/executor:debug
-            command: ["/busybox/cat"]
-            tty: true
-            resources:
-              requests:
-                memory: "1Gi"
-                cpu: "500m"
-              limits:
-                memory: "2Gi"
-                cpu: "1.5"
-            volumeMounts:
-            - name: docker-config
-              mountPath: /kaniko/.docker/config.json
-              subPath: .dockerconfigjson
-            - name: kaniko-cache-vol
-              mountPath: /workspace/cache
-          volumes:
-          - name: docker-config
-            secret:
-              secretName: repo-secret-cred
-          - name: kaniko-cache-vol
-            persistentVolumeClaim:
-              claimName: kaniko-cache-pvc
-    """
-}
-
 pipeline {
-    agent { kubernetes { yaml getKanikoPod() } }
+    agent any
+    
+    environment {
+        // Tu usuario de Docker Hub
+        DOCKER_HUB_USER = 'jorgeasca'
+        // El ID exacto de la credencial que crearás en Jenkins para Docker Hub
+        DOCKER_CREDS_ID = 'docker-hub-credentials' 
+        // Generamos un tag único basado en los primeros 7 caracteres del commit de Git
+        IMAGE_TAG = "${env.GIT_COMMIT.take(7)}" 
+    }
 
     stages {
-        stage('Checkout & Detect') {
-            steps {
-                checkout scm
-                script {
-                    env.APPS_UPDATED = ''
-                    def globalChange = false
-                    try {
-                        // Cambios que afectan a todo
-                        globalChange = sh(script: "git diff --name-only ${GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${GIT_COMMIT} | grep -E '^(libs/|Dockerfile|Jenkinsfile)'", returnStatus: true) == 0
-                    } catch (Exception e) { globalChange = true }
-
-                    microservices.each { appName, dockerRepo ->
-                        def appChange = false
-                        try {
-                            appChange = sh(script: "git diff --name-only ${GIT_PREVIOUS_COMMIT} ${GIT_COMMIT} | grep '^apps/${appName}/'", returnStatus: true) == 0
-                        } catch (Exception e) { appChange = true }
-                        
-                        if (globalChange || appChange || env.BUILD_ID == '1') {
-                            env.APPS_UPDATED = env.APPS_UPDATED ? "${env.APPS_UPDATED},${appName}" : appName
-                        }
-                    }
-                    echo "📦 Apps a construir: ${env.APPS_UPDATED}"
-                }
-            }
-        }
-
-        stage('Build & Push') {
-            when { expression { env.APPS_UPDATED != '' && env.APPS_UPDATED != null } }
-            steps {
-                script {
-                    def appsList = env.APPS_UPDATED.split(',')
-                    for (int i = 0; i < appsList.size(); i++) {
-                        def appName = appsList[i]
-                        def dockerRepo = microservices[appName]
-                        
-                        echo "🚀 CONSTRUYENDO: ${appName} (${i+1}/${appsList.size()})"
-                        
-                        container('kaniko') {
-                            sh """
-                            /kaniko/executor \
-                                --context \$(pwd) \
-                                --dockerfile apps/${appName}/deploy/Dockerfile \
-                                --destination ${dockerRepo}:${env.GIT_COMMIT} \
-                                --destination ${dockerRepo}:latest \
-                                --cache=true \
-                                --cache-dir=/workspace/cache \
-                                --cache-ttl=168h
-                            """
-                        }
-                    }
-                }
-            }
-        }
         
-        stage('Update GitOps') {
-            when { expression { env.APPS_UPDATED != '' && env.APPS_UPDATED != null } }
+        // 1. MICROSERVICIO: GATEWAY
+        stage('Build & Push: Gateway') {
+            when { changeset "apps/ms-gateway/**" }
             steps {
+                echo "🚀 Cambios detectados en ms-gateway. Iniciando build..."
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'github-pat-token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                        sh "git config user.email 'jenkins@ivent.com' && git config user.name 'Jenkins CI'"
-                        
-                        def apps = env.APPS_UPDATED.split(',')
-                        apps.each { app ->
-                            echo "📝 Actualizando valores de ${app}..."
-                            // Ruta ajustada a tu estructura deploy/kubernetes/inventario-app/...
-                            sh "sed -i 's|tag:.*|tag: \"${env.GIT_COMMIT}\"|' deploy/kubernetes/inventario-app/charts/${app}/values.yaml"
-                        }
-                        
-                        sh """
-                            git add .
-                            git commit -m "ci: update image tags to ${env.GIT_COMMIT} [skip ci]" || true
-                            git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/jorgeasca/ivent_app.git HEAD:main
-                        """
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-gateway:${IMAGE_TAG}", "apps/ms-gateway -f apps/ms-gateway/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
                     }
                 }
+            }
+        }
+
+        // 2. MICROSERVICIO: ADMINISTRACION
+        stage('Build & Push: Administracion') {
+            when { changeset "apps/ms-administracion/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-administracion. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-administracion:${IMAGE_TAG}", "apps/ms-administracion -f apps/ms-administracion/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 3. MICROSERVICIO: ANALYTICS
+        stage('Build & Push: Analytics') {
+            when { changeset "apps/ms-analytics/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-analytics. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-analytics:${IMAGE_TAG}", "apps/ms-analytics -f apps/ms-analytics/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 4. MICROSERVICIO: CONFIGURACION
+        stage('Build & Push: Configuracion') {
+            when { changeset "apps/ms-configuracion/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-configuracion. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-configuracion:${IMAGE_TAG}", "apps/ms-configuracion -f apps/ms-configuracion/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 5. MICROSERVICIO: INVENTARIO
+        stage('Build & Push: Inventario') {
+            when { changeset "apps/ms-inventario/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-inventario. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-inventario:${IMAGE_TAG}", "apps/ms-inventario -f apps/ms-inventario/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 6. MICROSERVICIO: LOGISTICA
+        stage('Build & Push: Logistica') {
+            when { changeset "apps/ms-logistica/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-logistica. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-logistica:${IMAGE_TAG}", "apps/ms-logistica -f apps/ms-logistica/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 7. MICROSERVICIO: USUARIOS
+        stage('Build & Push: Usuarios') {
+            when { changeset "apps/ms-usuarios/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-usuarios. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-usuarios:${IMAGE_TAG}", "apps/ms-usuarios -f apps/ms-usuarios/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 8. MICROSERVICIO: VENTAS
+        stage('Build & Push: Ventas') {
+            when { changeset "apps/ms-ventas/**" }
+            steps {
+                echo "🚀 Cambios detectados en ms-ventas. Iniciando build..."
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDS_ID}") {
+                        def img = docker.build("${DOCKER_HUB_USER}/ms-ventas:${IMAGE_TAG}", "apps/ms-ventas -f apps/ms-ventas/deploy/Dockerfile")
+                        img.push()
+                        img.push("latest")
+                    }
+                }
+            }
+        }
+
+        // 9. STAGE FINAL: DESPLIEGUE A KUBERNETES (Estructura base para el siguiente paso)
+        stage('Deploy a Kubernetes') {
+            // Se ejecutará siempre, pero aquí agregaremos lógica después para que K8s actualice
+            // solo el microservicio que se acaba de compilar.
+            steps {
+                echo "✅ Imágenes subidas con el tag: ${IMAGE_TAG}"
+                echo "Preparado para actualizar manifiestos de Kubernetes..."
             }
         }
     }
