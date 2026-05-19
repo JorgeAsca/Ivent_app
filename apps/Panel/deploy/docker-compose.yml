@@ -8,6 +8,8 @@ services:
     image: iventapp/panel-frontend:latest
     container_name: panel-frontend
     restart: unless-stopped
+    environment:
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE}
     ports:
       - "8080:3000"
     networks:
