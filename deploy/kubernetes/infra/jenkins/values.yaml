@@ -1,4 +1,4 @@
-Controller: 
+controller: 
   image:
     repository: "jenkins/jenkins"
     tag: "2.541.1-lts-jdk21"
@@ -15,10 +15,12 @@ Controller:
   sidecars:
     configAutoReload:
       enabled: true
-      skipTlsVerify: true
       image:
         repository: kiwigrid/k8s-sidecar
         tag: "1.27.4"
+      env:
+        - name: SKIP_TLS_VERIFY
+          value: "true"
   ingress:
     enabled: true
     ingressClassName: nginx
