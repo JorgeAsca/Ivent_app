@@ -14,9 +14,10 @@ const isDark = computed({
 const navItems = computed<NavigationMenuItem[]>(() => [
   { label: 'Características', to: '#caracteristicas' },
   { label: 'Cómo funciona', to: '#como-funciona' },
-  { label: 'Precios', to: '#precios' },
   { label: 'Contacto', to: '#contacto' }
 ])
+
+const isMobileMenuOpen = ref(false)
 
 </script>
 
@@ -61,7 +62,16 @@ const navItems = computed<NavigationMenuItem[]>(() => [
         <UButton 
           label="Prueba Gratis" 
           color="primary" 
+          class="hidden lg:flex"
           to="/login"
+        />
+        <UButton
+          icon="i-lucide-menu"
+          color="neutral"
+          variant="ghost"
+          class="lg:hidden"
+          @click="isMobileMenuOpen = true"
+          aria-label="Abrir menú"
         />
       </div>
     </header>
@@ -114,5 +124,63 @@ const navItems = computed<NavigationMenuItem[]>(() => [
         </div>
       </template>
     </UFooter>
+
+    <!-- Backdrop -->
+    <div 
+      v-if="isMobileMenuOpen"
+      class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+      @click="isMobileMenuOpen = false"
+    ></div>
+
+    <!-- Menú lateral -->
+    <div 
+      v-if="isMobileMenuOpen"
+      class="fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] z-50 bg-white dark:bg-neutral-900 flex flex-col p-6 shadow-2xl border-l border-gray-200 dark:border-gray-800"
+    >
+      <div class="flex items-center justify-between mb-8">
+        <span class="font-bold text-xl">Menú</span>
+        <UButton
+          icon="i-lucide-x"
+          color="neutral"
+          variant="ghost"
+          @click="isMobileMenuOpen = false"
+          aria-label="Cerrar menú"
+        />
+      </div>
+      
+      <div class="flex flex-col gap-2">
+        <UButton 
+          v-for="item in navItems" 
+          :key="item.label"
+          :to="item.to" 
+          variant="ghost"
+          color="neutral"
+          class="justify-start text-lg py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800"
+          @click="isMobileMenuOpen = false"
+        >
+          {{ item.label }}
+        </UButton>
+      </div>
+      
+      <div class="mt-auto flex flex-col gap-4 pt-8">
+        <UButton 
+          label="Acceder" 
+          color="neutral" 
+          variant="outline" 
+          size="lg"
+          block
+          to="/login"
+          @click="isMobileMenuOpen = false"
+        />
+        <UButton 
+          label="Prueba Gratis" 
+          color="primary" 
+          size="lg"
+          block
+          to="/login"
+          @click="isMobileMenuOpen = false"
+        />
+      </div>
+    </div>
   </div>
 </template>

@@ -56,62 +56,6 @@ const steps = [
   }
 ]
 
-const plans = [
-  {
-    title: 'Básico',
-    description: 'Ideal para empezar',
-    price: 'Gratis',
-    cycle: 'para siempre',
-    features: [
-      'Hasta 50 productos',
-      'Control de stock básico',
-      'Alertas por email',
-      'Soporte por email'
-    ],
-    button: {
-      label: 'Comenzar Gratis',
-      color: 'neutral' as const,
-      variant: 'outline' as const
-    }
-  },
-  {
-    title: 'Profesional',
-    description: 'Para negocios en crecimiento',
-    price: '19€',
-    cycle: '/mes',
-    highlight: true,
-    features: [
-      'Productos ilimitados',
-      'Control de rendimiento',
-      'Pedidos automáticos',
-      'Gestión de proveedores',
-      'Reportes avanzados',
-      'Soporte prioritario'
-    ],
-    button: {
-      label: 'Prueba 14 días gratis'
-    }
-  },
-  {
-    title: 'Empresa',
-    description: 'Para equipos grandes',
-    price: '49€',
-    cycle: '/mes',
-    features: [
-      'Todo lo de Profesional',
-      'Múltiples ubicaciones',
-      'API personalizada',
-      'Integraciones avanzadas',
-      'Soporte dedicado',
-      'Formación incluida'
-    ],
-    button: {
-      label: 'Contactar Ventas',
-      color: 'neutral' as const,
-      variant: 'outline' as const
-    }
-  }
-]
 
 const faqs = [
   {
@@ -172,13 +116,7 @@ const faqs = [
                 label="Comenzar Gratis"
                 trailing-icon="i-lucide-arrow-right"
               />
-              <UButton 
-                size="xl" 
-                color="neutral" 
-                variant="outline"
-                label="Ver Demo"
-                icon="i-lucide-play-circle"
-              />
+
             </div>
             
             <div class="flex items-center gap-6 mt-8 justify-center lg:justify-start text-sm text-muted">
@@ -205,7 +143,7 @@ const faqs = [
                     <div class="size-3 rounded-full bg-green-400" />
                   </div>
                   <div class="flex-1 text-center">
-                    <span class="text-xs text-muted">app.inventapp.com</span>
+                    <span class="text-xs text-muted">inventapp.store</span>
                   </div>
                 </div>
                 <div class="p-6">
@@ -446,59 +384,6 @@ const faqs = [
       </UContainer>
     </section>
 
-    <!-- Pricing Section -->
-    <section id="precios" class="py-24">
-      <UContainer>
-        <div class="text-center max-w-3xl mx-auto mb-16">
-          <UBadge color="primary" variant="subtle" class="mb-4">Precios</UBadge>
-          <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-            Un precio justo para cada negocio
-          </h2>
-          <p class="text-lg text-muted">
-            Empieza gratis y escala cuando lo necesites. Sin compromisos ni letras pequeñas.
-          </p>
-        </div>
-        
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <UCard 
-            v-for="plan in plans" 
-            :key="plan.title"
-            :class="[
-              'relative',
-              plan.highlight ? 'border-primary ring-2 ring-primary/20' : ''
-            ]"
-          >
-            <UBadge 
-              v-if="plan.highlight" 
-              color="primary" 
-              class="absolute -top-3 left-1/2 -translate-x-1/2"
-            >
-              Más popular
-            </UBadge>
-            <div class="text-center mb-6">
-              <h3 class="text-xl font-bold mb-1">{{ plan.title }}</h3>
-              <p class="text-sm text-muted">{{ plan.description }}</p>
-            </div>
-            <div class="text-center mb-6">
-              <span class="text-4xl font-bold">{{ plan.price }}</span>
-              <span class="text-muted">{{ plan.cycle }}</span>
-            </div>
-            <ul class="space-y-3 mb-8">
-              <li v-for="feature in plan.features" :key="feature" class="flex items-center gap-2 text-sm">
-                <UIcon name="i-lucide-check" class="size-4 text-primary" />
-                <span>{{ feature }}</span>
-              </li>
-            </ul>
-            <UButton 
-              :label="plan.button.label"
-              :color="plan.button.color || 'primary'"
-              :variant="plan.button.variant || 'solid'"
-              block
-            />
-          </UCard>
-        </div>
-      </UContainer>
-    </section>
 
     <!-- FAQ Section -->
     <section class="py-24 bg-muted/30">
