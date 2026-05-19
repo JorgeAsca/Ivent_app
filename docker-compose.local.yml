@@ -265,8 +265,6 @@ services:
       - "8080:3000"
     networks:
       - ivent-network
-    depends_on:
-      - ms-gateway
 
 volumes:
   nats_data:
