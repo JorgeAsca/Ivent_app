@@ -54,7 +54,7 @@
         "../../../node_modules/.pnpm/@vue+compiler-sfc@3.5.34/node_modules/@vue/compiler-sfc"
       ],
       "@nuxt/schema": [
-        "../../../node_modules/.pnpm/@nuxt+schema@4.4.6/node_modules/@nuxt/schema"
+        "../../../node_modules/.pnpm/@nuxt+schema@4.4.2/node_modules/@nuxt/schema"
       ],
       "@nuxt/icon": [
         "../../../node_modules/.pnpm/@nuxt+icon@2.2.2_magicast@0_8428a0cc93886387eaec25d35eaa168a/node_modules/@nuxt/icon"

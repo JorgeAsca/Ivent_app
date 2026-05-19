@@ -31,6 +31,11 @@ export { requestIdleCallback, cancelIdleCallback } from '#app/compat/idle-callba
 export { setInterval } from '#app/compat/interval';
 export { definePageMeta, PageMeta } from '#app/composables/pages';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
+export { useApi } from '../app/composables/useApi';
+export { useCategorias, Categoria } from '../app/composables/useCategorias';
+export { useProducts, Product } from '../app/composables/useProducts';
+export { useRoles, Role } from '../app/composables/useRoles';
+export { useUsuarios, Usuario } from '../app/composables/useUsuarios';
 export { defineLocale, extendLocale } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/defineLocale';
 export { defineShortcuts, extractShortcuts } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useContentSearch } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/useContentSearch';
@@ -42,5 +47,4 @@ export { useResizable } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@intern
 export { useScrollShadow } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/useScrollShadow';
 export { useScrollspy } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/useScrollspy';
 export { useToast } from '../../../node_modules/.pnpm/@nuxt+ui@4.7.1_@internation_333e61d1edb4717fae1df6fff24dd39c/node_modules/@nuxt/ui/dist/runtime/composables/useToast';
-export { useNuxtDevTools } from '../../../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@7_594fa63e83463b5f3197098e09e272a0/node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';
 export { useColorMode } from '../../../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/@nuxtjs/color-mode/dist/runtime/composables';

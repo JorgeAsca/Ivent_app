@@ -26,7 +26,7 @@
         "../../../node_modules/.pnpm/@vue+compiler-sfc@3.5.34/node_modules/@vue/compiler-sfc"
       ],
       "@nuxt/schema": [
-        "../../../node_modules/.pnpm/@nuxt+schema@4.4.6/node_modules/@nuxt/schema"
+        "../../../node_modules/.pnpm/@nuxt+schema@4.4.2/node_modules/@nuxt/schema"
       ],
       "@nuxt/icon": [
         "../../../node_modules/.pnpm/@nuxt+icon@2.2.2_magicast@0_8428a0cc93886387eaec25d35eaa168a/node_modules/@nuxt/icon"
@@ -128,7 +128,7 @@
         "./color-mode-options.mjs"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev.json"
+        "./manifest/meta/01703712-0bc0-4e43-8871-3bff52d67ea3"
       ],
       "#components": [
         "./components"
@@ -228,7 +228,7 @@
     "../../../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/dist/runtime/server",
     "../../../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/*.*",
     "../../../node_modules/.pnpm/@nuxtjs+color-mode@3.5.2_magicast@0.5.2/node_modules/dist/*.*",
-    "dev",
+    "../.output",
     "../server"
   ],
   "vueCompilerOptions": {

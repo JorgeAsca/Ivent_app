@@ -312,6 +312,6 @@ if (import.meta.dev && !import.meta.nitro && import.meta.hot) {
 }
 /** client-end **/
 
-import cfg0 from "C:/Users/PcVIP/Desktop/Nueva carpeta (2)/Ivent_app1/apps/Panel/app/app.config.ts"
+import cfg0 from "C:/Users/jorge/OneDrive/Desktop/Pro/Ivent_app/apps/Panel/app/app.config.ts"
 
 export default /*@__PURE__*/ defuFn(cfg0, inlineConfig)

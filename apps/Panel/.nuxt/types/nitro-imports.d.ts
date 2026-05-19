@@ -145,5 +145,5 @@ export { getRouteRules } from 'nitropack/runtime/internal/route-rules';
 export { useEvent } from 'nitropack/runtime/internal/context';
 export { defineTask, runTask } from 'nitropack/runtime/internal/task';
 export { defineNitroErrorHandler } from 'nitropack/runtime/internal/error/utils';
-export { buildAssetsURL as __buildAssetsURL, publicAssetsURL as __publicAssetsURL } from 'C:/Users/PcVIP/Desktop/Nueva carpeta (2)/Ivent_app1/node_modules/.pnpm/@nuxt+nitro-server@4.4.6_@b_ba155eadccb4b7d108f04e55599efd5f/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths';
-export { defineAppConfig } from 'C:/Users/PcVIP/Desktop/Nueva carpeta (2)/Ivent_app1/node_modules/.pnpm/@nuxt+nitro-server@4.4.6_@b_ba155eadccb4b7d108f04e55599efd5f/node_modules/@nuxt/nitro-server/dist/runtime/utils/config';
+export { buildAssetsURL as __buildAssetsURL, publicAssetsURL as __publicAssetsURL } from 'C:/Users/jorge/OneDrive/Desktop/Pro/Ivent_app/node_modules/.pnpm/@nuxt+nitro-server@4.4.6_@b_ba155eadccb4b7d108f04e55599efd5f/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths';
+export { defineAppConfig } from 'C:/Users/jorge/OneDrive/Desktop/Pro/Ivent_app/node_modules/.pnpm/@nuxt+nitro-server@4.4.6_@b_ba155eadccb4b7d108f04e55599efd5f/node_modules/@nuxt/nitro-server/dist/runtime/utils/config';
