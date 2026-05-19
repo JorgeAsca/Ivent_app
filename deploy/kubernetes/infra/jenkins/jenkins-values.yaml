@@ -1,14 +1,11 @@
 controller:
-  # Activamos para que instale los plugins necesarios de Webhooks y Docker
-  installPlugins: true
-  
-  # Añadimos los plugins requeridos para automatizar tus microservicios y Webhooks
-  plugins:
+  # En el Chart de Jenkins, installPlugins recibe directamente la lista de extensiones
+  installPlugins:
     - "kubernetes:4458.v3978db_0a_88ef"
     - "workflow-aggregator:600.vb_b_e06f8e434e"
     - "git:5.5.0"
-    - "github:1.40.0"                  # Para Webhooks automáticos de Git/GitHub
-    - "docker-workflow:585.v675713b_69503" # Para usar docker.build/withRegistry en tu Jenkinsfile
+    - "github:1.40.0"                  # Requerido para Webhooks automáticos de Git
+    - "docker-workflow:585.v675713b_69503" # Requerido para el bloque docker de tu Jenkinsfile
   
   admin:
     password: "admin"
@@ -20,8 +17,7 @@ controller:
     runAsUser: 1000
     fsGroup: 1000
   
-  # Al poner enabled: false en la raíz del bloque, el Chart removerá por completo 
-  # el contenedor 'config-reload-init' que está fallando por SSL.
+  # Desactivamos completamente el recargador para evitar el bucle de error SSL de Kubernetes
   sidecars:
     configAutoReload:
       enabled: false
