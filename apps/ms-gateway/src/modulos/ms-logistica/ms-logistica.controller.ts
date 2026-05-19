@@ -10,7 +10,8 @@ export class MsLogisticaController {
   @Get('stock/:productoId')
   obtenerStock(@Param('productoId') productoId: string) {
     console.log(`Recibiendo petición HTTP para consultar stock del producto: ${productoId}`);
-    // Asegúrate de que ms-logistica tenga un @MessagePattern({cmd: 'obtener_stock'})
-    return this.natsClient.send({ cmd: 'obtener_stock' }, productoId);
+    
+    // CORREGIDO: Enviamos un objeto estructurado en lugar de un string suelto
+    return this.natsClient.send({ cmd: 'obtener_stock' }, { productoId });
   } 
 }
