@@ -1,123 +1,250 @@
-<template>
-  <div>
-    <div class="header-actions">
-      <h2>Gestión de Inventario</h2>
-    </div>
+<script setup lang="ts">
+import { useProducts, type Product } from '~/composables/useProducts'
+import { useCategorias, type Categoria } from '~/composables/useCategorias'
 
-    <div v-if="pendingProd || !productos" class="loading-overlay">Cargando datos...</div>
+definePageMeta({ layout: 'dashboard' })
 
-    <div v-else>
-      <InventoryTable title="Administrar Productos"
-        :headers="['Producto', 'SKU', 'Categoría', 'Precio', 'Stock', 'Acciones']" @add="openCreateProd">
-        <tr v-for="prod in productos" :key="prod.id">
-          <td>{{ prod.nombre }}</td>
-          <td>{{ prod.sku }}</td>
-          <td>
-            <span class="badge ok">
-              {{ getNombreCategoria(prod) }}
-            </span>
-          </td>
-          <td>${{ prod.precio }}</td>
-          <td>{{ prod.stock }}</td>
-          <td>
-            <button @click="openEditProd(prod)"
-              style="margin-right: 5px; cursor: pointer; background:none; border:none;">✏️</button>
-            <button @click="borrarProducto(prod.id)"
-              style="color: red; cursor: pointer; background:none; border:none;">🗑️</button>
-          </td>
-        </tr>
-      </InventoryTable>
-    </div>
+const toast = useToast()
+const isModalOpen = ref(false)
+const isEditMode = ref(false)
+const searchQuery = ref('')
+const selectedCategory = ref<string | undefined>(undefined)
 
-    <BaseModal v-model="showModalProd" :title="editMode ? 'Editar Producto' : 'Nuevo Producto'">
-      <form @submit.prevent="saveProducto" class="form-grid">
-        <input v-model="formProd.nombre" placeholder="Nombre" required class="input-field">
-        <input v-model.number="formProd.precio" type="number" step="0.01" placeholder="Precio" required
-          class="input-field">
-        <input v-model.number="formProd.stock" type="number" placeholder="Stock" required class="input-field">
-        <input v-model="formProd.sku" placeholder="SKU" required class="input-field">
+const { getProducts, createProduct, updateProduct, deleteProduct: removeProduct } = useProducts()
+const { getCategorias } = useCategorias()
 
-<select v-model="formProd.categoriaId" required class="input-field">          <option value="" disabled>Seleccionar Categoría</option>
-          <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
-            {{ cat.nombre }}
-          </option>
-        </select>
+const products = ref<Product[]>([])
+const categorias = ref<Categoria[]>([])
 
-        <button type="submit" class="btn-primary" :disabled="loading">
-          {{ loading ? 'Guardando...' : (editMode ? 'Actualizar' : 'Crear') }}
-        </button>
-      </form>
-    </BaseModal>
-  </div>
-</template>
+onMounted(async () => {
+  try {
+    const [dataProducts, dataCategorias] = await Promise.all([
+      getProducts(),
+      getCategorias()
+    ])
+    if (dataProducts) products.value = dataProducts
+    if (dataCategorias) categorias.value = dataCategorias
+  } catch (error) {
+    toast.add({ title: 'Error cargando datos', color: 'error' })
+  }
+})
 
-<script setup>
-const { getCategorias, getProductos, createProducto, updateProducto, deleteProducto } = useInventario()
+const currentProduct = ref<Partial<Product>>({
+  sku: '',
+  nombre: '',
+  categoriaId: '',
+  stock: 0,
+  precio: 0,
+  activo: true
+})
 
-const loading = ref(false)
-const showModalProd = ref(false)
-const editMode = ref(false)
-const selectedProdId = ref(null)
-
-const formProd = reactive({ nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
-const { data: categorias } = await getCategorias()
-const { data: productos, pending: pendingProd, refresh: refreshProd } = await getProductos()
-
-const getNombreCategoria = (prod) => {
-  // 1. Verificamos que tengamos categorías cargadas
-  if (!categorias.value || categorias.value.length === 0) return 'Cargando...';
-
-  // 2. Intentamos extraer el ID de la categoría de todas las formas posibles
-  const idEncontrado = prod.categoria_id ||
-    prod.categoriaId ||
-    (prod.categoria && prod.categoria.id);
-
-  if (!idEncontrado) return 'Sin categoría';
-
-  // 3. Buscamos en el array de categorías comparando como Strings para evitar líos de tipos
-  const targetId = String(idEncontrado).trim();
-  const cat = categorias.value.find(c => String(c.id).trim() === targetId);
-
-  return cat ? cat.nombre : 'No encontrada';
-};
-
-const openCreateProd = () => {
-  Object.assign(formProd, { nombre: '', precio: 0, stock: 0, sku: '', categoriaId: '' })
-  editMode.value = false; showModalProd.value = true;
-}
-
-const openEditProd = (prod) => {
-  Object.assign(formProd, {
-    nombre: prod.nombre,
-    precio: prod.precio,
-    stock: prod.stock,
-    sku: prod.sku,
-    categoriaId: prod.categoria_id || prod.categoriaId
+const filteredProducts = computed(() => {
+  return products.value.filter((product) => {
+    const nameMatch = product.nombre ? product.nombre.toLowerCase().includes(searchQuery.value.toLowerCase()) : false
+    const skuMatch = product.sku ? product.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) : false
+    const matchesSearch = nameMatch || skuMatch
+    const matchesCategory = !selectedCategory.value || product.categoria?.id === selectedCategory.value
+    return matchesSearch && matchesCategory
   })
-  selectedProdId.value = prod.id; editMode.value = true; showModalProd.value = true;
+})
+
+const columns = [
+  { accessorKey: 'sku', header: 'SKU' },
+  { accessorKey: 'nombre', header: 'Nombre' },
+  { accessorKey: 'categoria', header: 'Categoria' },
+  { accessorKey: 'stock', header: 'Stock' },
+  { accessorKey: 'precio', header: 'Precio' },
+  { accessorKey: 'activo', header: 'Estado' },
+  { id: 'actions', header: '' },
+]
+
+function openNewProductModal() {
+  isEditMode.value = false
+  currentProduct.value = {
+    sku: '',
+    nombre: '',
+    categoriaId: '',
+    stock: 0,
+    precio: 0,
+    activo: true
+  }
+  isModalOpen.value = true
 }
 
-const saveProducto = async () => {
-  loading.value = true
+function openEditModal(product: Product) {
+  isEditMode.value = true
+  currentProduct.value = { ...product, categoriaId: product.categoria?.id }
+  isModalOpen.value = true
+}
+
+async function saveProduct() {
   try {
-    if (editMode.value) await updateProducto(selectedProdId.value, formProd)
-    else await createProducto(formProd)
-    await refreshProd()
-    showModalProd.value = false
-  } catch (e) {
-    console.error("Error al guardar:", e)
-  } finally {
-    loading.value = false
+    const payload = {
+      sku: currentProduct.value.sku,
+      nombre: currentProduct.value.nombre,
+      categoriaId: currentProduct.value.categoriaId,
+      stock: currentProduct.value.stock,
+      precio: currentProduct.value.precio
+    }
+
+    if (isEditMode.value && currentProduct.value.id) {
+      const updated = await updateProduct(currentProduct.value.id, payload)
+      const index = products.value.findIndex(p => p.id === currentProduct.value.id)
+      if (index !== -1 && updated) {
+        products.value[index] = updated
+      }
+      toast.add({ title: 'Producto actualizado', icon: 'i-lucide-check', color: 'success' })
+    } else {
+      const created = await createProduct(payload)
+      if (created) {
+        products.value.push(created)
+      }
+      toast.add({ title: 'Producto creado', icon: 'i-lucide-check', color: 'success' })
+    }
+    isModalOpen.value = false
+  } catch (error: any) {
+    console.error('Error guardando producto:', error)
+    toast.add({ title: 'Error al guardar el producto', description: error.message, color: 'error' })
   }
 }
 
-const borrarProducto = async (id) => {
-  if (!confirm('¿Eliminar producto?')) return
+async function deleteProduct(id: string) {
   try {
-    await deleteProducto(id)
-    await refreshProd()
-  } catch (e) {
-    console.error("Error al borrar:", e)
+    await removeProduct(id)
+    products.value = products.value.filter(p => p.id !== id)
+    toast.add({ title: 'Producto eliminado', icon: 'i-lucide-trash', color: 'warning' })
+  } catch (error) {
+    toast.add({ title: 'Error al eliminar el producto', color: 'error' })
   }
+}
+
+function getStatusColor(activo: boolean) {
+  return activo ? 'success' : 'neutral'
+}
+
+function getStatusLabel(activo: boolean) {
+  return activo ? 'Activo' : 'Inactivo'
 }
 </script>
+
+<template>
+  <UDashboardPanel>
+    <template #header>
+      <UDashboardNavbar title="Productos">
+        <template #right>
+          <UButton icon="i-lucide-plus" label="Nuevo Producto" @click="openNewProductModal" />
+        </template>
+      </UDashboardNavbar>
+
+      <UDashboardToolbar>
+        <template #left>
+          <UInput
+            v-model="searchQuery"
+            icon="i-lucide-search"
+            placeholder="Buscar productos..."
+            class="w-64"
+          />
+        </template>
+        <template #right>
+          <USelectMenu
+            v-model="selectedCategory"
+            :items="categorias"
+            value-attribute="id"
+            option-attribute="nombre"
+            placeholder="Todas las categorias"
+            class="w-48"
+          />
+        </template>
+      </UDashboardToolbar>
+    </template>
+
+    <template #body>
+      <div class="p-6">
+        <UCard>
+          <UTable :data="filteredProducts" :columns="columns">
+            <template #sku-cell="{ row }">
+              <span class="font-mono text-sm text-muted">{{ row.original.sku }}</span>
+            </template>
+            <template #nombre-cell="{ row }">
+              <span class="font-medium text-default">{{ row.original.nombre }}</span>
+            </template>
+            <template #categoria-cell="{ row }">
+              <span class="text-default">{{ row.original.categoria?.nombre || '-' }}</span>
+            </template>
+            <template #stock-cell="{ row }">
+              <span class="text-default">{{ row.original.stock }}</span>
+            </template>
+            <template #precio-cell="{ row }">
+              <span class="text-default">${{ Number(row.original.precio).toFixed(2) }}</span>
+            </template>
+            <template #activo-cell="{ row }">
+              <UBadge
+                :color="getStatusColor(row.original.activo)"
+                :label="getStatusLabel(row.original.activo)"
+                variant="subtle"
+              />
+            </template>
+            <template #actions-cell="{ row }">
+              <UDropdownMenu
+                :items="[
+                  [
+                    { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) },
+                  ],
+                  [
+                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteProduct(row.original.id) },
+                  ],
+                ]"
+              >
+                <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="sm" />
+              </UDropdownMenu>
+            </template>
+          </UTable>
+        </UCard>
+      </div>
+    </template>
+  </UDashboardPanel>
+
+  <!-- Product Modal -->
+  <UModal v-model:open="isModalOpen" :title="isEditMode ? 'Editar Producto' : 'Nuevo Producto'">
+    <template #body>
+      <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="SKU" name="sku">
+            <UInput v-model="currentProduct.sku" placeholder="HAR-001" />
+          </UFormField>
+          <UFormField label="Nombre" name="nombre">
+            <UInput v-model="currentProduct.nombre" placeholder="Nombre del producto" />
+          </UFormField>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="Categoria" name="categoria">
+            <USelectMenu 
+              v-model="currentProduct.categoriaId" 
+              :items="categorias" 
+              value-key="id"
+              label-key="nombre"
+              placeholder="Seleccionar" 
+            />
+          </UFormField>
+          <UFormField label="Stock Actual" name="stock">
+            <UInput v-model.number="currentProduct.stock" type="number" />
+          </UFormField>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="Precio de Venta" name="precio">
+            <UInput v-model.number="currentProduct.precio" type="number" step="0.01" icon="i-lucide-dollar-sign" />
+          </UFormField>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <UButton variant="ghost" label="Cancelar" @click="isModalOpen = false" />
+        <UButton :label="isEditMode ? 'Guardar Cambios' : 'Crear Producto'" @click="saveProduct" />
+      </div>
+    </template>
+  </UModal>
+</template>
