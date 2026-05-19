@@ -1,17 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MsAnalyticsController } from './ms-analytics.controller';
 
 @Module({
-  imports: [
-    ClientsModule.register([
-      {
-        name: 'MS__SERVICE',
-        transport: Transport.NATS,
-        options: { servers: ['nats://nats-server1:4222'] },
-      },
-    ]),
-  ],
+  // NO importes ClientsModule aquí. 
+  // Al ser NatsModule global, el token 'NATS_SERVICE' ya está disponible.
   controllers: [MsAnalyticsController],
 })
 export class MsAnalyticsModule {}

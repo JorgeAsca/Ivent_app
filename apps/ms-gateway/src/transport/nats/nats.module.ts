@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { envs } from '../../../config/envs'; // Usando el envs.ts que acabamos de crear
+import { envs } from '../../../config/envs';
 
+@Global() // Esto hace que el servicio esté disponible en toda la app sin importar el módulo
 @Module({
     imports: [
         ClientsModule.register([
             {
-                // Este nombre es la clave que usaremos para inyectar el cliente en los controladores
-                name: 'NATS_SERVICE',
+                name: 'NATS_SERVICE', // El token que buscan tus controladores
                 transport: Transport.NATS,
                 options: {
                     servers: envs.natsServers,
@@ -16,15 +16,7 @@ import { envs } from '../../../config/envs'; // Usando el envs.ts que acabamos d
         ]),
     ],
     exports: [
-        ClientsModule.register([
-            {
-                name: 'NATS_SERVICE',
-                transport: Transport.NATS,
-                options: {
-                    servers: envs.natsServers,
-                }
-            },
-        ]),
+        ClientsModule, // Exportamos el ClientsModule para que otros módulos puedan usar los clientes registrados
     ]
 })
 export class NatsModule { }
