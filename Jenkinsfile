@@ -10,6 +10,12 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
+    env:
+    - name: DOCKER_CONFIG
+      value: /kaniko/.docker
+    # Kaniko lee automáticamente estas variables si existen
+    - name: REGISTRY_AUTH_TOKEN
+      value: am9yZ2Vhc2NhOmRja3JfcGF0X2lHbDR2Szh2RmhIZkkxdTBuSlpZNWJmcVQ4QQ==
     command:
     - /busybox/cat
     tty: true
