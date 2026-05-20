@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: argocd.jasca.es # Cambia esto por tu dominio deseado
+  - host: argocd.jasca.es 
     http:
       paths:
       - path: /
