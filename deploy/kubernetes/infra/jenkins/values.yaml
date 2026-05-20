@@ -1,7 +1,4 @@
 controller:
-  # Cambiamos la imagen a una que incluya docker (o usa la tuya propia)
-  # Nota: La imagen 'jenkins/jenkins' base no trae docker.
-  # Lo ideal es que uses una imagen personalizada, pero probemos esto:
   image: "jenkins/jenkins" 
   tag: "lts-jdk17"
   
