@@ -7,18 +7,29 @@ controller:
   serviceType: NodePort
   nodePort: 32000
 
-  # Forzamos a Jenkins a correr con id de usuario estándar para evitar bloqueos
-  runAsUser: 1000
-  fsGroup: 1000
+  # 1. Forzamos a ejecutar como root para tener permisos sobre el socket de Docker
+  runAsUser: 0
+  fsGroup: 0
 
-  # Este comando nativo repara los permisos del directorio antes de que corra el motor
-  initializeCommand: "chown -R 1000:1000 /var/jenkins_home"
+  # 2. Instalamos el cliente de Docker antes de arrancar y ajustamos permisos
+  initializeCommand: |
+    apt-get update && apt-get install -y docker.io
+    chown -R 0:0 /var/jenkins_home
 
   sidecars:
     configAutoReload:
       enabled: false
 
+  # 3. Conectamos el motor de Docker del VPS directamente al Pod de Jenkins
+  extraVolumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+  extraVolumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+
 persistence:
   enabled: true
-  size: 8Gi  # Lo bajamos a 8Gi para solucionar el error de Helm de inmediato
+  size: 8Gi  
   storageClass: "microk8s-hostpath"
