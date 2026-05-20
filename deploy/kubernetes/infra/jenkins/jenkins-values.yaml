@@ -1,26 +1,25 @@
 controller:
-  installPlugins: false
-
-  admin:
-    password: "admin"
+  # Imagen oficial con JDK 17
+  image: "jenkins/jenkins"
+  tag: "lts-jdk17"
   
-  serviceType: NodePort
-  nodePort: 32000
-
-  # 1. Forzamos a ejecutar como root para tener permisos sobre el socket de Docker
+  # Ejecutar como root para poder usar docker.sock
   runAsUser: 0
-  fsGroup: 0
-
-  # 2. Instalamos el cliente de Docker antes de arrancar y ajustamos permisos
+  
+  # Instalar Docker al arrancar el contenedor
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - docker-workflow:latest
+  
+  # Esto instala Docker nativamente dentro del pod de Jenkins
   initializeCommand: |
-    apt-get update && apt-get install -y docker.io
-    chown -R 0:0 /var/jenkins_home
+    apt-get update
+    apt-get install -y docker.io
+    # Aseguramos que el usuario jenkins tenga permiso de docker
+    usermod -aG docker jenkins
 
-  sidecars:
-    configAutoReload:
-      enabled: false
-
-  # 3. Conectamos el motor de Docker del VPS directamente al Pod de Jenkins
   extraVolumes:
     - name: docker-sock
       hostPath:
@@ -28,8 +27,3 @@ controller:
   extraVolumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
-
-persistence:
-  enabled: true
-  size: 8Gi  
-  storageClass: "microk8s-hostpath"
