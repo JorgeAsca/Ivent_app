@@ -5,22 +5,15 @@ controller:
   serviceType: NodePort
   nodePort: 32000
 
-  # Privilegios para interactuar con el socket del host
   runAsUser: 0
-  runAsGroup: 0
   fsGroup: 0
 
+  # Desactivamos los sidecars que fallan por certificados SSL
   sidecars:
     configAutoReload:
-      enabled: true
-      image: "docker.io/kiwigrid/k8s-sidecar:2.7.3"
-      env:
-        - name: KUBERNETES_INSECURE_TLS
-          value: "true"
+      enabled: false
 
-  # QUITAMOS el initializeCommand por completo
-  # No instalaremos nada aquí. 
-
+  # Solo montamos el socket de Docker
   extraVolumes:
     - name: docker-sock
       hostPath:
@@ -30,6 +23,6 @@ controller:
       mountPath: /var/run/docker.sock
 
 persistence:
-  enabled: false
+  enabled: true
   size: 8Gi  
   storageClass: "microk8s-hostpath"
