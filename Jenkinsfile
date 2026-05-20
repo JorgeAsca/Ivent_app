@@ -5,6 +5,8 @@ pipeline {
 apiVersion: v1
 kind: Pod
 spec:
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
@@ -27,7 +29,6 @@ spec:
 '''
         }
     }
-
     environment {
         DOCKER_HUB_USER = 'jorgeasca'
         GITHUB_CREDS_ID = 'github-pat'
