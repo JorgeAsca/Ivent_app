@@ -1,23 +1,16 @@
 controller:
-  # Imagen oficial con JDK 17
-  image: "jenkins/jenkins"
-  tag: "lts-jdk17"
+  admin:
+    password: "admin"
   
-  # Ejecutar como root para poder usar docker.sock
+  serviceType: NodePort
+  nodePort: 32000
+
   runAsUser: 0
-  
-  # Instalar Docker al arrancar el contenedor
-  installPlugins:
-    - kubernetes:latest
-    - workflow-aggregator:latest
-    - git:latest
-    - docker-workflow:latest
-  
-  # Esto instala Docker nativamente dentro del pod de Jenkins
+  fsGroup: 0
+
+  # Instalación directa del cliente docker
   initializeCommand: |
-    apt-get update
-    apt-get install -y docker.io
-    # Aseguramos que el usuario jenkins tenga permiso de docker
+    apt-get update && apt-get install -y docker.io
     usermod -aG docker jenkins
 
   extraVolumes:
@@ -27,3 +20,8 @@ controller:
   extraVolumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
+
+persistence:
+  enabled: true
+  size: 8Gi  
+  storageClass: "microk8s-hostpath"
