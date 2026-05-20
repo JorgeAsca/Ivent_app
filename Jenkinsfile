@@ -2,11 +2,8 @@ pipeline {
     agent any
     
     environment {
-        // Tu usuario de Docker Hub
         DOCKER_HUB_USER = 'jorgeasca'
-        // El ID exacto de la credencial que crearás en Jenkins para Docker Hub
         DOCKER_CREDS_ID = 'docker-hub-credentials' 
-        // Generamos un tag único basado en los primeros 7 caracteres del commit de Git
         IMAGE_TAG = "${env.GIT_COMMIT.take(7)}" 
     }
 
