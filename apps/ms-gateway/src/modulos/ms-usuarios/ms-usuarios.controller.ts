@@ -35,6 +35,13 @@ export class UsuariosController {
         );
     }
 
+    @Get('roles')
+    obtenerRoles() {
+        return this.natsClient.send({ cmd: 'listar_roles' }, {}).pipe(
+            catchError((error) => { throw new RpcException(error); })
+        );
+    }
+
     @Get(':id')
     obtenerUsuario(@Param('id', ParseUUIDPipe) id: string) {
         return this.natsClient.send({ cmd: 'buscar_usuario' }, id).pipe(
@@ -56,10 +63,5 @@ export class UsuariosController {
         );
     }
 
-    @Get('roles')
-    obtenerRoles() {
-        return this.natsClient.send({ cmd: 'listar_roles' }, {}).pipe(
-            catchError((error) => { throw new RpcException(error); })
-        );
-    }
+
 }
