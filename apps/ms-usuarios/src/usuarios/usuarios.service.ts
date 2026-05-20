@@ -25,4 +25,27 @@ export class UsuariosService {
         const nuevoUsuario = this.userRepo.create(data);
         return await this.userRepo.save(nuevoUsuario);
     }
+
+    async findAll() {
+        return await this.userRepo.find({ relations: ['rol'] });
+    }
+
+    async findOne(id: string) {
+        const usuario = await this.userRepo.findOne({ where: { id_usuario: id }, relations: ['rol'] });
+        if (!usuario) {
+            throw new Error(`Usuario con ID ${id} no encontrado`);
+        }
+        return usuario;
+    }
+
+    async update(id: string, updateData: any) {
+        const usuario = await this.findOne(id);
+        const actualizado = Object.assign(usuario, updateData);
+        return await this.userRepo.save(actualizado);
+    }
+
+    async remove(id: string) {
+        const usuario = await this.findOne(id);
+        return await this.userRepo.remove(usuario);
+    }
 }
