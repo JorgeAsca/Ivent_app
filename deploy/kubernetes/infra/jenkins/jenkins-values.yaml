@@ -10,6 +10,14 @@ controller:
   runAsGroup: 0
   fsGroup: 0
 
+  sidecars:
+    configAutoReload:
+      enabled: true
+      image: "docker.io/kiwigrid/k8s-sidecar:2.7.3"
+      env:
+        - name: KUBERNETES_INSECURE_TLS
+          value: "true"
+
   # QUITAMOS el initializeCommand por completo
   # No instalaremos nada aquí. 
 
@@ -22,6 +30,6 @@ controller:
       mountPath: /var/run/docker.sock
 
 persistence:
-  enabled: true
+  enabled: false
   size: 8Gi  
   storageClass: "microk8s-hostpath"
