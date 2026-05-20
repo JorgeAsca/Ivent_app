@@ -1,5 +1,27 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: agent
+spec:
+  containers:
+  - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+    command:
+    - cat
+    tty: true
+  - name: jnlp
+    image: jenkins/inbound-agent:latest
+    args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
+'''
+        }
+    }
 
     environment {
         DOCKER_HUB_USER = 'jorgeasca'
