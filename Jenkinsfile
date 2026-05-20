@@ -10,21 +10,20 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:debug
-    env:
-    - name: DOCKER_CONFIG
-      value: /kaniko/.docker
-    # Kaniko lee automáticamente estas variables si existen
-    - name: REGISTRY_AUTH_TOKEN
-      value: am9yZ2Vhc2NhOmRja3JfcGF0X2lHbDR2Szh2RmhIZkkxdTBuSlpZNWJmcVQ4QQ==
     command:
     - /busybox/cat
     tty: true
     volumeMounts:
     - name: docker-config
       mountPath: /kaniko/.docker/
+    - name: "workspace-volume"
+      mountPath: "/home/jenkins/agent"
   - name: jnlp
     image: jenkins/inbound-agent:3355.v388858a_47b_33-3-jdk21
-    args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
+    args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
+    volumeMounts:
+    - name: "workspace-volume"
+      mountPath: "/home/jenkins/agent"
   volumes:
   - name: docker-config
     secret:
@@ -32,6 +31,8 @@ spec:
       items:
         - key: .dockerconfigjson
           path: config.json
+  - name: "workspace-volume"
+    emptyDir: {}
 '''
         }
     }
@@ -98,7 +99,6 @@ def updateGitOps(serviceName, valuesFilePath) {
         sh """
             git config user.email 'jenkins@jenkins.com'
             git config user.name 'Jenkins Bot'
-            # Usamos un sed más robusto para buscar la línea tag: dentro del yaml
             sed -i 's|tag:.*|tag: ${IMAGE_TAG}|' ${valuesFilePath}
             git add ${valuesFilePath}
             git commit -m "chore: update ${serviceName} image to ${IMAGE_TAG} [skip ci]"
