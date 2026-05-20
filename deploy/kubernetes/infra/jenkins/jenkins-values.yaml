@@ -5,13 +5,13 @@ controller:
   serviceType: NodePort
   nodePort: 32000
 
+  # Privilegios para interactuar con el socket del host
   runAsUser: 0
+  runAsGroup: 0
   fsGroup: 0
 
-  # Instalación directa del cliente docker al iniciar
-  initializeCommand: |
-    apt-get update && apt-get install -y docker.io
-    usermod -aG docker jenkins
+  # QUITAMOS el initializeCommand por completo
+  # No instalaremos nada aquí. 
 
   extraVolumes:
     - name: docker-sock
