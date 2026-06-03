@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule } from '@nestjs/config';
+import { envs } from './config/envs';
 
 // Importación de Módulos internos
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -21,28 +21,12 @@ import { Permission } from './permisos/entities/permission.entity';
     // Configuración de Base de Datos Independiente
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: 5432,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      url: envs.databaseUrl,
       entities: [User, Role, Permission],
       autoLoadEntities: true,
       synchronize: true, // Crea tablas automáticamente en la VPS
       logging: true,
     }),
-
-    // Registro del cliente para hablar con ms-administracion
-    ClientsModule.register([
-      {
-        name: 'MS_ADMIN_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: process.env.MS_ADMIN_HOST || 'ms-administracion',
-          port: 3000,
-        },
-      },
-    ]),
 
     // Módulos de Dominio
     UsuariosModule,
@@ -50,4 +34,4 @@ import { Permission } from './permisos/entities/permission.entity';
     PermisosModule,
   ],
 })
-export class AppModule {}
+export class AppModule {}

@@ -19,3 +19,4 @@ export * from './Dto/producto/update-producto.dto';
 export * from './Dto/categoria/update-categoria.dto';
 
 // export * from '../config/envs';
+export * from './transport/nats/nats.module';

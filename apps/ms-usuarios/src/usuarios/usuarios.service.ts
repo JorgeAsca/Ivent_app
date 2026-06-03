@@ -3,26 +3,35 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientProxy } from '@nestjs/microservices';
 import { User } from './entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UsuariosService {
     constructor(
         @InjectRepository(User) private readonly userRepo: Repository<User>,
-        @Inject('MS_ADMIN_SERVICE') private readonly clientAdmin: ClientProxy,
+        @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
     ) { }
 
     async crearUsuario(data: any) {
-        // Comunicación: Preguntar al ms-administracion
+        // Comunicación: Preguntar al ms-administracion usando el payload correcto { id_empresa }
         const empresa = await firstValueFrom(
-            this.clientAdmin.send({ cmd: 'validar_empresa' }, { id: data.empresaId })
+            this.natsClient.send({ cmd: 'validar_empresa' }, { id_empresa: data.empresaId })
         );
 
         if (!empresa) {
             throw new Error('La empresa referenciada no existe en el sistema');
         }
 
-        const nuevoUsuario = this.userRepo.create(data);
+        const { rolId, ...rest } = data;
+        const nuevoUsuario = this.userRepo.create(rest as Partial<User>);
+
+        
+        if (rolId) {
+            nuevoUsuario.rol = { id_rol: rolId } as Role;
+        }
+
+        
         return await this.userRepo.save(nuevoUsuario);
     }
 
@@ -40,7 +49,14 @@ export class UsuariosService {
 
     async update(id: string, updateData: any) {
         const usuario = await this.findOne(id);
-        const actualizado = Object.assign(usuario, updateData);
+        const { rolId, ...rest } = updateData;
+        
+        const actualizado = Object.assign(usuario, rest);
+        
+        if (rolId !== undefined) {
+            actualizado.rol = rolId ? ({ id_rol: rolId } as Role) : null;
+        }
+        
         return await this.userRepo.save(actualizado);
     }
 
@@ -48,4 +64,4 @@ export class UsuariosService {
         const usuario = await this.findOne(id);
         return await this.userRepo.remove(usuario);
     }
-}
+}

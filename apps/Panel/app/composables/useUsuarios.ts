@@ -24,8 +24,25 @@ export const useUsuarios = () => {
     })
   }
 
+  const updateUsuario = async (id: string, usuario: Partial<Usuario>) => {
+    return await fetchApi<Usuario>(`/usuarios/${id}`, {
+      method: 'PATCH',
+      body: usuario
+    })
+  }
+
+
+  const deleteUsuario = async (id: string) => {
+    return await fetchApi<void>(`/usuarios/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
   return {
     getUsuarios,
-    createUsuario
+    createUsuario,
+    updateUsuario,
+    deleteUsuario
   }
 }
+

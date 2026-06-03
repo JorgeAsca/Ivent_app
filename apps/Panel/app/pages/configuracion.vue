@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import { useUsuarios, type Usuario } from '~/composables/useUsuarios'
+import { useRoles, type Role } from '~/composables/useRoles'
+
 definePageMeta({ layout: 'dashboard' })
 
 const toast = useToast()
+
+const { getUsuarios, createUsuario, deleteUsuario } = useUsuarios()
+const { getRoles } = useRoles()
 
 // General Settings
 const companyName = ref('Mi Empresa S.L.')
@@ -46,10 +52,85 @@ const settingsSections = [
 
 const activeSection = ref('general')
 
+// Users Logic
+const usuarios = ref<Usuario[]>([])
+const rolesList = ref<Role[]>([])
+const isUserModalOpen = ref(false)
+const isLoadingUsers = ref(false)
+
+const newUser = ref({
+  nombre: '',
+  email: '',
+  password: '',
+  rolId: '',
+  empresaId: ''
+})
+
+async function loadUsersAndRoles() {
+  isLoadingUsers.value = true
+  try {
+    const [dataUsers, dataRoles] = await Promise.all([
+      getUsuarios(),
+      getRoles()
+    ])
+    if (dataUsers) usuarios.value = dataUsers
+    if (dataRoles) rolesList.value = dataRoles
+  } catch (error) {
+    console.error('Error cargando usuarios/roles:', error)
+    toast.add({ title: 'Error cargando datos de usuarios', color: 'error' })
+  } finally {
+    isLoadingUsers.value = false
+  }
+}
+
+watch(activeSection, (section) => {
+  if (section === 'users') {
+    loadUsersAndRoles()
+  }
+}, { immediate: true })
+
+function openNewUserModal() {
+  newUser.value = {
+    nombre: '',
+    email: '',
+    password: '',
+    rolId: '',
+    empresaId: usuarios.value[0]?.empresaId || ''
+  }
+  isUserModalOpen.value = true
+}
+
+async function inviteUser() {
+  try {
+    const created = await createUsuario(newUser.value)
+    if (created) {
+      await loadUsersAndRoles()
+      toast.add({ title: 'Usuario creado exitosamente', icon: 'i-lucide-check', color: 'success' })
+      isUserModalOpen.value = false
+    }
+  } catch (error: any) {
+    console.error('Error creando usuario:', error)
+    toast.add({ title: 'Error al crear usuario', description: error.message || 'Verifica que el ID Empresa exista.', color: 'error' })
+  }
+}
+
+async function removeUser(id: string) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return
+  try {
+    await deleteUsuario(id)
+    usuarios.value = usuarios.value.filter(u => u.id_usuario !== id)
+    toast.add({ title: 'Usuario eliminado', icon: 'i-lucide-trash', color: 'warning' })
+  } catch (error) {
+    console.error('Error eliminando usuario:', error)
+    toast.add({ title: 'Error al eliminar usuario', color: 'error' })
+  }
+}
+
 function saveSettings() {
   toast.add({ title: 'Configuracion guardada', icon: 'i-lucide-check', color: 'success' })
 }
 </script>
+
 
 <template>
   <UDashboardPanel>
@@ -218,43 +299,43 @@ function saveSettings() {
               <template #header>
                 <div class="flex items-center justify-between">
                   <span class="font-medium text-default">Usuarios Activos</span>
-                  <UButton icon="i-lucide-user-plus" label="Invitar Usuario" size="sm" />
+                  <UButton icon="i-lucide-user-plus" label="Invitar Usuario" size="sm" @click="openNewUserModal" />
                 </div>
               </template>
-              <div class="space-y-4">
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+              
+              <div v-if="isLoadingUsers" class="flex justify-center p-4">
+                <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-primary" />
+              </div>
+              
+              <div v-else-if="usuarios.length === 0" class="p-4 text-center text-sm text-muted">
+                No hay usuarios creados.
+              </div>
+
+              <div v-else class="space-y-4">
+                <div v-for="user in usuarios" :key="user.id_usuario" class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
                   <div class="flex items-center gap-3">
-                    <UAvatar src="https://api.dicebear.com/9.x/avataaars/svg?seed=admin" alt="Admin" size="sm" />
+                    <UAvatar :src="`https://api.dicebear.com/9.x/avataaars/svg?seed=${user.nombre}`" :alt="user.nombre" size="sm" />
                     <div>
-                      <p class="font-medium text-default">Administrador</p>
-                      <p class="text-sm text-muted">admin@miempresa.com</p>
+                      <p class="font-medium text-default">{{ user.nombre }}</p>
+                      <p class="text-sm text-muted">{{ user.email }}</p>
                     </div>
                   </div>
-                  <UBadge label="Admin" color="primary" variant="subtle" />
-                </div>
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-                  <div class="flex items-center gap-3">
-                    <UAvatar src="https://api.dicebear.com/9.x/avataaars/svg?seed=carlos" alt="Carlos" size="sm" />
-                    <div>
-                      <p class="font-medium text-default">Carlos Rodriguez</p>
-                      <p class="text-sm text-muted">carlos@miempresa.com</p>
-                    </div>
+                  <div class="flex items-center gap-2">
+                    <UBadge :label="user.rol?.nombre || 'Sin Rol'" color="primary" variant="subtle" />
+                    <UButton
+                      v-if="user.email !== 'admin@ivent.app'"
+                      icon="i-lucide-trash"
+                      variant="ghost"
+                      color="error"
+                      size="sm"
+                      @click="removeUser(user.id_usuario)"
+                    />
                   </div>
-                  <UBadge label="Almacenero" color="neutral" variant="subtle" />
-                </div>
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-                  <div class="flex items-center gap-3">
-                    <UAvatar src="https://api.dicebear.com/9.x/avataaars/svg?seed=ana" alt="Ana" size="sm" />
-                    <div>
-                      <p class="font-medium text-default">Ana Lopez</p>
-                      <p class="text-sm text-muted">ana@miempresa.com</p>
-                    </div>
-                  </div>
-                  <UBadge label="Supervisor" color="info" variant="subtle" />
                 </div>
               </div>
             </UCard>
           </div>
+
 
           <!-- Integrations Settings -->
           <div v-if="activeSection === 'integrations'" class="max-w-2xl space-y-6">
@@ -329,4 +410,47 @@ function saveSettings() {
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- User Invitation Modal -->
+  <UModal v-model:open="isUserModalOpen" title="Invitar Nuevo Usuario">
+    <template #body>
+      <div class="flex flex-col gap-4">
+        <UFormField label="Nombre Completo" name="nombre">
+          <UInput v-model="newUser.nombre" placeholder="Ej: Carlos Rodriguez" />
+        </UFormField>
+
+        <UFormField label="Email" name="email">
+          <UInput v-model="newUser.email" type="email" placeholder="carlos@miempresa.com" />
+        </UFormField>
+
+        <UFormField label="Contraseña" name="password">
+          <UInput v-model="newUser.password" type="password" placeholder="Contraseña temporal" />
+        </UFormField>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="Rol" name="rolId">
+            <USelectMenu 
+              v-model="newUser.rolId" 
+              :items="rolesList" 
+              value-key="id_rol"
+              label-key="nombre"
+              placeholder="Seleccionar Rol" 
+            />
+          </UFormField>
+          
+          <UFormField label="ID Empresa" name="empresaId">
+            <UInput v-model="newUser.empresaId" placeholder="UUID de la empresa" />
+          </UFormField>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <UButton variant="ghost" label="Cancelar" @click="isUserModalOpen = false" />
+        <UButton label="Crear Usuario" @click="inviteUser" />
+      </div>
+    </template>
+  </UModal>
 </template>
+
