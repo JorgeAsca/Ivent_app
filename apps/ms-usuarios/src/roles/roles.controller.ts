@@ -7,9 +7,18 @@ export class RolesController {
     constructor(private readonly rolesService: RolesService) { }
 
     @MessagePattern({ cmd: 'crear_rol' })
-    crear(@Payload() data: { nombre: string }) {
-        // Nota: Aquí podrías incluir empresaId si los roles son por empresa
+    crear(@Payload() data: { nombre: string; permisos: string[] }) {
         return this.rolesService.crear(data);
+    }
+
+    @MessagePattern({ cmd: 'actualizar_rol' })
+    actualizar(@Payload() data: { id: string; nombre?: string; permisos?: string[] }) {
+        return this.rolesService.actualizar(data.id, data);
+    }
+
+    @MessagePattern({ cmd: 'eliminar_rol' })
+    eliminar(@Payload() id: string) {
+        return this.rolesService.eliminar(id);
     }
 
     @MessagePattern({ cmd: 'asignar_permiso_a_rol' })

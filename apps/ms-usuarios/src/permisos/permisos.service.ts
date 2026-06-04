@@ -1,16 +1,53 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Permission } from './entities/permission.entity';
 
+const DEFAULT_PERMISSIONS = [
+    { nombre: 'usuarios:leer', descripcion: 'Ver lista de usuarios' },
+    { nombre: 'usuarios:crear', descripcion: 'Crear nuevos usuarios' },
+    { nombre: 'usuarios:editar', descripcion: 'Editar usuarios existentes' },
+    { nombre: 'usuarios:eliminar', descripcion: 'Eliminar usuarios' },
+    { nombre: 'roles:leer', descripcion: 'Ver lista de roles y permisos' },
+    { nombre: 'roles:crear', descripcion: 'Crear nuevos roles' },
+    { nombre: 'roles:editar', descripcion: 'Editar roles existentes' },
+    { nombre: 'roles:eliminar', descripcion: 'Eliminar roles' },
+    { nombre: 'empresas:leer', descripcion: 'Ver lista de empresas' },
+    { nombre: 'empresas:crear', descripcion: 'Crear nuevas empresas' },
+    { nombre: 'empresas:editar', descripcion: 'Editar empresas' },
+    { nombre: 'empresas:eliminar', descripcion: 'Eliminar empresas' },
+    { nombre: 'productos:leer', descripcion: 'Ver lista de productos' },
+    { nombre: 'productos:crear', descripcion: 'Crear productos' },
+    { nombre: 'productos:editar', descripcion: 'Editar productos' },
+    { nombre: 'productos:eliminar', descripcion: 'Eliminar productos' },
+];
+
 @Injectable()
-export class PermisosService {
+export class PermisosService implements OnModuleInit {
+    private readonly logger = new Logger(PermisosService.name);
+
     constructor(
         @InjectRepository(Permission)
         private readonly permisoRepo: Repository<Permission>,
     ) { }
 
-    async crear(data: { nombre: string }) {
+    async onModuleInit() {
+        await this.seedPermissions();
+    }
+
+    private async seedPermissions() {
+        this.logger.log('Comprobando permisos base (Seed)...');
+        for (const perm of DEFAULT_PERMISSIONS) {
+            const exists = await this.permisoRepo.findOne({ where: { nombre: perm.nombre } });
+            if (!exists) {
+                const nuevo = this.permisoRepo.create(perm);
+                await this.permisoRepo.save(nuevo);
+                this.logger.log(`Permiso creado: ${perm.nombre}`);
+            }
+        }
+    }
+
+    async crear(data: { nombre: string; descripcion?: string }) {
         const nuevoPermiso = this.permisoRepo.create(data);
         return await this.permisoRepo.save(nuevoPermiso);
     }

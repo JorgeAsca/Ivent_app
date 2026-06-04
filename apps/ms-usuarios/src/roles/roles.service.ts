@@ -26,9 +26,43 @@ export class RolesService {
         return await this.roleRepo.save(rol);
     }
 
-    async crear(data: any) {
-        const nuevoRol = this.roleRepo.create(data);
+    async crear(data: { nombre: string; permisos: string[] }) {
+        const nuevoRol = this.roleRepo.create({ nombre: data.nombre });
+        if (data.permisos && data.permisos.length > 0) {
+            const permissions = await this.permRepo.createQueryBuilder('permiso')
+                .where('permiso.nombre IN (:...nombres)', { nombres: data.permisos })
+                .getMany();
+            nuevoRol.permisos = permissions;
+        }
         return await this.roleRepo.save(nuevoRol);
+    }
+
+    async actualizar(id_rol: string, data: { nombre?: string; permisos?: string[] }) {
+        const rol = await this.roleRepo.findOne({
+            where: { id_rol },
+            relations: ['permisos']
+        });
+        if (!rol) throw new Error('Rol no encontrado');
+
+        if (data.nombre) {
+            rol.nombre = data.nombre;
+        }
+
+        if (data.permisos) {
+            const permissions = await this.permRepo.createQueryBuilder('permiso')
+                .where('permiso.nombre IN (:...nombres)', { nombres: data.permisos })
+                .getMany();
+            rol.permisos = permissions;
+        }
+
+        return await this.roleRepo.save(rol);
+    }
+
+    async eliminar(id_rol: string) {
+        const rol = await this.roleRepo.findOne({ where: { id_rol } });
+        if (!rol) throw new Error('Rol no encontrado');
+        await this.roleRepo.remove(rol);
+        return { success: true, id_rol };
     }
 
     async listar() {

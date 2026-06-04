@@ -42,6 +42,27 @@ export class UsuariosController {
         );
     }
 
+    @Patch('roles/:id')
+    actualizarRol(@Param('id', ParseUUIDPipe) id: string, @Body() data: any) {
+        return this.natsClient.send({ cmd: 'actualizar_rol' }, { id, ...data }).pipe(
+            catchError((error) => { throw new RpcException(error); })
+        );
+    }
+
+    @Delete('roles/:id')
+    eliminarRol(@Param('id', ParseUUIDPipe) id: string) {
+        return this.natsClient.send({ cmd: 'eliminar_rol' }, id).pipe(
+            catchError((error) => { throw new RpcException(error); })
+        );
+    }
+
+    @Get('permisos')
+    obtenerPermisos() {
+        return this.natsClient.send({ cmd: 'listar_permisos' }, {}).pipe(
+            catchError((error) => { throw new RpcException(error); })
+        );
+    }
+
     @Get(':id')
     obtenerUsuario(@Param('id', ParseUUIDPipe) id: string) {
         return this.natsClient.send({ cmd: 'buscar_usuario' }, id).pipe(
