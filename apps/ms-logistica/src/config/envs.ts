@@ -1,4 +1,12 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const appEnv = path.resolve(process.cwd(), 'apps/ms-logistica/.env');
+const rootEnv = path.resolve(process.cwd(), '.env');
+const envPath = fs.existsSync(appEnv) ? appEnv : rootEnv;
+
+dotenv.config({ path: envPath });
 import * as joi from 'joi';
 
 interface EnvVars {

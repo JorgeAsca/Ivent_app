@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Inject, Post, Get } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ADMIN_PATTERNS } from '@app/common';
 
@@ -14,4 +14,9 @@ export class AdministracionController {
     // Usa natsClient en lugar de adminClient
     return this.natsClient.send(ADMIN_PATTERNS.CREAR_EMPRESA, createEmpresaDto);
   }
-}
+
+  @Get('empresas')
+  listarEmpresas() {
+    return this.natsClient.send({ cmd: 'listar_empresas' }, {});
+  }
+}

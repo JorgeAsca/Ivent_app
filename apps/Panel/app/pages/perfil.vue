@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUsuarios, type Usuario } from '~/composables/useUsuarios'
 import { useRoles, type Role } from '~/composables/useRoles'
+import { useEmpresas, type Empresa } from '~/composables/useEmpresas'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -10,18 +11,22 @@ const isRoleModalOpen = ref(false)
 
 const { getUsuarios, createUsuario } = useUsuarios()
 const { getRoles, createRole } = useRoles()
+const { getEmpresas } = useEmpresas()
 
 const usuarios = ref<Usuario[]>([])
 const roles = ref<Role[]>([])
+const empresas = ref<Empresa[]>([])
 
 onMounted(async () => {
   try {
-    const [dataUsers, dataRoles] = await Promise.all([
+    const [dataUsers, dataRoles, dataEmpresas] = await Promise.all([
       getUsuarios(),
-      getRoles()
+      getRoles(),
+      getEmpresas()
     ])
     if (dataUsers) usuarios.value = dataUsers
     if (dataRoles) roles.value = dataRoles
+    if (dataEmpresas) empresas.value = dataEmpresas
   } catch (error) {
     toast.add({ title: 'Error cargando datos de perfil', color: 'error' })
   }
@@ -32,7 +37,7 @@ const currentUser = ref<Partial<Usuario>>({
   email: '',
   password: '',
   rolId: '',
-  empresaId: '' // Required valid UUID from ms-administracion
+  empresaId: ''
 })
 
 const currentRole = ref<Partial<Role>>({
@@ -52,10 +57,11 @@ function openNewUserModal() {
     email: '',
     password: '',
     rolId: '',
-    empresaId: ''
+    empresaId: empresas.value[0]?.id_empresa || ''
   }
   isUserModalOpen.value = true
 }
+
 
 function openNewRoleModal() {
   currentRole.value = { nombre: '' }
@@ -154,10 +160,16 @@ async function saveRole() {
             />
           </UFormField>
           
-          <UFormField label="ID Empresa" name="empresaId">
-            <UInput v-model="currentUser.empresaId" placeholder="UUID de la empresa" />
-            <p class="mt-1 text-xs text-muted">Debe existir en ms-administracion</p>
+          <UFormField label="Empresa" name="empresaId">
+            <USelectMenu 
+              v-model="currentUser.empresaId" 
+              :items="empresas" 
+              value-key="id_empresa"
+              label-key="nombre_comercial"
+              placeholder="Seleccionar Empresa" 
+            />
           </UFormField>
+
         </div>
       </div>
     </template>

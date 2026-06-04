@@ -17,4 +17,9 @@ export class EmpresasController {
     const empresa = await this.empresasService.findOne(data.id_empresa);
     return !!empresa; // Devuelve true si existe, false si no
   }
-}
+
+  @MessagePattern({ cmd: 'listar_empresas' })
+  async findAll() {
+    return this.empresasService.findAll();
+  }
+}

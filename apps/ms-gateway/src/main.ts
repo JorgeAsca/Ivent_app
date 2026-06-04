@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://inventapp.store', 'https://inventapp.store', 'http://38.242.141.205:8080'], 
+    origin: ['http://localhost:3000', 'http://localhost:8080', 'http://127.0.0.1:3000', 'http://inventapp.store', 'https://inventapp.store', 'http://38.242.141.205:8080'], 
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
   });

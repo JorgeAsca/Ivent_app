@@ -1,17 +1,24 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL no está definida en las variables de entorno');
+}
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter,
+});
+
+
 
 async function main() {
   console.log(' Iniciando Seed adaptado...');
-
-  const permiso = await prisma.permiso.create({
-    data: { 
-      recurso: 'usuarios', 
-      accion: 'crear' 
-    },
-  });
 
   // Crear Empresa
   const empresa = await prisma.empresa.upsert({
@@ -24,33 +31,7 @@ async function main() {
     },
   });
 
-  // Crear Rol
-  const rolAdmin = await prisma.rol.create({
-    data: {
-      nombre: 'Super Admin',
-      empresaId: empresa.id_empresa, 
-      
-      permisos: {
-        create: [
-          { permiso: { connect: { id_permiso: permiso.id_permiso } } }
-        ]
-      }
-    },
-  });
-
-  // Crear Usuario
-  await prisma.usuario.upsert({
-    where: { email: 'admin@ivent.app' },
-    update: {},
-    create: {
-      email: 'admin@ivent.app',
-      password: await bcrypt.hash('admin123', 10),
-      nombre: 'Jorge Admin',
-      empresaId: empresa.id_empresa,
-    },
-  });
-
-  console.log(' Seed completado.');
+  console.log(' Seed completado. Empresa ID:', empresa.id_empresa);
 }
 
 main()
@@ -60,4 +41,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-  });
+  });

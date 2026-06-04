@@ -1,10 +1,25 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
+
+const appEnv = path.resolve(process.cwd(), 'apps/ms-administracion/.env');
+const rootEnv = path.resolve(process.cwd(), '.env');
+const deployEnv = './apps/ms-administracion/deploy/.env';
+
+const envPath = process.env.ENV_FILE_PATH && fs.existsSync(process.env.ENV_FILE_PATH)
+  ? process.env.ENV_FILE_PATH
+  : fs.existsSync(appEnv)
+    ? appEnv
+    : fs.existsSync(rootEnv)
+      ? rootEnv
+      : fs.existsSync(deployEnv)
+        ? deployEnv
+        : undefined;
+
+if (envPath) {
+  dotenv.config({ path: envPath });
+}
 import * as joi from 'joi';
-
-
-process.env.ENV_FILE_PATH
-    ? require('dotenv').config({ path: process.env.ENV_FILE_PATH })
-    : require('dotenv').config({ path: './apps/ms-administracion/deploy/.env' });
 
 interface EnvVars {
     PORT: number;

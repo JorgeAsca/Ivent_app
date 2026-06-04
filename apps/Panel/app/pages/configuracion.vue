@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUsuarios, type Usuario } from '~/composables/useUsuarios'
 import { useRoles, type Role } from '~/composables/useRoles'
+import { useEmpresas, type Empresa } from '~/composables/useEmpresas'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -8,6 +9,8 @@ const toast = useToast()
 
 const { getUsuarios, createUsuario, deleteUsuario } = useUsuarios()
 const { getRoles } = useRoles()
+const { getEmpresas } = useEmpresas()
+
 
 // General Settings
 const companyName = ref('Mi Empresa S.L.')
@@ -55,6 +58,7 @@ const activeSection = ref('general')
 // Users Logic
 const usuarios = ref<Usuario[]>([])
 const rolesList = ref<Role[]>([])
+const empresas = ref<Empresa[]>([])
 const isUserModalOpen = ref(false)
 const isLoadingUsers = ref(false)
 
@@ -69,14 +73,16 @@ const newUser = ref({
 async function loadUsersAndRoles() {
   isLoadingUsers.value = true
   try {
-    const [dataUsers, dataRoles] = await Promise.all([
+    const [dataUsers, dataRoles, dataEmpresas] = await Promise.all([
       getUsuarios(),
-      getRoles()
+      getRoles(),
+      getEmpresas()
     ])
     if (dataUsers) usuarios.value = dataUsers
     if (dataRoles) rolesList.value = dataRoles
+    if (dataEmpresas) empresas.value = dataEmpresas
   } catch (error) {
-    console.error('Error cargando usuarios/roles:', error)
+    console.error('Error cargando usuarios/roles/empresas:', error)
     toast.add({ title: 'Error cargando datos de usuarios', color: 'error' })
   } finally {
     isLoadingUsers.value = false
@@ -95,10 +101,11 @@ function openNewUserModal() {
     email: '',
     password: '',
     rolId: '',
-    empresaId: usuarios.value[0]?.empresaId || ''
+    empresaId: empresas.value[0]?.id_empresa || usuarios.value[0]?.empresaId || ''
   }
   isUserModalOpen.value = true
 }
+
 
 async function inviteUser() {
   try {
@@ -438,9 +445,16 @@ function saveSettings() {
             />
           </UFormField>
           
-          <UFormField label="ID Empresa" name="empresaId">
-            <UInput v-model="newUser.empresaId" placeholder="UUID de la empresa" />
+          <UFormField label="Empresa" name="empresaId">
+            <USelectMenu 
+              v-model="newUser.empresaId" 
+              :items="empresas" 
+              value-key="id_empresa"
+              label-key="nombre_comercial"
+              placeholder="Seleccionar Empresa" 
+            />
           </UFormField>
+
         </div>
       </div>
     </template>

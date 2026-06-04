@@ -23,5 +23,10 @@
       "@app/common": ["libs/common/src"],
       "@app/common/*": ["libs/common/src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "apps/Panel"
+  ]
 }
