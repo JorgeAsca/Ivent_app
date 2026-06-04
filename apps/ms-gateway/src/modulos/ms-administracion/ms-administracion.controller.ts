@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post, Get } from '@nestjs/common';
+import { Body, Controller, Inject, Post, Get, Param, Patch, Delete } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ADMIN_PATTERNS } from '@app/common';
 
@@ -18,5 +18,15 @@ export class AdministracionController {
   @Get('empresas')
   listarEmpresas() {
     return this.natsClient.send({ cmd: 'listar_empresas' }, {});
+  }
+
+  @Patch('empresas/:id')
+  actualizarEmpresa(@Param('id') id: string, @Body() data: any) {
+    return this.natsClient.send({ cmd: 'actualizar_empresa' }, { id, ...data });
+  }
+
+  @Delete('empresas/:id')
+  eliminarEmpresa(@Param('id') id: string) {
+    return this.natsClient.send({ cmd: 'eliminar_empresa' }, id);
   }
 }

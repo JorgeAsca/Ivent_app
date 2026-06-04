@@ -22,4 +22,14 @@ export class EmpresasController {
   async findAll() {
     return this.empresasService.findAll();
   }
+
+  @MessagePattern({ cmd: 'actualizar_empresa' })
+  async updateEmpresa(@Payload() data: any) {
+    return this.empresasService.update(data.id, data);
+  }
+
+  @MessagePattern({ cmd: 'eliminar_empresa' })
+  async deleteEmpresa(@Payload() id: string) {
+    return this.empresasService.remove(id);
+  }
 }

@@ -30,7 +30,29 @@ export class EmpresasService {
   }
 
   async findAll() {
-    this.logger.log('Listando todas las empresas');
-    return this.prisma.empresa.findMany();
+    this.logger.log('Listando todas las empresas activas');
+    return this.prisma.empresa.findMany({
+      where: { activo: true },
+    });
+  }
+
+  async update(id_empresa: string, data: Partial<CreateEmpresaDto>) {
+    this.logger.log(`Actualizando empresa: ${id_empresa}`);
+    return this.prisma.empresa.update({
+      where: { id_empresa },
+      data: {
+        nombre_legal: data.nombre_legal,
+        nombre_comercial: data.nombre_comercial,
+        nif_cif: data.nif_cif,
+      },
+    });
+  }
+
+  async remove(id_empresa: string) {
+    this.logger.log(`Eliminando lógicamente empresa: ${id_empresa}`);
+    return this.prisma.empresa.update({
+      where: { id_empresa },
+      data: { activo: false },
+    });
   }
 }

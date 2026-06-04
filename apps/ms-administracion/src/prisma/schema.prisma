@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model Empresa {
@@ -13,4 +12,5 @@ model Empresa {
   nombre_legal     String
   nombre_comercial String?
   nif_cif          String   @unique
+  activo           Boolean  @default(true)
 }
