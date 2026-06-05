@@ -15,7 +15,7 @@ COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter common build
 # Generate Prisma Client ONLY if the prisma directory exists in the app
-RUN if [ -d "./apps/${APP_NAME}/prisma" ]; then npx prisma generate --schema=./apps/${APP_NAME}/prisma/schema.prisma; fi
+RUN if [ -d "./apps/${APP_NAME}/prisma" ]; then cd ./apps/${APP_NAME} && npx prisma generate; fi
 
 RUN npx nest build ${APP_NAME}
 RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
@@ -31,6 +31,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/apps/${APP_NAME}/prisma ./prisma
+COPY --from=build /app/apps/${APP_NAME}/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
 
 RUN chmod +x ./start.sh

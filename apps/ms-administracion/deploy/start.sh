@@ -2,7 +2,7 @@
 set -e
 
 echo "Applying database migrations..."
-if [ -d "./prisma" ]; then npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss; fi
+if [ -d "./prisma" ]; then npx prisma db push --accept-data-loss; fi
 
 echo "Starting microservice ${APP_NAME}..."
 
