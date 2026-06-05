@@ -30,7 +30,6 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/apps/${APP_NAME}/prisma ./prisma
 COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
 
 RUN chmod +x ./start.sh
