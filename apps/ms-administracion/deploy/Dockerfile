@@ -15,7 +15,7 @@ COPY ./apps/${APP_NAME} ./apps/${APP_NAME}
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter common build
 # Generate Prisma Client ONLY if the prisma directory exists in the app
-RUN if [ -d "./apps/${APP_NAME}/prisma" ]; then cd ./apps/${APP_NAME} && npx prisma generate; fi
+RUN if [ -d "./apps/${APP_NAME}/prisma" ]; then cd ./apps/${APP_NAME} && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate; fi
 
 RUN npx nest build ${APP_NAME}
 RUN pnpm install --prod --no-frozen-lockfile --config.node-linker=hoisted --config.confirm-modules-purge=false
