@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Applying database migrations..."
+if [ -d "./prisma" ]; then npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss; fi
+
 echo "Starting microservice ${APP_NAME}..."
 
 FLAT_PATH="dist/apps/${APP_NAME}/main.js"
