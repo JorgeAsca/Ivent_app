@@ -60,6 +60,7 @@ const movements = computed(() => {
       type: m.tipo.toLowerCase(),
       product: p ? p.nombre : 'Desconocido',
       productSku: p ? p.sku : '',
+      unidadMedida: p ? p.unidadMedida || 'Ud' : 'Ud',
       quantity: m.cantidad,
       warehouse: a ? a.nombre : 'Desconocido',
       warehouseId: m.id_almacen,
@@ -378,7 +379,7 @@ const totalSalidas = computed(() => {
                   row.original.type === 'entrada' ? 'text-emerald-500' : 'text-amber-500',
                 ]"
               >
-                {{ row.original.type === 'entrada' ? '+' : '-' }}{{ row.original.quantity }}
+                {{ row.original.type === 'entrada' ? '+' : '-' }}{{ row.original.quantity }} {{ row.original.unidadMedida }}
               </span>
             </template>
             <template #warehouse-cell="{ row }">

@@ -27,4 +27,8 @@ export class CreateProductoDto {
     @IsOptional()
     @IsUUID()
     public almacenId?: string;
+
+    @IsOptional()
+    @IsString()
+    public unidadMedida?: string;
 }

@@ -71,6 +71,14 @@ const columns = [
 const categoryOptions = computed(() => categorias.value.map(c => ({ value: c.id, label: c.nombre })))
 const warehouseOptions = computed(() => almacenes.value.map(a => ({ value: a.id, label: a.nombre })))
 
+const unidadOptions = [
+  { value: 'Ud', label: 'Unidades (Ud)' },
+  { value: 'Pq', label: 'Paquetes (Pq)' },
+  { value: 'kg', label: 'Kilogramos (kg)' },
+  { value: 'lb', label: 'Libras (lb)' },
+  { value: 'L', label: 'Litros (L)' },
+]
+
 function openNewProductModal() {
   isEditMode.value = false
   currentProduct.value = {
@@ -80,7 +88,8 @@ function openNewProductModal() {
     almacenId: '',
     stock: 0,
     precio: 0,
-    activo: true
+    activo: true,
+    unidadMedida: 'Ud'
   }
   isModalOpen.value = true
 }
@@ -98,6 +107,7 @@ async function saveProduct() {
       nombre: currentProduct.value.nombre,
       categoriaId: currentProduct.value.categoriaId,
       almacenId: currentProduct.value.almacenId,
+      unidadMedida: currentProduct.value.unidadMedida,
       stock: currentProduct.value.stock,
       precio: currentProduct.value.precio
     }
@@ -157,8 +167,8 @@ async function deleteProduct(id: string) {
           <USelectMenu
             v-model="selectedCategory"
             :items="categorias"
-            value-attribute="id"
-            option-attribute="nombre"
+            value-key="id"
+            label-key="nombre"
             placeholder="Todas las categorias"
             class="w-48"
           />
@@ -180,7 +190,7 @@ async function deleteProduct(id: string) {
               <span class="text-default">{{ row.original.categoria?.nombre || '-' }}</span>
             </template>
             <template #stock-cell="{ row }">
-              <span class="text-default">{{ row.original.stock }}</span>
+              <span class="text-default">{{ row.original.stock }} {{ row.original.unidadMedida || 'Ud' }}</span>
             </template>
             <template #precio-cell="{ row }">
               <span class="text-default">${{ Number(row.original.precio).toFixed(2) }}</span>
@@ -247,6 +257,15 @@ async function deleteProduct(id: string) {
         <div class="grid grid-cols-2 gap-4">
           <UFormField label="Precio de Venta" name="precio">
             <UInput v-model.number="currentProduct.precio" type="number" step="0.01" icon="i-lucide-dollar-sign" />
+          </UFormField>
+          <UFormField label="Unidad de Medida" name="unidadMedida">
+            <USelectMenu 
+              v-model="currentProduct.unidadMedida" 
+              :items="unidadOptions"
+              value-key="value"
+              label-key="label"
+              placeholder="Ej: Ud, kg, L" 
+            />
           </UFormField>
         </div>
       </div>

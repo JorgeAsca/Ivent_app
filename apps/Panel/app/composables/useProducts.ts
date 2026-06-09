@@ -9,6 +9,7 @@ export interface Product {
   activo: boolean
   categoriaId?: string
   almacenId?: string
+  unidadMedida?: string
   categoria?: any
 }
 

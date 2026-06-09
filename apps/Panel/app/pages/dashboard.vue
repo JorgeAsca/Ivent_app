@@ -66,7 +66,7 @@ const newProduct = ref({
   isVariable: false
 })
 
-const units = ['Unidades', 'Kilos', 'Litros', 'Metros', 'Cajas', 'Gramos', 'Mililitros']
+const units = ['Unidades', 'Kilos', 'Litros', 'Metros']
 const categories = ['Panaderia', 'Salsas', 'Lacteos', 'Aceites', 'Embutidos', 'Verduras', 'Especias', 'Conservas']
 const warehouses = ['Almacen Principal', 'Refrigerado', 'Congelados']
 

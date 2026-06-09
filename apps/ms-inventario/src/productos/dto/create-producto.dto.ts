@@ -5,4 +5,5 @@ export class CreateProductoDto {
     public sku: string;
     public categoriaId: string;
     public almacenId?: string;
+    public unidadMedida?: string;
 }

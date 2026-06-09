@@ -15,6 +15,9 @@ export class Producto {
     @Column('int', { default: 0 })
     stock: number;
 
+    @Column({ default: 'Ud' })
+    unidadMedida: string;
+
     @Column('text', { unique: true })
     sku: string; 
 
