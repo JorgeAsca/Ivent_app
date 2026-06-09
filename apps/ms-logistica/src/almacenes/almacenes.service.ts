@@ -19,12 +19,24 @@ export class AlmacenesService {
     }
 
     async findAll(id_empresa: string) {
+        if (!id_empresa) {
+            return await this.repository.find();
+        }
         return await this.repository.find({
-            where: { id_empresa, activo: true },
+            where: { id_empresa },
         });
     }
 
     async findOne(id: string) {
         return await this.repository.findOneBy({ id });
+    }
+
+    async update(id: string, updateData: Partial<CreateAlmacenDto>) {
+        await this.repository.update(id, updateData);
+        return this.findOne(id);
+    }
+
+    async remove(id: string) {
+        return await this.repository.update(id, { estado: 'inactivo' });
     }
 }

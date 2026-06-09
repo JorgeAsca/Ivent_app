@@ -1,135 +1,174 @@
 <script setup lang="ts">
+import { useAlmacenes, type Almacen } from '~/composables/useAlmacenes'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useProducts } from '~/composables/useProducts'
+
 definePageMeta({ layout: 'dashboard' })
 
 const toast = useToast()
+const { getAlmacenes, createAlmacen, updateAlmacen, deleteAlmacen, getWarehouseStock } = useAlmacenes()
+const { getEmpresas } = useEmpresas()
+const { getProducts } = useProducts()
+
 const isModalOpen = ref(false)
+const isInventoryModalOpen = ref(false)
 const isEditMode = ref(false)
+const isLoading = ref(false)
+const isStockLoading = ref(false)
 
-interface Warehouse {
-  id: number
-  code: string
-  name: string
-  type: 'general' | 'refrigerado' | 'congelados' | 'materia_prima'
-  address: string
-  manager: string
-  capacity: number
-  usedCapacity: number
-  productCount: number
-  status: 'active' | 'maintenance' | 'inactive'
-}
+const activeEmpresa = ref<string | null>(null)
+const backendAlmacenes = ref<Almacen[]>([])
+const backendProductos = ref<any[]>([])
 
-const warehouses = ref<Warehouse[]>([
-  { id: 1, code: 'ALM-001', name: 'Almacen Principal', type: 'general', address: 'Calle Industrial 123', manager: 'Carlos Rodriguez', capacity: 1000, usedCapacity: 650, productCount: 245, status: 'active' },
-  { id: 2, code: 'ALM-002', name: 'Refrigerado', type: 'refrigerado', address: 'Calle Industrial 123', manager: 'Ana Lopez', capacity: 300, usedCapacity: 210, productCount: 82, status: 'active' },
-  { id: 3, code: 'ALM-003', name: 'Congelados', type: 'congelados', address: 'Calle Industrial 125', manager: 'Pedro Martinez', capacity: 200, usedCapacity: 85, productCount: 34, status: 'active' },
-  { id: 4, code: 'ALM-004', name: 'Materia Prima', type: 'materia_prima', address: 'Calle Industrial 127', manager: 'Laura Sanchez', capacity: 500, usedCapacity: 320, productCount: 156, status: 'active' },
-  { id: 5, code: 'ALM-005', name: 'Cocina Central', type: 'general', address: 'Av. Gastronomica 45', manager: 'Miguel Torres', capacity: 150, usedCapacity: 120, productCount: 48, status: 'maintenance' },
-])
+const selectedWarehouseName = ref('')
+const selectedWarehouseStock = ref<any[]>([])
 
-const currentWarehouse = ref<Partial<Warehouse>>({
-  code: '',
-  name: '',
-  type: 'general',
-  address: '',
-  manager: '',
-  capacity: 0,
-  status: 'active',
+const warehouses = computed(() => backendAlmacenes.value)
+
+const currentWarehouse = ref<Partial<Almacen>>({
+  codigo: '',
+  nombre: '',
+  estado: 'activo',
 })
 
-const typeOptions = [
-  { value: 'general', label: 'General', icon: 'i-lucide-warehouse' },
-  { value: 'refrigerado', label: 'Refrigerado', icon: 'i-lucide-thermometer-snowflake' },
-  { value: 'congelados', label: 'Congelados', icon: 'i-lucide-snowflake' },
-  { value: 'materia_prima', label: 'Materia Prima', icon: 'i-lucide-boxes' },
-]
-
 const statusOptions = [
-  { value: 'active', label: 'Activo' },
-  { value: 'maintenance', label: 'En Mantenimiento' },
-  { value: 'inactive', label: 'Inactivo' },
+  { value: 'activo', label: 'Activo' },
+  { value: 'mantenimiento', label: 'En Mantenimiento' },
+  { value: 'inactivo', label: 'Inactivo' },
 ]
 
-function getTypeInfo(type: string) {
-  switch (type) {
-    case 'general': return { label: 'General', icon: 'i-lucide-warehouse', color: 'emerald' }
-    case 'refrigerado': return { label: 'Refrigerado', icon: 'i-lucide-thermometer-snowflake', color: 'blue' }
-    case 'congelados': return { label: 'Congelados', icon: 'i-lucide-snowflake', color: 'cyan' }
-    case 'materia_prima': return { label: 'Materia Prima', icon: 'i-lucide-boxes', color: 'amber' }
-    default: return { label: type, icon: 'i-lucide-warehouse', color: 'neutral' }
-  }
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'active': return 'success'
-    case 'maintenance': return 'warning'
-    case 'inactive': return 'neutral'
+function getStatusColor(estado: string) {
+  switch (estado) {
+    case 'activo': return 'success'
+    case 'mantenimiento': return 'warning'
+    case 'inactivo': return 'neutral'
     default: return 'neutral'
   }
 }
 
-function getStatusLabel(status: string) {
-  switch (status) {
-    case 'active': return 'Activo'
-    case 'maintenance': return 'Mantenimiento'
-    case 'inactive': return 'Inactivo'
-    default: return status
+function getStatusLabel(estado: string) {
+  switch (estado) {
+    case 'activo': return 'Activo'
+    case 'mantenimiento': return 'En Mantenimiento'
+    case 'inactivo': return 'Inactivo'
+    default: return estado || 'Activo'
   }
 }
 
-function getCapacityPercentage(warehouse: Warehouse) {
-  return Math.round((warehouse.usedCapacity / warehouse.capacity) * 100)
+const fetchAll = async () => {
+  isLoading.value = true
+  try {
+    const [empresas, prods] = await Promise.all([
+      getEmpresas(),
+      getProducts()
+    ])
+    backendProductos.value = prods || []
+    
+    if (empresas && empresas.length > 0) {
+      activeEmpresa.value = empresas[0].id_empresa
+      const alms = await getAlmacenes(activeEmpresa.value)
+      backendAlmacenes.value = alms || []
+    }
+  } catch (error) {
+    toast.add({ title: 'Error cargando datos', color: 'error' })
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function getCapacityColor(percentage: number) {
-  if (percentage >= 90) return 'error'
-  if (percentage >= 70) return 'warning'
-  return 'success'
-}
+onMounted(() => {
+  fetchAll()
+})
 
 function openNewModal() {
   isEditMode.value = false
   currentWarehouse.value = {
-    code: `ALM-${String(warehouses.value.length + 1).padStart(3, '0')}`,
-    name: '',
-    type: 'general',
-    address: '',
-    manager: '',
-    capacity: 0,
-    status: 'active',
+    codigo: '',
+    nombre: '',
+    estado: 'activo',
   }
   isModalOpen.value = true
 }
 
-function openEditModal(warehouse: Warehouse) {
+function openEditModal(warehouse: Almacen) {
   isEditMode.value = true
   currentWarehouse.value = { ...warehouse }
   isModalOpen.value = true
 }
 
-function saveWarehouse() {
-  if (isEditMode.value) {
-    const index = warehouses.value.findIndex(w => w.id === currentWarehouse.value.id)
-    if (index !== -1) {
-      warehouses.value[index] = currentWarehouse.value as Warehouse
-    }
-    toast.add({ title: 'Almacen actualizado', icon: 'i-lucide-check', color: 'success' })
-  } else {
-    const newWarehouse: Warehouse = {
-      ...currentWarehouse.value as Warehouse,
-      id: Date.now(),
-      usedCapacity: 0,
-      productCount: 0,
-    }
-    warehouses.value.push(newWarehouse)
-    toast.add({ title: 'Almacen creado', icon: 'i-lucide-check', color: 'success' })
+async function viewInventory(warehouse: Almacen) {
+  selectedWarehouseName.value = warehouse.nombre
+  isInventoryModalOpen.value = true
+  isStockLoading.value = true
+  try {
+    const stockData = await getWarehouseStock(warehouse.id)
+    // Enrich stockData with product names
+    selectedWarehouseStock.value = (stockData || []).map(s => {
+      const prod = backendProductos.value.find(p => p.id === s.id_producto)
+      return {
+        ...s,
+        productoNombre: prod ? prod.nombre : 'Producto Desconocido',
+        productoSku: prod ? prod.sku : 'N/A'
+      }
+    })
+  } catch (error) {
+    toast.add({ title: 'Error al cargar inventario', color: 'error' })
+    selectedWarehouseStock.value = []
+  } finally {
+    isStockLoading.value = false
   }
-  isModalOpen.value = false
 }
 
-function deleteWarehouse(id: number) {
-  warehouses.value = warehouses.value.filter(w => w.id !== id)
-  toast.add({ title: 'Almacen eliminado', icon: 'i-lucide-trash', color: 'warning' })
+async function saveWarehouse() {
+  if (!currentWarehouse.value.nombre) {
+    toast.add({ title: 'El nombre es requerido', color: 'error' })
+    return
+  }
+
+  // Auto-generate codigo if empty
+  const codigoToSave = currentWarehouse.value.codigo || `ALM-${String(warehouses.value.length + 1).padStart(3, '0')}`
+
+  try {
+    if (isEditMode.value && currentWarehouse.value.id) {
+      const res = await updateAlmacen(currentWarehouse.value.id, {
+        codigo: codigoToSave,
+        nombre: currentWarehouse.value.nombre,
+        estado: currentWarehouse.value.estado
+      })
+      if (res) {
+        toast.add({ title: 'Almacen actualizado', icon: 'i-lucide-check', color: 'success' })
+      }
+    } else {
+      if (!activeEmpresa.value) {
+        toast.add({ title: 'No hay empresa activa', color: 'error' })
+        return
+      }
+      const newWarehouse = {
+        id_empresa: activeEmpresa.value,
+        codigo: codigoToSave,
+        nombre: currentWarehouse.value.nombre,
+        estado: currentWarehouse.value.estado
+      }
+      const res = await createAlmacen(newWarehouse)
+      if (res) {
+        toast.add({ title: 'Almacen creado', icon: 'i-lucide-check', color: 'success' })
+      }
+    }
+    isModalOpen.value = false
+    await fetchAll()
+  } catch (error) {
+    toast.add({ title: 'Error guardando almacen', color: 'error' })
+  }
+}
+
+async function handleDeleteWarehouse(id: string) {
+  try {
+    await deleteAlmacen(id)
+    toast.add({ title: 'Almacen eliminado', icon: 'i-lucide-trash', color: 'warning' })
+    await fetchAll()
+  } catch (error) {
+    toast.add({ title: 'Error eliminando almacen', color: 'error' })
+  }
 }
 </script>
 
@@ -146,7 +185,7 @@ function deleteWarehouse(id: number) {
     <template #body>
       <div class="p-6">
         <!-- Summary Stats -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
           <UCard>
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-emerald-500/10 p-2">
@@ -165,29 +204,7 @@ function deleteWarehouse(id: number) {
               </div>
               <div>
                 <p class="text-sm text-muted">Productos Totales</p>
-                <p class="text-xl font-semibold text-default">{{ warehouses.reduce((sum, w) => sum + w.productCount, 0) }}</p>
-              </div>
-            </div>
-          </UCard>
-          <UCard>
-            <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-amber-500/10 p-2">
-                <UIcon name="i-lucide-ruler" class="size-5 text-amber-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Capacidad Total</p>
-                <p class="text-xl font-semibold text-default">{{ warehouses.reduce((sum, w) => sum + w.capacity, 0).toLocaleString() }} m3</p>
-              </div>
-            </div>
-          </UCard>
-          <UCard>
-            <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-purple-500/10 p-2">
-                <UIcon name="i-lucide-percent" class="size-5 text-purple-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Ocupacion Media</p>
-                <p class="text-xl font-semibold text-default">{{ Math.round(warehouses.reduce((sum, w) => sum + getCapacityPercentage(w), 0) / warehouses.length) }}%</p>
+                <p class="text-xl font-semibold text-default">{{ warehouses.reduce((sum, w) => sum + (w.productCount || 0), 0) }}</p>
               </div>
             </div>
           </UCard>
@@ -198,22 +215,22 @@ function deleteWarehouse(id: number) {
           <UCard v-for="warehouse in warehouses" :key="warehouse.id">
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">
-                <div :class="`rounded-lg bg-${getTypeInfo(warehouse.type).color}-500/10 p-3`">
-                  <UIcon :name="getTypeInfo(warehouse.type).icon" :class="`size-6 text-${getTypeInfo(warehouse.type).color}-500`" />
+                <div class="rounded-lg bg-emerald-500/10 p-3">
+                  <UIcon name="i-lucide-warehouse" class="size-6 text-emerald-500" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-default">{{ warehouse.name }}</h3>
-                  <p class="text-sm text-muted">{{ warehouse.code }}</p>
+                  <h3 class="font-semibold text-default">{{ warehouse.nombre }}</h3>
+                  <p class="text-sm text-muted">{{ warehouse.codigo || 'Sin código' }}</p>
                 </div>
               </div>
               <UDropdownMenu
                 :items="[
                   [
                     { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(warehouse) },
-                    { label: 'Ver inventario', icon: 'i-lucide-package', to: `/productos?warehouse=${warehouse.name}` },
+                    { label: 'Ver inventario', icon: 'i-lucide-package', onSelect: () => viewInventory(warehouse) },
                   ],
                   [
-                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteWarehouse(warehouse.id) },
+                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => handleDeleteWarehouse(warehouse.id) },
                   ],
                 ]"
               >
@@ -223,38 +240,13 @@ function deleteWarehouse(id: number) {
 
             <div class="mt-4 space-y-3">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-muted">Tipo</span>
-                <UBadge :label="getTypeInfo(warehouse.type).label" variant="subtle" color="neutral" />
-              </div>
-              <div class="flex items-center justify-between text-sm">
                 <span class="text-muted">Estado</span>
-                <UBadge :label="getStatusLabel(warehouse.status)" :color="getStatusColor(warehouse.status)" variant="subtle" />
-              </div>
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-muted">Responsable</span>
-                <span class="text-default">{{ warehouse.manager }}</span>
+                <UBadge :label="getStatusLabel(warehouse.estado)" :color="getStatusColor(warehouse.estado)" variant="subtle" />
               </div>
               <div class="flex items-center justify-between text-sm">
                 <span class="text-muted">Productos</span>
-                <span class="font-semibold text-default">{{ warehouse.productCount }}</span>
+                <span class="font-semibold text-default">{{ warehouse.productCount || 0 }}</span>
               </div>
-            </div>
-
-            <div class="mt-4">
-              <div class="mb-2 flex items-center justify-between text-sm">
-                <span class="text-muted">Capacidad</span>
-                <span :class="`font-semibold text-${getCapacityColor(getCapacityPercentage(warehouse))}`">
-                  {{ getCapacityPercentage(warehouse) }}%
-                </span>
-              </div>
-              <UProgress
-                :value="getCapacityPercentage(warehouse)"
-                :color="getCapacityColor(getCapacityPercentage(warehouse))"
-                size="sm"
-              />
-              <p class="mt-1 text-xs text-muted">
-                {{ warehouse.usedCapacity }} / {{ warehouse.capacity }} m3
-              </p>
             </div>
           </UCard>
         </div>
@@ -266,40 +258,17 @@ function deleteWarehouse(id: number) {
   <UModal v-model:open="isModalOpen" :title="isEditMode ? 'Editar Almacen' : 'Nuevo Almacen'">
     <template #body>
       <div class="flex flex-col gap-4">
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Codigo" name="code">
-            <UInput v-model="currentWarehouse.code" :disabled="isEditMode" />
-          </UFormField>
-          <UFormField label="Tipo" name="type">
-            <USelectMenu
-              v-model="currentWarehouse.type"
-              :items="typeOptions"
-              value-key="value"
-              placeholder="Seleccionar tipo"
-            />
-          </UFormField>
-        </div>
-
-        <UFormField label="Nombre" name="name">
-          <UInput v-model="currentWarehouse.name" placeholder="Nombre del almacen" />
+        <UFormField label="Codigo" name="codigo">
+          <UInput v-model="currentWarehouse.codigo" :disabled="isEditMode" placeholder="Dejar en blanco para auto-generar" />
         </UFormField>
 
-        <UFormField label="Direccion" name="address">
-          <UInput v-model="currentWarehouse.address" placeholder="Direccion del almacen" />
+        <UFormField label="Nombre" name="nombre">
+          <UInput v-model="currentWarehouse.nombre" placeholder="Nombre del almacen" />
         </UFormField>
 
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Responsable" name="manager">
-            <UInput v-model="currentWarehouse.manager" placeholder="Nombre del responsable" />
-          </UFormField>
-          <UFormField label="Capacidad (m3)" name="capacity">
-            <UInput v-model.number="currentWarehouse.capacity" type="number" min="0" />
-          </UFormField>
-        </div>
-
-        <UFormField label="Estado" name="status">
+        <UFormField label="Estado" name="estado">
           <URadioGroup
-            v-model="currentWarehouse.status"
+            v-model="currentWarehouse.estado"
             :items="statusOptions"
             orientation="horizontal"
           />
@@ -311,6 +280,34 @@ function deleteWarehouse(id: number) {
       <div class="flex justify-end gap-2">
         <UButton variant="ghost" label="Cancelar" @click="isModalOpen = false" />
         <UButton :label="isEditMode ? 'Guardar Cambios' : 'Crear Almacen'" @click="saveWarehouse" />
+      </div>
+    </template>
+  </UModal>
+
+  <!-- Inventory Modal -->
+  <UModal v-model:open="isInventoryModalOpen" :title="`Inventario: ${selectedWarehouseName}`">
+    <template #body>
+      <div v-if="isStockLoading" class="flex justify-center p-6">
+        <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
+      </div>
+      <div v-else-if="selectedWarehouseStock.length === 0" class="text-center p-6 text-muted">
+        No hay productos en este almacén.
+      </div>
+      <div v-else class="max-h-[60vh] overflow-auto">
+        <UTable 
+          :data="selectedWarehouseStock" 
+          :columns="[
+            { accessorKey: 'productoSku', header: 'SKU' },
+            { accessorKey: 'productoNombre', header: 'Producto' },
+            { accessorKey: 'cantidad', header: 'Cantidad' }
+          ]" 
+        />
+      </div>
+    </template>
+    
+    <template #footer>
+      <div class="flex justify-end">
+        <UButton label="Cerrar" color="neutral" variant="ghost" @click="isInventoryModalOpen = false" />
       </div>
     </template>
   </UModal>

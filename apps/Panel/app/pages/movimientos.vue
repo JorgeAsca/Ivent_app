@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useMovimientos, type Movimiento as BackendMovimiento } from '~/composables/useMovimientos'
+import { useAlmacenes, type Almacen } from '~/composables/useAlmacenes'
+import { useProducts, type Product } from '~/composables/useProducts'
+import { useEmpresas, type Empresa } from '~/composables/useEmpresas'
+
 definePageMeta({ layout: 'dashboard' })
 
 const toast = useToast()
@@ -7,33 +12,67 @@ const searchQuery = ref('')
 const filterType = ref<string | undefined>(undefined)
 const filterWarehouse = ref<string | undefined>(undefined)
 
-interface Movement {
-  id: number
-  date: string
-  time: string
-  type: 'entrada' | 'salida' | 'ajuste' | 'transferencia'
-  product: string
-  productSku: string
-  quantity: number
-  warehouse: string
-  warehouseTo?: string
-  reference: string
-  notes: string
-  user: string
+const isDetailsModalOpen = ref(false)
+const selectedMovement = ref<any>(null)
+
+const { getMovimientos, createMovimiento, getStockByProducto } = useMovimientos()
+const { getAlmacenes } = useAlmacenes()
+const { getProducts } = useProducts()
+const { getEmpresas } = useEmpresas()
+
+const rawMovements = ref<BackendMovimiento[]>([])
+const backendAlmacenes = ref<Almacen[]>([])
+const backendProductos = ref<Product[]>([])
+const activeEmpresa = ref<string | null>(null)
+
+const fetchAll = async () => {
+  try {
+    const [alms, prods, empresas] = await Promise.all([
+      getAlmacenes(),
+      getProducts(),
+      getEmpresas()
+    ])
+    backendAlmacenes.value = alms || []
+    backendProductos.value = prods || []
+    if (empresas && empresas.length > 0) {
+      activeEmpresa.value = empresas[0].id_empresa
+      const movs = await getMovimientos(activeEmpresa.value)
+      rawMovements.value = movs || []
+    }
+  } catch (error) {
+    toast.add({ title: 'Error cargando datos', color: 'error' })
+  }
 }
 
-const movements = ref<Movement[]>([
-  { id: 1, date: '2024-01-15', time: '09:30', type: 'entrada', product: 'Harina de Trigo 1kg', productSku: 'HAR-001', quantity: 50, warehouse: 'Almacen Principal', reference: 'OC-2024-001', notes: 'Compra a Proveedor ABC', user: 'Admin' },
-  { id: 2, date: '2024-01-15', time: '10:15', type: 'salida', product: 'Salsa de Tomate 500ml', productSku: 'SAL-001', quantity: 30, warehouse: 'Almacen Principal', reference: 'PED-2024-042', notes: 'Venta a cliente', user: 'Admin' },
-  { id: 3, date: '2024-01-15', time: '11:00', type: 'entrada', product: 'Queso Mozzarella 500g', productSku: 'QUE-001', quantity: 25, warehouse: 'Refrigerado', reference: 'OC-2024-002', notes: 'Compra a Lacteos del Norte', user: 'Admin' },
-  { id: 4, date: '2024-01-15', time: '14:30', type: 'transferencia', product: 'Aceite de Oliva 1L', productSku: 'ACE-001', quantity: 15, warehouse: 'Almacen Principal', warehouseTo: 'Cocina', reference: 'TRF-2024-008', notes: 'Transferencia interna', user: 'Admin' },
-  { id: 5, date: '2024-01-14', time: '16:00', type: 'ajuste', product: 'Oregano 100g', productSku: 'ORE-001', quantity: -5, warehouse: 'Almacen Principal', reference: 'AJU-2024-003', notes: 'Ajuste por inventario fisico', user: 'Admin' },
-  { id: 6, date: '2024-01-14', time: '09:00', type: 'entrada', product: 'Levadura Fresca', productSku: 'LEV-001', quantity: 100, warehouse: 'Refrigerado', reference: 'OC-2024-003', notes: 'Reposicion de stock', user: 'Admin' },
-  { id: 7, date: '2024-01-13', time: '11:30', type: 'salida', product: 'Jamon Serrano', productSku: 'JAM-001', quantity: 8, warehouse: 'Refrigerado', reference: 'PED-2024-038', notes: 'Pedido restaurante', user: 'Admin' },
-])
+onMounted(() => {
+  fetchAll()
+})
+
+const movements = computed(() => {
+  return rawMovements.value.map(m => {
+    const p = backendProductos.value.find(prod => prod.id === m.id_producto)
+    const a = backendAlmacenes.value.find(alm => alm.id === m.id_almacen)
+    
+    return {
+      id: m.id,
+      date: m.fecha_movimiento ? m.fecha_movimiento.split('T')[0] : '-',
+      time: m.fecha_movimiento ? new Date(m.fecha_movimiento).toLocaleTimeString().slice(0, 5) : '-',
+      type: m.tipo.toLowerCase(),
+      product: p ? p.nombre : 'Desconocido',
+      productSku: p ? p.sku : '',
+      quantity: m.cantidad,
+      warehouse: a ? a.nombre : 'Desconocido',
+      warehouseId: m.id_almacen,
+      warehouseTo: undefined,
+      reference: m.referencia_externa || '-',
+      notes: '',
+      user: m.id_usuario ? 'Usuario Real' : 'Admin'
+    }
+  })
+})
 
 const currentMovement = ref({
-  type: 'entrada' as Movement['type'],
+  type: 'entrada',
   product: '',
   quantity: 0,
   warehouse: '',
@@ -49,24 +88,38 @@ const typeOptions = [
   { value: 'transferencia', label: 'Transferencia' },
 ]
 
-const warehouses = ['Almacen Principal', 'Refrigerado', 'Congelados', 'Cocina']
+const warehouses = computed(() => backendAlmacenes.value.map(a => ({ value: a.id, label: a.nombre })))
+const products = computed(() => backendProductos.value.map(p => ({ value: p.id, label: `${p.nombre} (${p.sku})` })))
 
-const products = [
-  { value: 'HAR-001', label: 'Harina de Trigo 1kg' },
-  { value: 'SAL-001', label: 'Salsa de Tomate 500ml' },
-  { value: 'QUE-001', label: 'Queso Mozzarella 500g' },
-  { value: 'ACE-001', label: 'Aceite de Oliva 1L' },
-  { value: 'LEV-001', label: 'Levadura Fresca' },
-  { value: 'JAM-001', label: 'Jamon Serrano' },
-  { value: 'ORE-001', label: 'Oregano 100g' },
-]
+const productStockInfo = ref<any[]>([])
+
+watch(() => currentMovement.value.product, async (newVal) => {
+  if (newVal) {
+    const stock = await getStockByProducto(newVal)
+    productStockInfo.value = stock || []
+  } else {
+    productStockInfo.value = []
+  }
+})
+
+const filteredWarehouses = computed(() => {
+  if (currentMovement.value.type === 'entrada') {
+    return warehouses.value
+  }
+  
+  if (!currentMovement.value.product) return []
+  
+  return warehouses.value.filter(w => 
+    productStockInfo.value.some(s => s.id_almacen === w.value && s.cantidad > 0)
+  )
+})
 
 const filteredMovements = computed(() => {
   return movements.value.filter((mov) => {
     const matchesSearch = mov.product.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       mov.reference.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesType = !filterType.value || mov.type === filterType.value
-    const matchesWarehouse = !filterWarehouse.value || mov.warehouse === filterWarehouse.value
+    const matchesWarehouse = !filterWarehouse.value || mov.warehouseId === filterWarehouse.value
     return matchesSearch && matchesType && matchesWarehouse
   })
 })
@@ -83,7 +136,7 @@ const columns = [
 ]
 
 function getTypeColor(type: string) {
-  switch (type) {
+  switch (type.toLowerCase()) {
     case 'entrada': return 'success'
     case 'salida': return 'warning'
     case 'ajuste': return 'info'
@@ -93,7 +146,7 @@ function getTypeColor(type: string) {
 }
 
 function getTypeIcon(type: string) {
-  switch (type) {
+  switch (type.toLowerCase()) {
     case 'entrada': return 'i-lucide-package-plus'
     case 'salida': return 'i-lucide-package-minus'
     case 'ajuste': return 'i-lucide-scale'
@@ -102,7 +155,7 @@ function getTypeIcon(type: string) {
   }
 }
 
-function openNewModal(type: Movement['type']) {
+function openNewModal(type: string) {
   currentMovement.value = {
     type,
     product: '',
@@ -115,26 +168,93 @@ function openNewModal(type: Movement['type']) {
   isModalOpen.value = true
 }
 
-function saveMovement() {
-  const product = products.find(p => p.value === currentMovement.value.product)
-  const newMovement: Movement = {
-    id: Date.now(),
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5),
-    type: currentMovement.value.type,
-    product: product?.label || '',
-    productSku: currentMovement.value.product,
-    quantity: currentMovement.value.type === 'salida' ? -Math.abs(currentMovement.value.quantity) : currentMovement.value.quantity,
-    warehouse: currentMovement.value.warehouse,
-    warehouseTo: currentMovement.value.warehouseTo || undefined,
-    reference: currentMovement.value.reference || `MOV-${Date.now()}`,
-    notes: currentMovement.value.notes,
-    user: 'Admin',
-  }
-  movements.value.unshift(newMovement)
-  toast.add({ title: 'Movimiento registrado', icon: 'i-lucide-check', color: 'success' })
-  isModalOpen.value = false
+function viewDetails(movement: any) {
+  selectedMovement.value = movement
+  isDetailsModalOpen.value = true
 }
+
+async function saveMovement() {
+  if (!currentMovement.value.product || !currentMovement.value.warehouse || currentMovement.value.quantity <= 0) {
+    toast.add({ title: 'Complete los campos requeridos', color: 'error' })
+    return
+  }
+
+  if (currentMovement.value.type === 'transferencia' && !currentMovement.value.warehouseTo) {
+    toast.add({ title: 'Seleccione un almacén de destino', color: 'error' })
+    return
+  }
+
+  if (!activeEmpresa.value) {
+    toast.add({ title: 'Error: No hay empresa activa', color: 'error' })
+    return
+  }
+
+  try {
+    if (currentMovement.value.type === 'transferencia') {
+      // 1. Registrar SALIDA del almacén origen
+      await createMovimiento({
+        id_producto: currentMovement.value.product,
+        id_almacen: currentMovement.value.warehouse,
+        id_empresa: activeEmpresa.value,
+        tipo: 'SALIDA',
+        cantidad: currentMovement.value.quantity,
+        referencia_externa: currentMovement.value.reference || 'Transferencia (Salida)',
+      })
+
+      // 2. Registrar ENTRADA al almacén destino
+      await createMovimiento({
+        id_producto: currentMovement.value.product,
+        id_almacen: currentMovement.value.warehouseTo,
+        id_empresa: activeEmpresa.value,
+        tipo: 'ENTRADA',
+        cantidad: currentMovement.value.quantity,
+        referencia_externa: currentMovement.value.reference || 'Transferencia (Entrada)',
+      })
+
+      toast.add({ title: 'Transferencia completada', icon: 'i-lucide-check', color: 'success' })
+    } else {
+      // Entrada o Salida Normal
+      const tipoReal = currentMovement.value.type.toUpperCase() === 'AJUSTE' ? 'ENTRADA' : currentMovement.value.type.toUpperCase() as 'ENTRADA' | 'SALIDA'
+      
+      await createMovimiento({
+        id_producto: currentMovement.value.product,
+        id_almacen: currentMovement.value.warehouse,
+        id_empresa: activeEmpresa.value,
+        tipo: tipoReal,
+        cantidad: currentMovement.value.quantity,
+        referencia_externa: currentMovement.value.reference || undefined,
+      })
+
+      toast.add({ title: 'Movimiento registrado', icon: 'i-lucide-check', color: 'success' })
+    }
+    
+    isModalOpen.value = false
+    await fetchAll()
+  } catch (error) {
+    toast.add({ title: 'Error al registrar movimiento', color: 'error' })
+  }
+}
+
+const isToday = (dateString: string) => {
+  if (!dateString || dateString === '-') return false
+  const d = new Date(dateString)
+  const today = new Date()
+  return d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear()
+}
+
+const totalEntradas = computed(() => {
+  return rawMovements.value
+    .filter(m => m.tipo === 'ENTRADA' && isToday(m.fecha_movimiento))
+    .reduce((acc, curr) => acc + curr.cantidad, 0)
+})
+
+const totalSalidas = computed(() => {
+  return rawMovements.value
+    .filter(m => m.tipo === 'SALIDA' && isToday(m.fecha_movimiento))
+    .reduce((acc, curr) => acc + curr.cantidad, 0)
+})
 </script>
 
 <template>
@@ -190,7 +310,7 @@ function saveMovement() {
               </div>
               <div>
                 <p class="text-sm text-muted">Entradas Hoy</p>
-                <p class="text-xl font-semibold text-default">175</p>
+                <p class="text-xl font-semibold text-default">{{ totalEntradas }}</p>
               </div>
             </div>
           </UCard>
@@ -201,7 +321,7 @@ function saveMovement() {
               </div>
               <div>
                 <p class="text-sm text-muted">Salidas Hoy</p>
-                <p class="text-xl font-semibold text-default">38</p>
+                <p class="text-xl font-semibold text-default">{{ totalSalidas }}</p>
               </div>
             </div>
           </UCard>
@@ -255,10 +375,10 @@ function saveMovement() {
               <span
                 :class="[
                   'font-semibold',
-                  row.original.quantity > 0 ? 'text-emerald-500' : 'text-amber-500',
+                  row.original.type === 'entrada' ? 'text-emerald-500' : 'text-amber-500',
                 ]"
               >
-                {{ row.original.quantity > 0 ? '+' : '' }}{{ row.original.quantity }}
+                {{ row.original.type === 'entrada' ? '+' : '-' }}{{ row.original.quantity }}
               </span>
             </template>
             <template #warehouse-cell="{ row }">
@@ -277,7 +397,7 @@ function saveMovement() {
               <UDropdownMenu
                 :items="[
                   [
-                    { label: 'Ver detalles', icon: 'i-lucide-eye' },
+                    { label: 'Ver detalles', icon: 'i-lucide-eye', onSelect: () => viewDetails(row.original) },
                     { label: 'Imprimir', icon: 'i-lucide-printer' },
                   ],
                 ]"
@@ -300,6 +420,7 @@ function saveMovement() {
             v-model="currentMovement.product"
             :items="products"
             value-key="value"
+            label-key="label"
             searchable
             placeholder="Buscar producto..."
           />
@@ -312,7 +433,9 @@ function saveMovement() {
         <UFormField label="Almacen Origen" name="warehouse">
           <USelectMenu
             v-model="currentMovement.warehouse"
-            :items="warehouses"
+            :items="filteredWarehouses"
+            value-key="value"
+            label-key="label"
             placeholder="Seleccionar almacen"
           />
         </UFormField>
@@ -320,17 +443,15 @@ function saveMovement() {
         <UFormField v-if="currentMovement.type === 'transferencia'" label="Almacen Destino" name="warehouseTo">
           <USelectMenu
             v-model="currentMovement.warehouseTo"
-            :items="warehouses.filter(w => w !== currentMovement.warehouse)"
+            :items="warehouses.filter(w => w.value !== currentMovement.warehouse)"
+            value-key="value"
+            label-key="label"
             placeholder="Seleccionar almacen destino"
           />
         </UFormField>
 
         <UFormField label="Referencia (opcional)" name="reference">
           <UInput v-model="currentMovement.reference" placeholder="Ej: OC-2024-001" />
-        </UFormField>
-
-        <UFormField label="Notas" name="notes">
-          <UTextarea v-model="currentMovement.notes" placeholder="Notas adicionales..." :rows="2" />
         </UFormField>
       </div>
     </template>
@@ -339,6 +460,84 @@ function saveMovement() {
       <div class="flex justify-end gap-2">
         <UButton variant="ghost" label="Cancelar" @click="isModalOpen = false" />
         <UButton label="Registrar Movimiento" @click="saveMovement" />
+      </div>
+    </template>
+  </UModal>
+
+  <!-- Details Modal -->
+  <UModal v-model:open="isDetailsModalOpen" title="Detalles del Movimiento">
+    <template #body>
+      <div v-if="selectedMovement" class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">ID</p>
+            <p class="font-mono text-sm text-default">{{ selectedMovement.id }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Fecha y Hora</p>
+            <p class="text-default">{{ selectedMovement.date }} {{ selectedMovement.time }}</p>
+          </div>
+        </div>
+
+        <USeparator />
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">Producto</p>
+            <p class="font-medium text-default">{{ selectedMovement.product }}</p>
+            <p class="text-xs text-muted">{{ selectedMovement.productSku }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Tipo y Cantidad</p>
+            <div class="flex items-center gap-2">
+              <UBadge
+                :color="getTypeColor(selectedMovement.type)"
+                :icon="getTypeIcon(selectedMovement.type)"
+                :label="selectedMovement.type.charAt(0).toUpperCase() + selectedMovement.type.slice(1)"
+                variant="subtle"
+                size="sm"
+              />
+              <span
+                :class="[
+                  'font-semibold',
+                  selectedMovement.type === 'entrada' ? 'text-emerald-500' : 'text-amber-500',
+                ]"
+              >
+                {{ selectedMovement.type === 'entrada' ? '+' : '-' }}{{ selectedMovement.quantity }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <USeparator />
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">Almacén Origen</p>
+            <p class="text-default">{{ selectedMovement.warehouse }}</p>
+          </div>
+          <div v-if="selectedMovement.warehouseTo">
+            <p class="text-sm text-muted">Almacén Destino</p>
+            <p class="text-default">{{ selectedMovement.warehouseTo }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">Referencia</p>
+            <p class="text-default">{{ selectedMovement.reference || '-' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Usuario</p>
+            <p class="text-default">{{ selectedMovement.user }}</p>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end">
+        <UButton label="Cerrar" color="neutral" variant="ghost" @click="isDetailsModalOpen = false" />
       </div>
     </template>
   </UModal>

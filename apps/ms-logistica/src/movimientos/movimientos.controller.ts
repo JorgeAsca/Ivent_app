@@ -16,4 +16,9 @@ export class MovimientosController {
     async obtenerPorProducto(@Payload() data: { id_producto: string }) {
         return await this.movimientosService.buscarPorProducto(data.id_producto);
     }
+
+    @MessagePattern({ cmd: 'listar_movimientos' })
+    async findAll(@Payload() data: { id_empresa: string }) {
+        return await this.movimientosService.findAll(data.id_empresa);
+    }
 }

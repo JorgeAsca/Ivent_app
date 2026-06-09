@@ -20,6 +20,9 @@ export class Movimiento {
     @Column({ nullable: true })
     referencia_externa: string; // ID de la orden de ms-terceros o ms-ventas
 
+    @Column({ type: 'uuid', nullable: true })
+    id_usuario: string; // Usuario que realizó el movimiento
+
     @CreateDateColumn()
     fecha_movimiento: Date;
 }

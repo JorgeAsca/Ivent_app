@@ -13,8 +13,8 @@ export class MovimientosService {
     constructor(
         @InjectRepository(Movimiento)
         private readonly repo: Repository<Movimiento>,
-        @Inject('ANALYTICS_SERVICE')
-        private readonly clientAnalytics: ClientProxy,
+        @Inject('NATS_SERVICE')
+        private readonly natsClient: ClientProxy,
         private readonly stockService: StockService,
     ) { }
 
@@ -33,8 +33,8 @@ export class MovimientosService {
             // Calculamos el stock total sumando entradas y restando salidas
             const stockTotal = await this.calcularStockActual(guardado.id_producto);
 
-            // Notificamos al barril de analytics
-            this.clientAnalytics.emit({ cmd: 'sync_inventory_data' }, {
+            // Notificamos al barril de analytics e inventario via NATS
+            this.natsClient.emit({ cmd: 'sync_inventory_data' }, {
                 id_producto: guardado.id_producto,
                 id_empresa: dto.id_empresa,
                 stock_actual: stockTotal
@@ -49,6 +49,21 @@ export class MovimientosService {
 
     async buscarPorProducto(id_producto: string) {
         return await this.repo.find({ where: { id_producto } });
+    }
+
+    async findAll(id_empresa: string) {
+        // Obtenemos los almacenes de la empresa
+        const almacenes = await this.repo.manager.query(
+            `SELECT id FROM almacenes WHERE id_empresa = $1`, [id_empresa]
+        );
+        const idsAlmacenes = almacenes.map((a: any) => a.id);
+
+        if (idsAlmacenes.length === 0) return [];
+
+        return await this.repo.createQueryBuilder('movimiento')
+            .where('movimiento.id_almacen IN (:...ids)', { ids: idsAlmacenes })
+            .orderBy('movimiento.fecha_movimiento', 'DESC')
+            .getMany();
     }
 
     private async calcularStockActual(id_producto: string): Promise<number> {

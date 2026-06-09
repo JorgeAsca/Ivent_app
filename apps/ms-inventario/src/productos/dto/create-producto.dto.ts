@@ -4,4 +4,5 @@ export class CreateProductoDto {
     public stock: number;
     public sku: string;
     public categoriaId: string;
+    public almacenId?: string;
 }

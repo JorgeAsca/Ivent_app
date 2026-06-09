@@ -19,4 +19,8 @@ export class CreateMovimientoDto {
     @IsOptional()
     @IsString()
     referencia_externa?: string;
+
+    @IsOptional()
+    @IsUUID()
+    id_usuario?: string;
 }

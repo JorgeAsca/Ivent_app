@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto, INVENTARIO_PATTERNS } from '@app/common';
 import { UpdateProductoDto } from './dto/update-producto.dto';   
@@ -32,5 +32,10 @@ export class ProductosController {
     @MessagePattern(INVENTARIO_PATTERNS.ELIMINAR_PRODUCTO)
     remove(@Payload() id: string) {
         return this.productosService.remove(id);
+    }
+
+    @EventPattern({ cmd: 'sync_inventory_data' })
+    handleSyncInventoryData(@Payload() data: { id_producto: string, stock_actual: number }) {
+        return this.productosService.actualizarStockReal(data.id_producto, data.stock_actual);
     }
 }

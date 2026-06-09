@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Inject, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Inject, Post, Body, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('logistica')
@@ -18,7 +18,36 @@ export class MsLogisticaController {
   @Post('movimientos')
   crearMovimiento(@Body() data: any) {
     console.log('Recibiendo petición HTTP para crear movimiento de stock:', data);
-    // Redirigimos el JSON recibido directo al patrón que espera el microservicio
     return this.natsClient.send({ cmd: 'crear_movimiento' }, data);
+  }
+
+  @Get('movimientos')
+  listarMovimientos(@Query('empresaId') empresaId: string) {
+    return this.natsClient.send({ cmd: 'listar_movimientos' }, { id_empresa: empresaId });
+  }
+
+  @Get('almacenes')
+  listarAlmacenes(@Query('empresaId') empresaId: string) {
+    return this.natsClient.send({ cmd: 'find_all_almacenes' }, empresaId || '');
+  }
+
+  @Post('almacenes')
+  crearAlmacen(@Body() data: any) {
+    return this.natsClient.send({ cmd: 'create_almacen' }, data);
+  }
+
+  @Get('almacenes/:id/stock')
+  obtenerStockAlmacen(@Param('id') id: string) {
+    return this.natsClient.send({ cmd: 'get_stock_by_almacen' }, { id_almacen: id });
+  }
+
+  @Post('almacenes/:id')
+  actualizarAlmacen(@Param('id') id: string, @Body() data: any) {
+    return this.natsClient.send({ cmd: 'update_almacen' }, { id, updateData: data });
+  }
+
+  @Post('almacenes/delete/:id')
+  eliminarAlmacen(@Param('id') id: string) {
+    return this.natsClient.send({ cmd: 'delete_almacen' }, id);
   }
 }

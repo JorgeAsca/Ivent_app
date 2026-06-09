@@ -6,6 +6,7 @@ import { Categoria } from '../categorias/entities/categoria.entity';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ProductosService {
@@ -20,11 +21,19 @@ export class ProductosService {
     ) { }
 
     async create(createProductoDto: CreateProductoDto) {
-        const { categoriaId, ...datosProducto } = createProductoDto;
+        const { categoriaId, almacenId, ...datosProducto } = createProductoDto;
 
         const categoria = await this.categoriaRepository.findOneBy({ id: categoriaId });
         if (!categoria) {
             throw new NotFoundException(`Categoría con ID ${categoriaId} no encontrada`);
+        }
+
+        let almacen: any = null;
+        if (almacenId) {
+            almacen = await firstValueFrom(this.natsClient.send({ cmd: 'find_one_almacen' }, almacenId)).catch(() => null);
+            if (!almacen) {
+                throw new NotFoundException(`Almacén con ID ${almacenId} no encontrado en logística`);
+            }
         }
 
         try {
@@ -39,7 +48,22 @@ export class ProductosService {
             this.natsClient.emit('producto_creado', {
                 productoId: productoGuardado.id,
                 nombre: productoGuardado.nombre,
+                almacenId: almacenId || null
             });
+
+            // Registrar movimiento inicial si hay stock
+            if (productoGuardado.stock > 0 && almacen) {
+                this.natsClient.send({ cmd: 'crear_movimiento' }, {
+                    id_producto: productoGuardado.id,
+                    id_almacen: almacen.id,
+                    id_empresa: almacen.id_empresa,
+                    tipo: 'ENTRADA',
+                    cantidad: productoGuardado.stock,
+                    referencia_externa: 'CREACION_INICIAL'
+                }).subscribe({
+                    error: (err) => this.logger.error('Error al registrar movimiento inicial', err)
+                });
+            }
 
             return productoGuardado;
 
@@ -67,6 +91,7 @@ export class ProductosService {
 
     async update(id: string, updateProductoDto: UpdateProductoDto) {
         const producto = await this.findOne(id);
+        const stockAnterior = producto.stock;
 
         if (updateProductoDto.categoriaId) {
             const nuevaCategoria = await this.categoriaRepository.findOneBy({ id: updateProductoDto.categoriaId });
@@ -75,14 +100,35 @@ export class ProductosService {
         }
 
         const { categoriaId, ...datos } = updateProductoDto;
+        // Evitamos que se pueda actualizar el stock directamente desde aquí
+        if ('stock' in datos) {
+            delete (datos as any).stock;
+        }
+        if ('almacenId' in datos) {
+            delete (datos as any).almacenId;
+        }
         const productoActualizado = this.productoRepository.merge(producto, datos);
+        const productoGuardado = await this.productoRepository.save(productoActualizado);
 
-        return this.productoRepository.save(productoActualizado);
+        return productoGuardado;
     }
 
     async remove(id: string) {
         const producto = await this.findOne(id);
         producto.activo = false;
         return this.productoRepository.save(producto);
+    }
+
+    async actualizarStockReal(id: string, stock_actual: number) {
+        try {
+            const producto = await this.findOne(id);
+            if (producto.stock !== stock_actual) {
+                producto.stock = stock_actual;
+                await this.productoRepository.save(producto);
+                this.logger.log(`Stock actualizado sincronizado para ${id}: nuevo stock = ${stock_actual}`);
+            }
+        } catch (error) {
+            this.logger.warn(`No se pudo sincronizar stock del producto ${id}: ${error.message}`);
+        }
     }
 }

@@ -8,6 +8,7 @@ export interface Product {
   stock: number
   activo: boolean
   categoriaId?: string
+  almacenId?: string
   categoria?: any
 }
 

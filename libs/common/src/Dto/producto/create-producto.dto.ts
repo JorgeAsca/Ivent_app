@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsNotEmpty, IsPositive, Min, IsUUID } from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, IsPositive, Min, IsUUID, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateProductoDto {
@@ -23,4 +23,8 @@ export class CreateProductoDto {
     @IsUUID()
     @IsNotEmpty()
     public categoriaId: string;
+
+    @IsOptional()
+    @IsUUID()
+    public almacenId?: string;
 }

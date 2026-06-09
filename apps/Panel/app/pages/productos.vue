@@ -12,18 +12,28 @@ const selectedCategory = ref<string | undefined>(undefined)
 
 const { getProducts, createProduct, updateProduct, deleteProduct: removeProduct } = useProducts()
 const { getCategorias } = useCategorias()
+const { getAlmacenes } = useAlmacenes()
+const { getEmpresas } = useEmpresas()
 
 const products = ref<Product[]>([])
 const categorias = ref<Categoria[]>([])
+const almacenes = ref<any[]>([])
 
 onMounted(async () => {
   try {
-    const [dataProducts, dataCategorias] = await Promise.all([
+    const [dataProducts, dataCategorias, empresas] = await Promise.all([
       getProducts(),
-      getCategorias()
+      getCategorias(),
+      getEmpresas()
     ])
     if (dataProducts) products.value = dataProducts
     if (dataCategorias) categorias.value = dataCategorias
+    
+    if (empresas && empresas.length > 0) {
+      const activeEmpresa = empresas[0].id_empresa
+      const alms = await getAlmacenes(activeEmpresa)
+      if (alms) almacenes.value = alms
+    }
   } catch (error) {
     toast.add({ title: 'Error cargando datos', color: 'error' })
   }
@@ -33,6 +43,7 @@ const currentProduct = ref<Partial<Product>>({
   sku: '',
   nombre: '',
   categoriaId: '',
+  almacenId: '',
   stock: 0,
   precio: 0,
   activo: true
@@ -52,11 +63,13 @@ const columns = [
   { accessorKey: 'sku', header: 'SKU' },
   { accessorKey: 'nombre', header: 'Nombre' },
   { accessorKey: 'categoria', header: 'Categoria' },
-  { accessorKey: 'stock', header: 'Stock' },
+  { accessorKey: 'stock', header: 'Stock Global' },
   { accessorKey: 'precio', header: 'Precio' },
-  { accessorKey: 'activo', header: 'Estado' },
   { id: 'actions', header: '' },
 ]
+
+const categoryOptions = computed(() => categorias.value.map(c => ({ value: c.id, label: c.nombre })))
+const warehouseOptions = computed(() => almacenes.value.map(a => ({ value: a.id, label: a.nombre })))
 
 function openNewProductModal() {
   isEditMode.value = false
@@ -64,6 +77,7 @@ function openNewProductModal() {
     sku: '',
     nombre: '',
     categoriaId: '',
+    almacenId: '',
     stock: 0,
     precio: 0,
     activo: true
@@ -83,6 +97,7 @@ async function saveProduct() {
       sku: currentProduct.value.sku,
       nombre: currentProduct.value.nombre,
       categoriaId: currentProduct.value.categoriaId,
+      almacenId: currentProduct.value.almacenId,
       stock: currentProduct.value.stock,
       precio: currentProduct.value.precio
     }
@@ -118,13 +133,6 @@ async function deleteProduct(id: string) {
   }
 }
 
-function getStatusColor(activo: boolean) {
-  return activo ? 'success' : 'neutral'
-}
-
-function getStatusLabel(activo: boolean) {
-  return activo ? 'Activo' : 'Inactivo'
-}
 </script>
 
 <template>
@@ -177,13 +185,6 @@ function getStatusLabel(activo: boolean) {
             <template #precio-cell="{ row }">
               <span class="text-default">${{ Number(row.original.precio).toFixed(2) }}</span>
             </template>
-            <template #activo-cell="{ row }">
-              <UBadge
-                :color="getStatusColor(row.original.activo)"
-                :label="getStatusLabel(row.original.activo)"
-                variant="subtle"
-              />
-            </template>
             <template #actions-cell="{ row }">
               <UDropdownMenu
                 :items="[
@@ -217,7 +218,7 @@ function getStatusLabel(activo: boolean) {
           </UFormField>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4">
           <UFormField label="Categoria" name="categoria">
             <USelectMenu 
               v-model="currentProduct.categoriaId" 
@@ -227,8 +228,19 @@ function getStatusLabel(activo: boolean) {
               placeholder="Seleccionar" 
             />
           </UFormField>
-          <UFormField label="Stock Actual" name="stock">
-            <UInput v-model.number="currentProduct.stock" type="number" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <UFormField label="Stock Inicial" name="stock">
+            <UInput v-model.number="currentProduct.stock" type="number" :disabled="isEditMode" />
+          </UFormField>
+          <UFormField label="Almacén Inicial" name="almacen" v-if="!isEditMode">
+            <USelectMenu 
+              v-model="currentProduct.almacenId" 
+              :items="warehouseOptions"
+              value-key="value"
+              placeholder="Seleccionar almacén" 
+            />
           </UFormField>
         </div>
 

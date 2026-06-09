@@ -34,8 +34,10 @@ export class StockController {
     }
 
     @EventPattern('producto_creado')
-    async handleProductoCreado(@Payload() data: { productoId: string, nombre: string }) {
+    async handleProductoCreado(@Payload() data: { productoId: string, nombre: string, almacenId?: string }) {
         console.log(`[ms-logistica] Evento de producto creado recibido para ID: ${data.productoId}`);
-        // Aquí puedes meter lógica en caso de que necesites inicializar el stock en 0 en la tabla de logística
+        if (data.almacenId) {
+            await this.stockService.inicializarStock(data.productoId, data.almacenId);
+        }
     }
 }

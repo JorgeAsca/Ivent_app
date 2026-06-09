@@ -6,13 +6,16 @@ export class Almacen {
     id: string;
 
     @Column({ type: 'uuid' })
-    id_empresa: string; //
+    id_empresa: string; 
+
+    @Column({ nullable: true })
+    codigo: string;
 
     @Column()
     nombre: string;
 
-    @Column({ default: true })
-    activo: boolean;
+    @Column({ default: 'activo' })
+    estado: string;
 
     @CreateDateColumn()
     createdAt: Date;

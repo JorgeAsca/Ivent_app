@@ -11,9 +11,11 @@ import { Movimiento } from './entities/movimiento.entity';
         TypeOrmModule.forFeature([Movimiento]),
         ClientsModule.register([
             {
-                name: 'ANALYTICS_SERVICE',
-                transport: Transport.TCP,
-                options: { host: 'ms-analytics', port: 3000 },
+                name: 'NATS_SERVICE',
+                transport: Transport.NATS,
+                options: {
+                    servers: [process.env.NATS_URL || 'nats://nats-server1:4222'],
+                },
             },
         ]),
         StockModule,
