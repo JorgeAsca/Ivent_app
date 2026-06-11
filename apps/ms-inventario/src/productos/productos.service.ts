@@ -123,9 +123,24 @@ export class ProductosService {
         try {
             const producto = await this.findOne(id);
             if (producto.stock !== stock_actual) {
+                const stockAnterior = producto.stock;
                 producto.stock = stock_actual;
                 await this.productoRepository.save(producto);
                 this.logger.log(`Stock actualizado sincronizado para ${id}: nuevo stock = ${stock_actual}`);
+
+                // Si el stock cruzó el límite hacia abajo, enviar alerta
+                const stockMinimo = producto.stockMinimo || 0;
+                if (stockAnterior > stockMinimo && stock_actual <= stockMinimo) {
+                    this.natsClient.emit('alerta_stock_bajo', {
+                        productoId: producto.id,
+                        nombre: producto.nombre,
+                        stock_actual: stock_actual,
+                        stock_minimo: stockMinimo,
+                        proveedorId: producto.proveedorId || null,
+                        unidadMedida: producto.unidadMedida || 'Ud'
+                    });
+                    this.logger.log(`Alerta de stock bajo emitida para producto ${id}`);
+                }
             }
         } catch (error) {
             this.logger.warn(`No se pudo sincronizar stock del producto ${id}: ${error.message}`);

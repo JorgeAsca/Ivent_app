@@ -17,6 +17,11 @@ export class ProveedoresController {
         return this.proveedoresService.findAll(id_empresa);
     }
 
+    @MessagePattern({ cmd: 'find_one_proveedor' })
+    findOne(@Payload() id: string) {
+        return this.proveedoresService.findOne(id);
+    }
+
     @MessagePattern({ cmd: 'update_proveedor' })
     update(@Payload() payload: { id: string, data: any }) {
         return this.proveedoresService.update(payload.id, payload.data);

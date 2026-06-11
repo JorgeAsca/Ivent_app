@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TipoDocumentoModule } from './tipo-documento/tipo-documento.module';
 import { ConfiguracionEmpresaModule } from './configuracion-empresa/configuracion-empresa.module';
 import { ConfiguracionGlobalModule } from './configuracion-global/configuracion-global.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ConfiguracionGlobalModule } from './configuracion-global/configuracion-
     TipoDocumentoModule,
     ConfiguracionEmpresaModule,
     ConfiguracionGlobalModule,
+    NotificacionesModule,
   ],
 })
 export class AppModule { }

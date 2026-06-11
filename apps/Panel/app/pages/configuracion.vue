@@ -27,6 +27,7 @@ const barcodeEnabled = ref(true)
 // Notification Settings
 const emailNotifications = ref(true)
 const stockAlertEmail = ref(true)
+const alertEmails = ref('admin@empresa.com')
 const dailyReport = ref(false)
 const weeklyReport = ref(true)
 
@@ -271,6 +272,10 @@ function saveSettings() {
                   </div>
                   <USwitch v-model="stockAlertEmail" :disabled="!emailNotifications" />
                 </div>
+
+                <UFormField v-if="stockAlertEmail" label="Correos que reciben las alertas" name="alertEmails" description="Separa los correos con comas si son varios">
+                  <UInput v-model="alertEmails" type="text" placeholder="admin@empresa.com, jefe@empresa.com" />
+                </UFormField>
 
                 <USeparator />
 
