@@ -10,4 +10,14 @@ export class ConfiguracionController {
     ping() {
         return this.natsClient.send({ cmd: 'ping_configuracion' }, {});
     }
+
+    @Get('global')
+    getAllGlobal() {
+        return this.natsClient.send({ cmd: 'get_all_global_configs' }, {});
+    }
+
+    @Post('global/upsert')
+    upsertGlobal(@Body() dto: { clave: string; valor: string }) {
+        return this.natsClient.send({ cmd: 'upsert_global_config' }, dto);
+    }
 }

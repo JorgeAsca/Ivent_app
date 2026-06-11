@@ -201,6 +201,8 @@ services:
     image: iventapp/ms-configuracion:latest
     container_name: ms-configuracion
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - MICROSERVICIO=ms-configuracion
       - DB_HOST=db-configuracion
@@ -364,6 +366,7 @@ services:
     environment:
       - NUXT_API_BASE=http://ms-gateway:3000/api
       - NUXT_PUBLIC_API_BASE=http://inventapp.store:3000/api
+      #- NUXT_PUBLIC_API_BASE=http://localhost:3000/api
     networks:
       - ivent-network
     depends_on:

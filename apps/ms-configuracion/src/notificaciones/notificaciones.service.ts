@@ -15,49 +15,49 @@ export class NotificacionesService {
     @InjectRepository(ConfiguracionGlobal)
     private readonly configRepo: Repository<ConfiguracionGlobal>,
     @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
-  ) {
-    this.initTransporter();
-  }
+  ) {}
 
-  private async initTransporter() {
-    // Configuramos el transportador para producción usando variables de entorno
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE === 'true' || true, // true para 465, false para otros puertos
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+  private async getTransporter() {
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = parseInt(process.env.SMTP_PORT) || 465;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
     });
-    this.logger.log(`Nodemailer configurado con el host SMTP: ${process.env.SMTP_HOST || 'smtp.gmail.com'}`);
+
+    return { transporter, user };
   }
 
   async procesarAlertaStockBajo(data: any) {
+    const { transporter, user } = await this.getTransporter();
+
     if (data.proveedorId) {
-      // Caso 1: Orden de Compra Automática
       try {
         const proveedor = await firstValueFrom(
           this.natsClient.send({ cmd: 'find_one_proveedor' }, data.proveedorId)
         );
 
         if (proveedor && proveedor.email) {
-          await this.enviarOrdenCompra(proveedor, data);
+          await this.enviarOrdenCompra(transporter, user, proveedor, data);
         } else {
-          this.logger.warn(`El proveedor ${data.proveedorId} no tiene email o no existe. Enviando alerta interna.`);
-          await this.enviarAlertaInterna(data);
+          this.logger.warn(`El proveedor ${data.proveedorId} no tiene email. Enviando alerta interna.`);
+          await this.enviarAlertaInterna(transporter, user, data);
         }
       } catch (error) {
         this.logger.error(`Error consultando proveedor: ${error.message}`);
-        await this.enviarAlertaInterna(data);
+        await this.enviarAlertaInterna(transporter, user, data);
       }
     } else {
-      // Caso 2: Alerta Interna
-      await this.enviarAlertaInterna(data);
+      await this.enviarAlertaInterna(transporter, user, data);
     }
   }
 
-  private async enviarOrdenCompra(proveedor: any, data: any) {
+  private async enviarOrdenCompra(transporter: any, fromUser: string, proveedor: any, data: any) {
     const html = `
       <h2>Orden de Compra Automática</h2>
       <p>Estimado/a ${proveedor.contacto_nombre || proveedor.razon_social},</p>
@@ -69,8 +69,8 @@ export class NotificacionesService {
       <p>Favor de confirmar la recepción de este pedido. Gracias.</p>
     `;
 
-    const info = await this.transporter.sendMail({
-      from: process.env.SMTP_USER || '"Sistema de Inventario" <pedidos@iventapp.com>',
+    await transporter.sendMail({
+      from: fromUser || '"Sistema de Inventario" <pedidos@iventapp.com>',
       to: proveedor.email,
       subject: `Nueva Orden de Compra - ${data.nombre}`,
       html,
@@ -79,13 +79,26 @@ export class NotificacionesService {
     this.logger.log(`Orden de compra enviada a ${proveedor.email}`);
   }
 
-  private async enviarAlertaInterna(data: any) {
-    // Buscar configuración de correos de alerta
-    let correos = 'admin@empresa.com'; // Default
-    const config = await this.configRepo.findOneBy({ clave: 'CORREOS_ALERTAS' });
+  private async enviarAlertaInterna(transporter: any, fromUser: string, data: any) {
+    let emails = [];
+    const config = await this.configRepo.findOneBy({ clave: 'USUARIOS_ALERTAS_STOCK' });
     
     if (config && config.valor) {
-      correos = config.valor;
+      const ids = config.valor.split(',').map(id => id.trim()).filter(id => id);
+      try {
+        const usuarios = await firstValueFrom(
+          this.natsClient.send({ cmd: 'get_usuarios_by_ids' }, ids)
+        );
+        if (usuarios && usuarios.length > 0) {
+          emails = usuarios.map((u: any) => u.email).filter((e: string) => e);
+        }
+      } catch (error) {
+        this.logger.error(`Error obteniendo usuarios para alertas: ${error.message}`);
+      }
+    }
+
+    if (emails.length === 0) {
+      emails = ['admin@empresa.com']; // Fallback
     }
 
     const html = `
@@ -99,13 +112,13 @@ export class NotificacionesService {
       <p>Por favor, revisa el inventario o contacta a un proveedor.</p>
     `;
 
-    const info = await this.transporter.sendMail({
-      from: process.env.SMTP_USER || '"Sistema de Alertas" <alertas@iventapp.com>',
-      to: correos,
+    await transporter.sendMail({
+      from: fromUser || '"Sistema de Alertas" <alertas@iventapp.com>',
+      to: emails.join(', '),
       subject: `ALERTA: Stock Bajo - ${data.nombre}`,
       html,
     });
 
-    this.logger.log(`Alerta interna enviada a ${correos}`);
+    this.logger.log(`Alerta interna enviada a ${emails.join(', ')}`);
   }
 }

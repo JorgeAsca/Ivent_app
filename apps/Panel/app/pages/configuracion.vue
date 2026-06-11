@@ -2,6 +2,7 @@
 import { useUsuarios, type Usuario } from '~/composables/useUsuarios'
 import { useRoles, type Role } from '~/composables/useRoles'
 import { useEmpresas, type Empresa } from '~/composables/useEmpresas'
+import { useConfiguracion } from '~/composables/useConfiguracion'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -10,6 +11,7 @@ const toast = useToast()
 const { getUsuarios, createUsuario, deleteUsuario } = useUsuarios()
 const { getRoles } = useRoles()
 const { getEmpresas } = useEmpresas()
+const { getGlobalConfigs, upsertGlobalConfig } = useConfiguracion()
 
 
 // General Settings
@@ -27,7 +29,7 @@ const barcodeEnabled = ref(true)
 // Notification Settings
 const emailNotifications = ref(true)
 const stockAlertEmail = ref(true)
-const alertEmails = ref('admin@empresa.com')
+const alertUserIds = ref<string[]>([])
 const dailyReport = ref(false)
 const weeklyReport = ref(true)
 
@@ -90,11 +92,22 @@ async function loadUsersAndRoles() {
   }
 }
 
-watch(activeSection, (section) => {
-  if (section === 'users') {
-    loadUsersAndRoles()
+async function loadConfigs() {
+  const configs = await getGlobalConfigs();
+  const configMap = configs.reduce((acc: any, c: any) => {
+    acc[c.clave] = c.valor;
+    return acc;
+  }, {});
+
+  if (configMap['USUARIOS_ALERTAS_STOCK']) {
+    alertUserIds.value = configMap['USUARIOS_ALERTAS_STOCK'].split(',').map((i: string) => i.trim());
   }
-}, { immediate: true })
+}
+
+onMounted(() => {
+  loadConfigs();
+  loadUsersAndRoles(); // Load users always so we can show them in the notifications tab
+})
 
 function openNewUserModal() {
   newUser.value = {
@@ -134,7 +147,12 @@ async function removeUser(id: string) {
   }
 }
 
-function saveSettings() {
+async function saveSettings() {
+  if (activeSection.value === 'notifications') {
+    await Promise.all([
+      upsertGlobalConfig('USUARIOS_ALERTAS_STOCK', alertUserIds.value.join(',')),
+    ]);
+  }
   toast.add({ title: 'Configuracion guardada', icon: 'i-lucide-check', color: 'success' })
 }
 </script>
@@ -273,12 +291,19 @@ function saveSettings() {
                   <USwitch v-model="stockAlertEmail" :disabled="!emailNotifications" />
                 </div>
 
-                <UFormField v-if="stockAlertEmail" label="Correos que reciben las alertas" name="alertEmails" description="Separa los correos con comas si son varios">
-                  <UInput v-model="alertEmails" type="text" placeholder="admin@empresa.com, jefe@empresa.com" />
+                <UFormField v-if="stockAlertEmail" label="Usuarios que reciben las alertas" name="alertUserIds" description="Selecciona a los usuarios que seran notificados">
+                  <USelectMenu 
+                    v-model="alertUserIds" 
+                    :items="usuarios" 
+                    value-key="id_usuario" 
+                    label-key="nombre" 
+                    multiple 
+                    placeholder="Seleccionar usuarios" 
+                  />
                 </UFormField>
 
                 <USeparator />
-
+                
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="font-medium text-default">Reporte Diario</p>

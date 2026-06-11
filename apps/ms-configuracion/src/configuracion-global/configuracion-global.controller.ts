@@ -21,4 +21,9 @@ export class ConfiguracionGlobalController {
     findByClave(@Payload() clave: string) {
         return this.globalService.findByClave(clave);
     }
+
+    @MessagePattern({ cmd: 'upsert_global_config' })
+    upsert(@Payload() dto: { clave: string; valor: string }) {
+        return this.globalService.upsert(dto.clave, dto.valor);
+    }
 }

@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { ClientProxy } from '@nestjs/microservices';
 import { User } from './entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
@@ -45,6 +45,13 @@ export class UsuariosService {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
         return usuario;
+    }
+
+    async findByIds(ids: string[]) {
+        if (!ids || ids.length === 0) return [];
+        return await this.userRepo.find({
+            where: { id_usuario: In(ids) }
+        });
     }
 
     async update(id: string, updateData: any) {

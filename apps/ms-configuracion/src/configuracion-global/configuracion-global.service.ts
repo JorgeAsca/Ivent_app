@@ -16,6 +16,16 @@ export class ConfiguracionGlobalService {
         return await this.globalRepo.save(nuevaConfig);
     }
 
+    async upsert(clave: string, valor: string) {
+        let config = await this.globalRepo.findOneBy({ clave });
+        if (config) {
+            config.valor = valor;
+        } else {
+            config = this.globalRepo.create({ clave, valor, activo: true });
+        }
+        return await this.globalRepo.save(config);
+    }
+
     async findAll() {
         return await this.globalRepo.find({ where: { activo: true } });
     }

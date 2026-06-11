@@ -20,6 +20,11 @@ export class UsuariosController {
         return await this.usuariosService.findOne(id);
     }
 
+    @MessagePattern({ cmd: 'get_usuarios_by_ids' })
+    async findByIds(@Payload() ids: string[]) {
+        return await this.usuariosService.findByIds(ids);
+    }
+
     @MessagePattern({ cmd: 'actualizar_usuario' })
     async update(@Payload() data: any) {
         return await this.usuariosService.update(data.id, data);
