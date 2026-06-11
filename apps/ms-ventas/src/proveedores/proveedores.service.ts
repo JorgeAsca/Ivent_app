@@ -32,4 +32,24 @@ export class ProveedoresService {
     async findOne(id: string) {
         return await this.proveedorRepository.findOneBy({ id });
     }
+
+    async update(id: string, updateData: any) {
+        try {
+            await this.proveedorRepository.update(id, updateData);
+            return this.findOne(id);
+        } catch (error) {
+            this.logger.error(`Error al actualizar proveedor: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async remove(id: string) {
+        try {
+            await this.proveedorRepository.update(id, { activo: false });
+            return { message: 'Proveedor desactivado correctamente' };
+        } catch (error) {
+            this.logger.error(`Error al desactivar proveedor: ${error.message}`);
+            throw error;
+        }
+    }
 }

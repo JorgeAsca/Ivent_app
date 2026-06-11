@@ -7,11 +7,31 @@ export class CreateProveedorDto {
 
     @IsString()
     @IsNotEmpty()
-    razon_social: string;
+    codigo: string;
 
     @IsString()
     @IsNotEmpty()
-    identificacion_fiscal: string; // RUC, NIT, CIF, etc.
+    razon_social: string;
+
+    @IsOptional()
+    @IsString()
+    contacto_nombre?: string;
+
+    @IsOptional()
+    @IsString()
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    telefono?: string;
+
+    @IsOptional()
+    @IsString()
+    direccion?: string;
+
+    @IsOptional()
+    @IsString()
+    identificacion_fiscal?: string;
 
     @IsOptional()
     @IsBoolean()

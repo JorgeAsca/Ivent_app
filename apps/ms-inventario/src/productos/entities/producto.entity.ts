@@ -21,6 +21,12 @@ export class Producto {
     @Column('text', { unique: true })
     sku: string; 
 
+    @Column('int', { default: 0 })
+    stockMinimo: number;
+
+    @Column('uuid', { nullable: true })
+    proveedorId: string;
+
     @Column('boolean', { default: true })
     activo: boolean;
 

@@ -8,10 +8,25 @@ export class Proveedor {
     @Column({ type: 'uuid' })
     id_empresa: string; // Propietaria de este registro (ms-administracion)
 
+    @Column({ unique: true })
+    codigo: string;
+
     @Column()
     razon_social: string;
 
-    @Column({ unique: true })
+    @Column({ nullable: true })
+    contacto_nombre: string;
+
+    @Column({ nullable: true })
+    email: string;
+
+    @Column({ nullable: true })
+    telefono: string;
+
+    @Column('text', { nullable: true })
+    direccion: string;
+
+    @Column({ unique: true, nullable: true })
     identificacion_fiscal: string;
 
     @Column({ default: true })

@@ -10,6 +10,8 @@ export interface Product {
   categoriaId?: string
   almacenId?: string
   unidadMedida?: string
+  stockMinimo?: number
+  proveedorId?: string
   categoria?: any
 }
 

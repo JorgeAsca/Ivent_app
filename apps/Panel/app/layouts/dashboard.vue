@@ -34,6 +34,11 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => [
     icon: 'i-lucide-warehouse',
     to: '/almacenes',
   },
+  {
+    label: 'Stock / Alertas',
+    icon: 'i-lucide-bell',
+    to: '/stock',
+  },
 ])
 
 const settingsNavItems = computed<NavigationMenuItem[]>(() => [

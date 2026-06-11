@@ -31,4 +31,14 @@ export class CreateProductoDto {
     @IsOptional()
     @IsString()
     public unidadMedida?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Type(() => Number)
+    public stockMinimo?: number;
+
+    @IsOptional()
+    @IsUUID()
+    public proveedorId?: string;
 }

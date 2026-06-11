@@ -6,4 +6,6 @@ export class CreateProductoDto {
     public categoriaId: string;
     public almacenId?: string;
     public unidadMedida?: string;
+    public stockMinimo?: number;
+    public proveedorId?: string;
 }
