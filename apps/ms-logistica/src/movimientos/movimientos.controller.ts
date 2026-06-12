@@ -7,6 +7,11 @@ import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 export class MovimientosController {
     constructor(private readonly movimientosService: MovimientosService) { }
 
+    @MessagePattern({ cmd: 'get_dashboard_stats_logistica' })
+    getDashboardStats() {
+        return this.movimientosService.getDashboardStats();
+    }
+
     @MessagePattern({ cmd: 'crear_movimiento' }) // Asegúrate de que los espacios y comillas coincidan
     async create(@Payload() createMovimientoDto: CreateMovimientoDto) {
         console.log('Microservicio Logística: Recibido comando crear_movimiento', createMovimientoDto);

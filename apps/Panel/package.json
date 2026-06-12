@@ -9,11 +9,13 @@
     "prepare": "nuxt prepare"
   },
   "dependencies": {
-    "nuxt": "latest",
+    "@iconify-json/lucide": "latest",
     "@nuxt/ui": "latest",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "nuxt": "latest",
     "tailwindcss": "latest",
-    "zod": "^3.24.1",
-    "@iconify-json/lucide": "latest"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "typescript": "5.7.3"

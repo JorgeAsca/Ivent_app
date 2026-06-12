@@ -1,94 +1,54 @@
 <script setup lang="ts">
 import { useProducts } from '~/composables/useProducts'
+import { useAnalytics, type DashboardStats } from '~/composables/useAnalytics'
 
 definePageMeta({ layout: 'dashboard' })
 
-// Mock data for dashboard
-const stats = [
-  { label: 'Total Productos', value: '1,234', icon: 'i-lucide-package', change: '+12%', trend: 'up' },
-  { label: 'Stock Bajo', value: '23', icon: 'i-lucide-alert-triangle', change: '-5%', trend: 'down' },
-  { label: 'Movimientos Hoy', value: '89', icon: 'i-lucide-arrow-left-right', change: '+28%', trend: 'up' },
-  { label: 'Valor Total', value: '$125,400', icon: 'i-lucide-dollar-sign', change: '+8%', trend: 'up' },
-]
+const { getDashboardStats } = useAnalytics()
 
-const recentMovements = [
-  { id: 1, product: 'Harina de Trigo 1kg', type: 'entrada', quantity: 50, date: '2024-01-15', warehouse: 'Almacen Principal' },
-  { id: 2, product: 'Salsa de Tomate 500ml', type: 'salida', quantity: 30, date: '2024-01-15', warehouse: 'Almacen Principal' },
-  { id: 3, product: 'Queso Mozzarella 500g', type: 'entrada', quantity: 25, date: '2024-01-15', warehouse: 'Refrigerado' },
-  { id: 4, product: 'Aceite de Oliva 1L', type: 'salida', quantity: 15, date: '2024-01-14', warehouse: 'Almacen Principal' },
-  { id: 5, product: 'Oregano 100g', type: 'entrada', quantity: 100, date: '2024-01-14', warehouse: 'Almacen Principal' },
-]
+const dashboardData = ref<DashboardStats>({
+  totalProductos: 0,
+  valorTotal: 0,
+  lowStockCount: 0,
+  lowStockProducts: [],
+  valorPorCategoria: [],
+  movimientosHoy: 0,
+  ultimosMovimientos: []
+})
 
-const { getProducts } = useProducts()
-
-const lowStockProducts = ref<any[]>([])
+const stats = computed(() => [
+  { label: 'Total Productos', value: dashboardData.value.totalProductos, icon: 'i-lucide-package', change: '+12%', trend: 'up' },
+  { label: 'Stock Bajo', value: dashboardData.value.lowStockCount, icon: 'i-lucide-alert-triangle', change: '-5%', trend: 'down' },
+  { label: 'Movimientos Hoy', value: dashboardData.value.movimientosHoy, icon: 'i-lucide-arrow-left-right', change: '+28%', trend: 'up' },
+  { label: 'Valor Total', value: `€${dashboardData.value.valorTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`, icon: 'i-lucide-euro', change: '+8%', trend: 'up' },
+])
 
 onMounted(async () => {
   try {
-    const data = await getProducts()
+    const data = await getDashboardStats()
     if (data) {
-      lowStockProducts.value = data.filter(p => p.stock <= p.minStock).slice(0, 5)
+      dashboardData.value = data
     }
   } catch (e) {
-    console.error('Error fetching low stock products:', e)
+    console.error('Error fetching dashboard stats:', e)
   }
 })
 
 const movementColumns = [
-  { accessorKey: 'product', header: 'Producto' },
-  { accessorKey: 'type', header: 'Tipo' },
-  { accessorKey: 'quantity', header: 'Cantidad' },
-  { accessorKey: 'warehouse', header: 'Almacen' },
-  { accessorKey: 'date', header: 'Fecha' },
+  { accessorKey: 'id_producto', header: 'ID Producto' },
+  { accessorKey: 'tipo', header: 'Tipo' },
+  { accessorKey: 'cantidad', header: 'Cantidad' },
+  { accessorKey: 'fecha_movimiento', header: 'Fecha' },
 ]
 
 const lowStockColumns = [
-  { accessorKey: 'name', header: 'Producto' },
+  { accessorKey: 'nombre', header: 'Producto' },
   { accessorKey: 'stock', header: 'Stock Actual' },
-  { accessorKey: 'minStock', header: 'Stock Minimo' },
-  { accessorKey: 'category', header: 'Categoria' },
+  { accessorKey: 'stockMinimo', header: 'Stock Minimo' },
+  { accessorKey: 'categoria.nombre', header: 'Categoria' },
   { id: 'actions', header: '' },
 ]
 
-const isNewProductModalOpen = ref(false)
-
-const newProduct = ref({
-  sku: '',
-  name: '',
-  category: '',
-  warehouse: '',
-  unit: '',
-  quantity: 0,
-  stock: 0,
-  minStock: 0,
-  price: 0,
-  cost: 0,
-  isVariable: false
-})
-
-const units = ['Unidades', 'Kilos', 'Litros', 'Metros']
-const categories = ['Panaderia', 'Salsas', 'Lacteos', 'Aceites', 'Embutidos', 'Verduras', 'Especias', 'Conservas']
-const warehouses = ['Almacen Principal', 'Refrigerado', 'Congelados']
-
-function saveNewProduct() {
-  const toast = useToast()
-  toast.add({ title: 'Producto guardado', description: 'El producto se ha guardado correctamente (Demo visual)', color: 'success' })
-  isNewProductModalOpen.value = false
-  // Reset form
-  newProduct.value = {
-    sku: '',
-    name: '',
-    category: '',
-    warehouse: '',
-    unit: '',
-    quantity: 0,
-    stock: 0,
-    minStock: 0,
-    price: 0,
-    cost: 0,
-    isVariable: false
-  }
-}
 </script>
 
 <template>
@@ -96,7 +56,7 @@ function saveNewProduct() {
     <template #header>
       <UDashboardNavbar title="Dashboard">
         <template #right>
-          <UButton icon="i-lucide-plus" label="Nuevo Producto" @click="isNewProductModalOpen = true" />
+          <UButton icon="i-lucide-plus" label="Nuevo Producto" to="/productos?new=true" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -140,18 +100,21 @@ function saveNewProduct() {
               </div>
             </template>
 
-            <UTable :data="recentMovements" :columns="movementColumns">
-              <template #type-cell="{ row }">
+            <UTable :data="dashboardData.ultimosMovimientos" :columns="movementColumns">
+              <template #tipo-cell="{ row }">
                 <UBadge
-                  :color="row.original.type === 'entrada' ? 'success' : 'warning'"
-                  :label="row.original.type === 'entrada' ? 'Entrada' : 'Salida'"
+                  :color="row.original.tipo === 'ENTRADA' ? 'success' : 'warning'"
+                  :label="row.original.tipo === 'ENTRADA' ? 'Entrada' : 'Salida'"
                   variant="subtle"
                 />
               </template>
-              <template #quantity-cell="{ row }">
-                <span :class="row.original.type === 'entrada' ? 'text-emerald-500' : 'text-amber-500'">
-                  {{ row.original.type === 'entrada' ? '+' : '-' }}{{ row.original.quantity }}
+              <template #cantidad-cell="{ row }">
+                <span :class="row.original.tipo === 'ENTRADA' ? 'text-emerald-500' : 'text-amber-500'">
+                  {{ row.original.tipo === 'ENTRADA' ? '+' : '-' }}{{ row.original.cantidad }}
                 </span>
+              </template>
+              <template #fecha_movimiento-cell="{ row }">
+                <span>{{ new Date(row.original.fecha_movimiento).toLocaleDateString() }}</span>
               </template>
             </UTable>
           </UCard>
@@ -168,7 +131,7 @@ function saveNewProduct() {
               </div>
             </template>
 
-            <UTable :data="lowStockProducts" :columns="lowStockColumns">
+            <UTable :data="dashboardData.lowStockProducts" :columns="lowStockColumns">
               <template #stock-cell="{ row }">
                 <UBadge color="error" :label="String(row.original.stock)" variant="subtle" />
               </template>
@@ -229,66 +192,4 @@ function saveNewProduct() {
     </template>
   </UDashboardPanel>
 
-  <!-- Modal Nuevo Producto -->
-  <UModal v-model:open="isNewProductModalOpen" title="Nuevo Producto">
-    <template #body>
-      <div class="flex flex-col gap-4">
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="SKU" name="sku">
-            <UInput v-model="newProduct.sku" placeholder="HAR-001" />
-          </UFormField>
-          <UFormField label="Nombre" name="name">
-            <UInput v-model="newProduct.name" placeholder="Nombre del producto" />
-          </UFormField>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Categoria" name="category">
-            <USelectMenu v-model="newProduct.category" :items="categories" placeholder="Seleccionar" />
-          </UFormField>
-          <UFormField label="Almacen" name="warehouse">
-            <USelectMenu v-model="newProduct.warehouse" :items="warehouses" placeholder="Seleccionar" />
-          </UFormField>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Unidad de Medida" name="unit">
-            <USelectMenu v-model="newProduct.unit" :items="units" placeholder="Seleccionar" />
-          </UFormField>
-          <UFormField label="Peso / Cantidad" name="quantity">
-            <UInput v-model.number="newProduct.quantity" type="number" step="0.01" />
-          </UFormField>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Stock Actual" name="stock">
-            <UInput v-model.number="newProduct.stock" type="number" />
-          </UFormField>
-          <UFormField label="Stock Minimo" name="minStock">
-            <UInput v-model.number="newProduct.minStock" type="number" />
-          </UFormField>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Precio de Venta" name="price">
-            <UInput v-model.number="newProduct.price" type="number" step="0.01" icon="i-lucide-dollar-sign" />
-          </UFormField>
-          <UFormField label="Costo" name="cost">
-            <UInput v-model.number="newProduct.cost" type="number" step="0.01" icon="i-lucide-dollar-sign" />
-          </UFormField>
-        </div>
-
-        <UFormField label="Producto Variable" name="isVariable" description="Indica si este producto tiene diferentes variantes (tallas, colores, etc.)">
-          <USwitch v-model="newProduct.isVariable" />
-        </UFormField>
-      </div>
-    </template>
-
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <UButton variant="ghost" label="Cancelar" @click="isNewProductModalOpen = false" />
-        <UButton label="Guardar Producto" @click="saveNewProduct" />
-      </div>
-    </template>
-  </UModal>
 </template>

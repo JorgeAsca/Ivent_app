@@ -7,9 +7,19 @@ export class MsAnalyticsController {
     @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
   ) {}
 
-  @Get('historial-ventas')
-  obtenerHistorial() {
-    console.log('Recibiendo petición HTTP para ver las gráficas de ventas...');
-    return this.natsClient.send({ cmd: 'obtener_historial_ventas' }, {});
+  @Get('dashboard')
+  async getDashboard() {
+    try {
+      const inventarioStats = await this.natsClient.send({ cmd: 'get_dashboard_stats' }, {}).toPromise();
+      const logisticaStats = await this.natsClient.send({ cmd: 'get_dashboard_stats_logistica' }, {}).toPromise();
+
+      return {
+        ...inventarioStats,
+        ...logisticaStats,
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
   }
 }

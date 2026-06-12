@@ -48,17 +48,90 @@ const lowStockAlerts = [
 ]
 
 const reportTypes = [
-  { id: 'inventory', label: 'Inventario General', icon: 'i-lucide-package', description: 'Stock actual de todos los productos' },
-  { id: 'movements', label: 'Movimientos', icon: 'i-lucide-arrow-left-right', description: 'Historial de entradas y salidas' },
-  { id: 'valuation', label: 'Valoracion', icon: 'i-lucide-dollar-sign', description: 'Valor del inventario por categoria' },
-  { id: 'rotation', label: 'Rotacion', icon: 'i-lucide-refresh-cw', description: 'Analisis de rotacion de productos' },
-  { id: 'low-stock', label: 'Stock Bajo', icon: 'i-lucide-alert-triangle', description: 'Productos por debajo del minimo' },
-  { id: 'suppliers', label: 'Proveedores', icon: 'i-lucide-truck', description: 'Compras por proveedor' },
+  { id: 'inventory', label: 'Inventario General (Valoración)', icon: 'i-lucide-package', description: 'Valor del inventario por categoría' },
+  { id: 'movements', label: 'Historial de Movimientos', icon: 'i-lucide-arrow-left-right', description: 'Historial de entradas y salidas recientes' },
+  { id: 'low-stock', label: 'Alerta Stock Bajo', icon: 'i-lucide-alert-triangle', description: 'Productos por debajo del mínimo' },
 ]
 
+import jsPDF from 'jspdf'
+import jspdfAutotable from 'jspdf-autotable'
+import { useAnalytics, type DashboardStats } from '~/composables/useAnalytics'
+
+const { getDashboardStats } = useAnalytics()
+const dashboardData = ref<DashboardStats | null>(null)
+
+onMounted(async () => {
+  try {
+    const data = await getDashboardStats()
+    if (data) dashboardData.value = data
+  } catch (e) {
+    console.error('Error fetching data for reports', e)
+  }
+})
+
+function applyAutoTable(doc: any, options: any) {
+  if (typeof jspdfAutotable === 'function') {
+    jspdfAutotable(doc, options)
+  } else if (jspdfAutotable && typeof (jspdfAutotable as any).default === 'function') {
+    (jspdfAutotable as any).default(doc, options)
+  } else {
+    // Fallback if it somehow attached to doc
+    doc.autoTable(options)
+  }
+}
+
 function generateReport(reportId: string) {
-  // TODO: Implement report generation
-  console.log('Generating report:', reportId)
+  if (!dashboardData.value) return;
+
+  const doc = new jsPDF();
+  const dateStr = new Date().toLocaleDateString();
+  
+  doc.setFontSize(18);
+  doc.text('Reporte de Inventario', 14, 22);
+  doc.setFontSize(11);
+  doc.text(`Fecha: ${dateStr}`, 14, 30);
+
+  if (reportId === 'inventory') {
+    doc.text('Resumen de Valoración:', 14, 40);
+    applyAutoTable(doc, {
+      startY: 45,
+      head: [['Categoría', 'Valor Total', 'Porcentaje']],
+      body: dashboardData.value.valorPorCategoria.map(c => [
+        c.name, 
+        `€${c.value.toFixed(2)}`, 
+        `${c.percentage}%`
+      ]),
+    });
+    doc.save(`Reporte_Inventario_${dateStr}.pdf`);
+  } else if (reportId === 'low-stock') {
+    doc.text('Productos con Stock Bajo:', 14, 40);
+    applyAutoTable(doc, {
+      startY: 45,
+      head: [['Producto', 'Categoría', 'Stock', 'Stock Mínimo']],
+      body: dashboardData.value.lowStockProducts.map(p => [
+        p.nombre, 
+        p.categoria?.nombre || '-', 
+        p.stock.toString(), 
+        p.stockMinimo.toString()
+      ]),
+    });
+    doc.save(`Reporte_Stock_Bajo_${dateStr}.pdf`);
+  } else if (reportId === 'movements') {
+    doc.text('Últimos Movimientos:', 14, 40);
+    applyAutoTable(doc, {
+      startY: 45,
+      head: [['Fecha', 'Tipo', 'Cantidad', 'ID Producto']],
+      body: dashboardData.value.ultimosMovimientos.map(m => [
+        new Date(m.fecha_movimiento).toLocaleDateString(),
+        m.tipo,
+        m.cantidad.toString(),
+        m.id_producto
+      ]),
+    });
+    doc.save(`Reporte_Movimientos_${dateStr}.pdf`);
+  } else {
+    alert('Este reporte está en construcción');
+  }
 }
 </script>
 

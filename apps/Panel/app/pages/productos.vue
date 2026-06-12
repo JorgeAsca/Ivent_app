@@ -37,6 +37,12 @@ onMounted(async () => {
   } catch (error) {
     toast.add({ title: 'Error cargando datos', color: 'error' })
   }
+
+  // Open modal if ?new=true is in the URL
+  const route = useRoute()
+  if (route.query.new === 'true') {
+    openNewProductModal()
+  }
 })
 
 const currentProduct = ref<Partial<Product>>({

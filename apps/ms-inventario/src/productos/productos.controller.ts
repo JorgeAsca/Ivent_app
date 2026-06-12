@@ -8,6 +8,11 @@ import { UpdateProductoDto } from './dto/update-producto.dto';
 export class ProductosController {
     constructor(private readonly productosService: ProductosService) { }
 
+    @MessagePattern({ cmd: 'get_dashboard_stats' })
+    getDashboardStats() {
+        return this.productosService.getDashboardStats();
+    }
+
     @MessagePattern(INVENTARIO_PATTERNS.CREAR_PRODUCTO)
     create(@Payload() createProductoDto: CreateProductoDto) {
         return this.productosService.create(createProductoDto);

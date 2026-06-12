@@ -152,4 +152,53 @@ export class ProductosService {
             this.logger.warn(`No se pudo sincronizar stock del producto ${id}: ${error.message}`);
         }
     }
+
+    async getDashboardStats() {
+        const totalProductos = await this.productoRepository.count({ where: { activo: true } });
+        
+        const { valorTotal } = await this.productoRepository
+          .createQueryBuilder('producto')
+          .where('producto.activo = :activo', { activo: true })
+          .select('SUM(producto.stock * producto.costo)', 'valorTotal')
+          .getRawOne();
+
+        const lowStockCount = await this.productoRepository
+          .createQueryBuilder('producto')
+          .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.stock <= producto.stockMinimo')
+          .getCount();
+
+        const lowStockProducts = await this.productoRepository
+          .createQueryBuilder('producto')
+          .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.stock <= producto.stockMinimo')
+          .leftJoinAndSelect('producto.categoria', 'categoria')
+          .take(5)
+          .getMany();
+
+        const valorPorCategoria = await this.productoRepository
+          .createQueryBuilder('producto')
+          .where('producto.activo = :activo', { activo: true })
+          .leftJoin('producto.categoria', 'categoria')
+          .select('categoria.nombre', 'name')
+          .addSelect('SUM(producto.stock * producto.costo)', 'value')
+          .groupBy('categoria.id')
+          .getRawMany();
+
+        // Calculate percentages
+        const totalVal = Number(valorTotal || 0);
+        const byCategory = valorPorCategoria.map(v => ({
+            name: v.name || 'Sin Categoría',
+            value: Number(v.value || 0),
+            percentage: totalVal > 0 ? Math.round((Number(v.value || 0) / totalVal) * 100) : 0
+        }));
+
+        return {
+            totalProductos,
+            valorTotal: totalVal,
+            lowStockCount,
+            lowStockProducts,
+            valorPorCategoria: byCategory
+        };
+    }
 }

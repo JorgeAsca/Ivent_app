@@ -75,4 +75,25 @@ export class MovimientosService {
 
         return parseInt(resultado.total) || 0;
     }
+
+    async getDashboardStats() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const movimientosHoy = await this.repo
+          .createQueryBuilder('movimiento')
+          .where('movimiento.fecha_movimiento >= :today', { today })
+          .getCount();
+
+        const ultimosMovimientos = await this.repo
+          .createQueryBuilder('movimiento')
+          .orderBy('movimiento.fecha_movimiento', 'DESC')
+          .take(5)
+          .getMany();
+
+        return {
+            movimientosHoy,
+            ultimosMovimientos
+        };
+    }
 }
