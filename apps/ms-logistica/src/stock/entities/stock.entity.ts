@@ -8,6 +8,9 @@ export class Stock {
     @PrimaryColumn('uuid')
     id_almacen: string;
 
+    @Column({ type: 'uuid' })
+    id_empresa: string;
+
     @Column({ type: 'int', default: 0 })
     cantidad: number;
 }

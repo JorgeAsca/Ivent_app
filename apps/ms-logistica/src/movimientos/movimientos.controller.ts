@@ -8,8 +8,8 @@ export class MovimientosController {
     constructor(private readonly movimientosService: MovimientosService) { }
 
     @MessagePattern({ cmd: 'get_dashboard_stats_logistica' })
-    getDashboardStats() {
-        return this.movimientosService.getDashboardStats();
+    getDashboardStats(@Payload() payload: { id_empresa: string }) {
+        return this.movimientosService.getDashboardStats(payload.id_empresa);
     }
 
     @MessagePattern({ cmd: 'crear_movimiento' }) // Asegúrate de que los espacios y comillas coincidan

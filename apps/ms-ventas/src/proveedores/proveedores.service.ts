@@ -29,23 +29,23 @@ export class ProveedoresService {
         });
     }
 
-    async findOne(id: string) {
-        return await this.proveedorRepository.findOneBy({ id });
+    async findOne(id: string, id_empresa: string) {
+        return await this.proveedorRepository.findOne({ where: { id, id_empresa } });
     }
 
-    async update(id: string, updateData: any) {
+    async update(id: string, id_empresa: string, updateData: any) {
         try {
-            await this.proveedorRepository.update(id, updateData);
-            return this.findOne(id);
+            await this.proveedorRepository.update({ id, id_empresa }, updateData);
+            return this.findOne(id, id_empresa);
         } catch (error) {
             this.logger.error(`Error al actualizar proveedor: ${error.message}`);
             throw error;
         }
     }
 
-    async remove(id: string) {
+    async remove(id: string, id_empresa: string) {
         try {
-            await this.proveedorRepository.update(id, { activo: false });
+            await this.proveedorRepository.update({ id, id_empresa }, { activo: false });
             return { message: 'Proveedor desactivado correctamente' };
         } catch (error) {
             this.logger.error(`Error al desactivar proveedor: ${error.message}`);

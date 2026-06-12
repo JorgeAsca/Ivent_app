@@ -12,13 +12,21 @@ import { MsTercerosModule } from './modulos/ms-terceros/ms-terceros.module';
 import { MsVentasModule } from './modulos/ms-ventas/ms-ventas.module';
 import { AuthModule } from './modulos/auth/auth.module';
 
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './guards/auth.guard';
+import { JwtModule } from '@nestjs/jwt';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
-    
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET || 'super-secret-key-iventapp',
+      signOptions: { expiresIn: '1d' },
+    }),
     AdministracionModule,
     InventarioModule,
     MsUsuariosModule,
@@ -30,6 +38,12 @@ import { AuthModule } from './modulos/auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {}

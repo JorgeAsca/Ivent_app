@@ -15,7 +15,9 @@ export class Categoria {
     @Column('boolean', { default: true })
     activo: boolean;
 
-    
+    @Column('uuid')
+    id_empresa: string;
+
     @OneToMany(() => Producto, (producto) => producto.categoria)
     productos: Producto[];
 

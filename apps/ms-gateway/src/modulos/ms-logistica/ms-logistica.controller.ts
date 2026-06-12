@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Inject, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Param, Inject, Post, Body, Query, Req } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('logistica')
@@ -8,46 +8,44 @@ export class MsLogisticaController {
   ) {}
 
   @Get('stock/:productoId')
-  obtenerStock(@Param('productoId') productoId: string) {
+  obtenerStock(@Param('productoId') productoId: string, @Req() req: any) {
     console.log(`Recibiendo petición HTTP para consultar stock del producto: ${productoId}`);
-    
-    // CORREGIDO: Enviamos un objeto estructurado en lugar de un string suelto
-    return this.natsClient.send({ cmd: 'obtener_stock' }, { productoId });
+    return this.natsClient.send({ cmd: 'obtener_stock' }, { productoId, id_empresa: req.user.empresaId });
   } 
 
   @Post('movimientos')
-  crearMovimiento(@Body() data: any) {
+  crearMovimiento(@Body() data: any, @Req() req: any) {
     console.log('Recibiendo petición HTTP para crear movimiento de stock:', data);
-    return this.natsClient.send({ cmd: 'crear_movimiento' }, data);
+    return this.natsClient.send({ cmd: 'crear_movimiento' }, { ...data, id_empresa: req.user.empresaId });
   }
 
   @Get('movimientos')
-  listarMovimientos(@Query('empresaId') empresaId: string) {
-    return this.natsClient.send({ cmd: 'listar_movimientos' }, { id_empresa: empresaId });
+  listarMovimientos(@Req() req: any) {
+    return this.natsClient.send({ cmd: 'listar_movimientos' }, { id_empresa: req.user.empresaId });
   }
 
   @Get('almacenes')
-  listarAlmacenes(@Query('empresaId') empresaId: string) {
-    return this.natsClient.send({ cmd: 'find_all_almacenes' }, empresaId || '');
+  listarAlmacenes(@Req() req: any) {
+    return this.natsClient.send({ cmd: 'find_all_almacenes' }, { id_empresa: req.user.empresaId });
   }
 
   @Post('almacenes')
-  crearAlmacen(@Body() data: any) {
-    return this.natsClient.send({ cmd: 'create_almacen' }, data);
+  crearAlmacen(@Body() data: any, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'create_almacen' }, { ...data, id_empresa: req.user.empresaId });
   }
 
   @Get('almacenes/:id/stock')
-  obtenerStockAlmacen(@Param('id') id: string) {
-    return this.natsClient.send({ cmd: 'get_stock_by_almacen' }, { id_almacen: id });
+  obtenerStockAlmacen(@Param('id') id: string, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'get_stock_by_almacen' }, { id_almacen: id, id_empresa: req.user.empresaId });
   }
 
   @Post('almacenes/:id')
-  actualizarAlmacen(@Param('id') id: string, @Body() data: any) {
-    return this.natsClient.send({ cmd: 'update_almacen' }, { id, updateData: data });
+  actualizarAlmacen(@Param('id') id: string, @Body() data: any, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'update_almacen' }, { id, updateData: data, id_empresa: req.user.empresaId });
   }
 
   @Post('almacenes/delete/:id')
-  eliminarAlmacen(@Param('id') id: string) {
-    return this.natsClient.send({ cmd: 'delete_almacen' }, id);
+  eliminarAlmacen(@Param('id') id: string, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'delete_almacen' }, { id, id_empresa: req.user.empresaId });
   }
 }

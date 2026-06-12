@@ -33,7 +33,9 @@ export class Producto {
     @Column('boolean', { default: true })
     activo: boolean;
 
-    
+    @Column('uuid')
+    id_empresa: string;
+
     @ManyToOne(() => Categoria, (categoria) => categoria.productos, { eager: true }) 
     @JoinColumn({ name: 'categoria_id' })
     categoria: Categoria;

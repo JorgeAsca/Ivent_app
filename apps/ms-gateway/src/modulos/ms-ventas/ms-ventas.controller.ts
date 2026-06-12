@@ -1,37 +1,36 @@
-import { Controller, Post, Body, Inject, Get, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Inject, Get, Param, Patch, Delete, Req } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('ventas')
 export class MsVentasController {
   constructor(
-    
     @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
   ) {}
 
   @Post()
-  createVenta(@Body() createVentaDto: any) {
+  createVenta(@Body() createVentaDto: any, @Req() req: any) {
     console.log('Recibiendo petición HTTP en Gateway para crear venta...');
-    return this.natsClient.send({ cmd: 'create_venta' }, createVentaDto);
+    return this.natsClient.send({ cmd: 'create_venta' }, { ...createVentaDto, id_empresa: req.user.empresaId });
   }
 
   // Rutas para Proveedores
   @Post('proveedores')
-  createProveedor(@Body() createProveedorDto: any) {
-    return this.natsClient.send({ cmd: 'create_proveedor' }, createProveedorDto);
+  createProveedor(@Body() createProveedorDto: any, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'create_proveedor' }, { ...createProveedorDto, id_empresa: req.user.empresaId });
   }
 
-  @Get('proveedores/:id_empresa')
-  findAllProveedores(@Param('id_empresa') id_empresa: string) {
-    return this.natsClient.send({ cmd: 'find_all_proveedores' }, id_empresa);
+  @Get('proveedores')
+  findAllProveedores(@Req() req: any) {
+    return this.natsClient.send({ cmd: 'find_all_proveedores' }, { id_empresa: req.user.empresaId });
   }
 
   @Patch('proveedores/:id')
-  updateProveedor(@Param('id') id: string, @Body() updateProveedorDto: any) {
-    return this.natsClient.send({ cmd: 'update_proveedor' }, { id, data: updateProveedorDto });
+  updateProveedor(@Param('id') id: string, @Body() updateProveedorDto: any, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'update_proveedor' }, { id, data: updateProveedorDto, id_empresa: req.user.empresaId });
   }
 
   @Delete('proveedores/:id')
-  removeProveedor(@Param('id') id: string) {
-    return this.natsClient.send({ cmd: 'remove_proveedor' }, id);
+  removeProveedor(@Param('id') id: string, @Req() req: any) {
+    return this.natsClient.send({ cmd: 'remove_proveedor' }, { id, id_empresa: req.user.empresaId });
   }
 }

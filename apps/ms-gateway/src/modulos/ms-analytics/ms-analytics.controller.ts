@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Req } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('analytics')
@@ -8,18 +8,19 @@ export class MsAnalyticsController {
   ) {}
 
   @Get('dashboard')
-  async getDashboard() {
+  async getDashboardStats(@Req() req: any) {
     try {
-      const inventarioStats = await this.natsClient.send({ cmd: 'get_dashboard_stats' }, {}).toPromise();
-      const logisticaStats = await this.natsClient.send({ cmd: 'get_dashboard_stats_logistica' }, {}).toPromise();
-
+      const inventarioStats = await this.natsClient.send({ cmd: 'get_dashboard_stats' }, { id_empresa: req.user.empresaId }).toPromise();
+      const logisticaStats = await this.natsClient.send({ cmd: 'get_dashboard_stats_logistica' }, { id_empresa: req.user.empresaId }).toPromise();
+      
       return {
-        ...inventarioStats,
-        ...logisticaStats,
+        inventario: inventarioStats,
+        logistica: logisticaStats,
+        ventas: { totalVentas: 0, ultimasVentas: [] } 
       };
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      throw error;
+      console.error('Error obteniendo stats del dashboard:', error);
+      return { error: 'No se pudieron cargar las estadísticas' };
     }
   }
 }

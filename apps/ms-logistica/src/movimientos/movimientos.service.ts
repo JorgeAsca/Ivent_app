@@ -27,7 +27,8 @@ export class MovimientosService {
                 guardado.id_producto,
                 guardado.id_almacen,
                 guardado.cantidad,
-                guardado.tipo
+                guardado.tipo,
+                guardado.id_empresa
             );
 
             // Calculamos el stock total sumando entradas y restando salidas
@@ -52,18 +53,10 @@ export class MovimientosService {
     }
 
     async findAll(id_empresa: string) {
-        // Obtenemos los almacenes de la empresa
-        const almacenes = await this.repo.manager.query(
-            `SELECT id FROM almacenes WHERE id_empresa = $1`, [id_empresa]
-        );
-        const idsAlmacenes = almacenes.map((a: any) => a.id);
-
-        if (idsAlmacenes.length === 0) return [];
-
-        return await this.repo.createQueryBuilder('movimiento')
-            .where('movimiento.id_almacen IN (:...ids)', { ids: idsAlmacenes })
-            .orderBy('movimiento.fecha_movimiento', 'DESC')
-            .getMany();
+        return await this.repo.find({
+            where: { id_empresa },
+            order: { fecha_movimiento: 'DESC' }
+        });
     }
 
     private async calcularStockActual(id_producto: string): Promise<number> {
@@ -76,17 +69,19 @@ export class MovimientosService {
         return parseInt(resultado.total) || 0;
     }
 
-    async getDashboardStats() {
+    async getDashboardStats(id_empresa: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const movimientosHoy = await this.repo
           .createQueryBuilder('movimiento')
           .where('movimiento.fecha_movimiento >= :today', { today })
+          .andWhere('movimiento.id_empresa = :id_empresa', { id_empresa })
           .getCount();
 
         const ultimosMovimientos = await this.repo
           .createQueryBuilder('movimiento')
+          .where('movimiento.id_empresa = :id_empresa', { id_empresa })
           .orderBy('movimiento.fecha_movimiento', 'DESC')
           .take(5)
           .getMany();

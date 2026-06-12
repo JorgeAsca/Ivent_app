@@ -16,11 +16,14 @@ export const useProveedores = () => {
   const { fetchApi } = useApi()
   const error = ref<string | null>(null)
   const loading = ref(false)
+  const proveedores = ref<Proveedor[]>([])
 
-  const getProveedores = async (id_empresa: string): Promise<Proveedor[] | null> => {
+  const getProveedores = async (): Promise<Proveedor[] | null> => {
     loading.value = true
+    error.value = null
     try {
-      const data = await fetchApi<Proveedor[]>(`/ventas/proveedores/${id_empresa}`)
+      const data = await fetchApi<Proveedor[]>('/ventas/proveedores')
+      proveedores.value = data || []
       return data
     } catch (err: any) {
       error.value = err.message

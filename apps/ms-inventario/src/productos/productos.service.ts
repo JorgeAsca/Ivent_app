@@ -20,8 +20,8 @@ export class ProductosService {
         @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
     ) { }
 
-    async create(createProductoDto: CreateProductoDto) {
-        const { categoriaId, almacenId, ...datosProducto } = createProductoDto;
+    async create(createProductoDto: any) {
+        const { categoriaId, almacenId, id_empresa, ...datosProducto } = createProductoDto;
 
         if (!datosProducto.sku || datosProducto.sku.trim() === '') {
             const prefix = datosProducto.nombre ? datosProducto.nombre.substring(0, 3).toUpperCase().padEnd(3, 'X') : 'PRD';
@@ -29,7 +29,7 @@ export class ProductosService {
             datosProducto.sku = `${prefix}-${randomNum}`;
         }
 
-        const categoria = await this.categoriaRepository.findOneBy({ id: categoriaId });
+        const categoria = await this.categoriaRepository.findOneBy({ id: categoriaId, id_empresa });
         if (!categoria) {
             throw new NotFoundException(`Categoría con ID ${categoriaId} no encontrada`);
         }
@@ -43,8 +43,9 @@ export class ProductosService {
         }
 
         try {
-            const nuevoProducto = this.productoRepository.create({
+            const nuevoProducto: any = this.productoRepository.create({
                 ...datosProducto,
+                id_empresa,
                 categoria: categoria,
             });
 
@@ -79,28 +80,28 @@ export class ProductosService {
         }
     }
 
-    findAll() {
+    findAll(id_empresa: string) {
         return this.productoRepository.find({
-            where: { activo: true },
+            where: { activo: true, id_empresa },
             relations: ['categoria'],
         });
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, id_empresa: string) {
         const producto = await this.productoRepository.findOne({
-            where: { id, activo: true },
+            where: { id, activo: true, id_empresa },
             relations: ['categoria']
         });
         if (!producto) throw new NotFoundException(`Producto con ID ${id} no encontrado`);
         return producto;
     }
 
-    async update(id: string, updateProductoDto: UpdateProductoDto) {
-        const producto = await this.findOne(id);
+    async update(id: string, id_empresa: string, updateProductoDto: any) {
+        const producto = await this.findOne(id, id_empresa);
         const stockAnterior = producto.stock;
 
         if (updateProductoDto.categoriaId) {
-            const nuevaCategoria = await this.categoriaRepository.findOneBy({ id: updateProductoDto.categoriaId });
+            const nuevaCategoria = await this.categoriaRepository.findOneBy({ id: updateProductoDto.categoriaId, id_empresa });
             if (!nuevaCategoria) throw new NotFoundException(`Nueva categoría con ID ${updateProductoDto.categoriaId} no encontrada`);
             producto.categoria = nuevaCategoria;
         }
@@ -113,21 +114,24 @@ export class ProductosService {
         if ('almacenId' in datos) {
             delete (datos as any).almacenId;
         }
+        if ('id_empresa' in datos) {
+            delete (datos as any).id_empresa;
+        }
         const productoActualizado = this.productoRepository.merge(producto, datos);
         const productoGuardado = await this.productoRepository.save(productoActualizado);
 
         return productoGuardado;
     }
 
-    async remove(id: string) {
-        const producto = await this.findOne(id);
+    async remove(id: string, id_empresa: string) {
+        const producto = await this.findOne(id, id_empresa);
         producto.activo = false;
         return this.productoRepository.save(producto);
     }
 
-    async actualizarStockReal(id: string, stock_actual: number) {
+    async actualizarStockReal(id: string, stock_actual: number, id_empresa: string) {
         try {
-            const producto = await this.findOne(id);
+            const producto = await this.findOne(id, id_empresa);
             if (producto.stock !== stock_actual) {
                 const stockAnterior = producto.stock;
                 producto.stock = stock_actual;
@@ -153,24 +157,27 @@ export class ProductosService {
         }
     }
 
-    async getDashboardStats() {
-        const totalProductos = await this.productoRepository.count({ where: { activo: true } });
+    async getDashboardStats(id_empresa: string) {
+        const totalProductos = await this.productoRepository.count({ where: { activo: true, id_empresa } });
         
         const { valorTotal } = await this.productoRepository
           .createQueryBuilder('producto')
           .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.id_empresa = :id_empresa', { id_empresa })
           .select('SUM(producto.stock * producto.costo)', 'valorTotal')
           .getRawOne();
 
         const lowStockCount = await this.productoRepository
           .createQueryBuilder('producto')
           .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.id_empresa = :id_empresa', { id_empresa })
           .andWhere('producto.stock <= producto.stockMinimo')
           .getCount();
 
         const lowStockProducts = await this.productoRepository
           .createQueryBuilder('producto')
           .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.id_empresa = :id_empresa', { id_empresa })
           .andWhere('producto.stock <= producto.stockMinimo')
           .leftJoinAndSelect('producto.categoria', 'categoria')
           .take(5)
@@ -179,6 +186,7 @@ export class ProductosService {
         const valorPorCategoria = await this.productoRepository
           .createQueryBuilder('producto')
           .where('producto.activo = :activo', { activo: true })
+          .andWhere('producto.id_empresa = :id_empresa', { id_empresa })
           .leftJoin('producto.categoria', 'categoria')
           .select('categoria.nombre', 'name')
           .addSelect('SUM(producto.stock * producto.costo)', 'value')

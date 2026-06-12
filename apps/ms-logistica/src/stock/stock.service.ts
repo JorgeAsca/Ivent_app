@@ -12,11 +12,11 @@ export class StockService {
         @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
     ) { }
 
-    async actualizarStock(id_producto: string, id_almacen: string, cantidad: number, tipo: string) {
+    async actualizarStock(id_producto: string, id_almacen: string, cantidad: number, tipo: string, id_empresa?: string) {
         let stock = await this.stockRepo.findOne({ where: { id_producto, id_almacen } });
 
         if (!stock) {
-            stock = this.stockRepo.create({ id_producto, id_almacen, cantidad: 0 });
+            stock = this.stockRepo.create({ id_producto, id_almacen, cantidad: 0, id_empresa });
         }
 
         if (tipo === 'ENTRADA') {
@@ -42,15 +42,15 @@ export class StockService {
 
     private readonly logger = new Logger('StockService');
 
-    async inicializarStock(productoId: string, id_almacen: string = '00000000-0000-0000-0000-000000000000') {
+    async inicializarStock(productoId: string, id_almacen: string = '00000000-0000-0000-0000-000000000000', id_empresa?: string) {
         const existe = await this.stockRepo.findOne({ where: { id_producto: productoId, id_almacen } });
         if (existe) return existe;
-        const nuevoStock = this.stockRepo.create({ id_producto: productoId, id_almacen, cantidad: 0 });
+        const nuevoStock = this.stockRepo.create({ id_producto: productoId, id_almacen, cantidad: 0, id_empresa });
         this.logger.log(`Stock inicializado a 0 para el producto: ${productoId}`);
         return await this.stockRepo.save(nuevoStock);
     }
 
-    async descontarStock(productoId: string, cantidadVendida: number) {
+    async descontarStock(productoId: string, cantidadVendida: number, id_empresa?: string) {
         const stockActual = await this.stockRepo.findOne({ where: { id_producto: productoId } });
 
         if (!stockActual) {

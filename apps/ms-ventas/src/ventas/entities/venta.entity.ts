@@ -17,6 +17,9 @@ export class Venta {
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
+  @Column({ type: 'uuid' })
+  id_empresa: string;
+
   @CreateDateColumn()
   fechaVenta: Date;
 }

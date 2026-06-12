@@ -8,27 +8,27 @@ export class ProveedoresController {
     constructor(private readonly proveedoresService: ProveedoresService) { }
 
     @MessagePattern({ cmd: 'create_proveedor' })
-    create(@Payload() createProveedorDto: CreateProveedorDto) {
+    create(@Payload() createProveedorDto: any) {
         return this.proveedoresService.create(createProveedorDto);
     }
 
     @MessagePattern({ cmd: 'find_all_proveedores' })
-    findAll(@Payload() id_empresa: string) {
-        return this.proveedoresService.findAll(id_empresa);
+    findAll(@Payload() payload: { id_empresa: string }) {
+        return this.proveedoresService.findAll(payload.id_empresa);
     }
 
     @MessagePattern({ cmd: 'find_one_proveedor' })
-    findOne(@Payload() id: string) {
-        return this.proveedoresService.findOne(id);
+    findOne(@Payload() payload: { id: string, id_empresa: string }) {
+        return this.proveedoresService.findOne(payload.id, payload.id_empresa);
     }
 
     @MessagePattern({ cmd: 'update_proveedor' })
-    update(@Payload() payload: { id: string, data: any }) {
-        return this.proveedoresService.update(payload.id, payload.data);
+    update(@Payload() payload: { id: string, id_empresa: string, data: any }) {
+        return this.proveedoresService.update(payload.id, payload.id_empresa, payload.data);
     }
 
     @MessagePattern({ cmd: 'remove_proveedor' })
-    remove(@Payload() id: string) {
-        return this.proveedoresService.remove(id);
+    remove(@Payload() payload: { id: string, id_empresa: string }) {
+        return this.proveedoresService.remove(payload.id, payload.id_empresa);
     }
 }

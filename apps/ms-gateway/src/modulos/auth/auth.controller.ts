@@ -1,7 +1,9 @@
 import { Controller, Post, Body, Inject } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
+import { Public } from '../../decorators/public.decorator';
 
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(@Inject('NATS_SERVICE') private readonly natsClient: ClientProxy) {}

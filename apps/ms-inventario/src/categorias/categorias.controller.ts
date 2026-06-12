@@ -10,28 +10,28 @@ export class CategoriasController {
     constructor(private readonly categoriasService: CategoriasService) { }
 
     @MessagePattern(INVENTARIO_PATTERNS.CREAR_CATEGORIA)
-    create(@Payload() createCategoriaDto: CreateCategoriaDto) {
+    create(@Payload() createCategoriaDto: any) {
         return this.categoriasService.create(createCategoriaDto);
     }
 
     @MessagePattern(INVENTARIO_PATTERNS.LISTAR_CATEGORIAS)
-    findAll() {
-        return this.categoriasService.findAll();
+    findAll(@Payload() payload: { id_empresa: string }) {
+        return this.categoriasService.findAll(payload.id_empresa);
     }
 
 
     @MessagePattern(INVENTARIO_PATTERNS.BUSCAR_CATEGORIA)
-    findOne(@Payload() id: string) {
-        return this.categoriasService.findOne(id);
+    findOne(@Payload() payload: { id: string, id_empresa: string }) {
+        return this.categoriasService.findOne(payload.id, payload.id_empresa);
     }
 
     @MessagePattern(INVENTARIO_PATTERNS.ACTUALIZAR_CATEGORIA)
-    update(@Payload() updateCategoriaDto: UpdateCategoriaDto) {
-        return this.categoriasService.update(updateCategoriaDto.id, updateCategoriaDto);
+    update(@Payload() updateCategoriaDto: any) {
+        return this.categoriasService.update(updateCategoriaDto.id, updateCategoriaDto.id_empresa, updateCategoriaDto);
     }
 
     @MessagePattern(INVENTARIO_PATTERNS.ELIMINAR_CATEGORIA)
-    remove(@Payload() id: string) {
-        return this.categoriasService.remove(id);
+    remove(@Payload() payload: { id: string, id_empresa: string }) {
+        return this.categoriasService.remove(payload.id, payload.id_empresa);
     }
 }

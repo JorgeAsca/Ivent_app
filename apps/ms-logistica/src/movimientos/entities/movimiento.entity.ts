@@ -23,6 +23,9 @@ export class Movimiento {
     @Column({ type: 'uuid', nullable: true })
     id_usuario: string; // Usuario que realizó el movimiento
 
+    @Column({ type: 'uuid' })
+    id_empresa: string;
+
     @CreateDateColumn()
     fecha_movimiento: Date;
 }

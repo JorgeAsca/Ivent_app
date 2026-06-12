@@ -8,7 +8,7 @@ export class VentasController {
     constructor(private readonly ventasService: VentasService) { }
 
     @MessagePattern({ cmd: 'create_venta' })
-    create(@Payload() createVentaDto: CreateVentaDto) {
+    create(@Payload() createVentaDto: any) {
         return this.ventasService.create(createVentaDto);
     }
 }

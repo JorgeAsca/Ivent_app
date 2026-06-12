@@ -23,7 +23,8 @@ export class VentasService {
         this.natsClient.emit('venta_realizada', {
             productoId: ventaGuardada.productoId,
             cantidad: ventaGuardada.cantidad,
-            ventaId: ventaGuardada.id
+            ventaId: ventaGuardada.id,
+            id_empresa: ventaGuardada.id_empresa
         });
 
         return ventaGuardada;

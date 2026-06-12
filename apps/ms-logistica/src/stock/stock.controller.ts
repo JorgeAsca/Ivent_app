@@ -21,11 +21,11 @@ export class StockController {
     }
 
     @EventPattern('venta_realizada')
-    async handleVentaRealizada(@Payload() data: { productoId: string, cantidad: number, ventaId: string }) {
+    async handleVentaRealizada(@Payload() data: { productoId: string, cantidad: number, ventaId: string, id_empresa: string }) {
         console.log(`[ms-logistica] Evento atrapado: Se vendieron ${data.cantidad} unidades del producto ${data.productoId}`);
 
         // Llamamos a nuestro servicio para actualizar la base de datos de logística
-        await this.stockService.descontarStock(data.productoId, data.cantidad);
+        await this.stockService.descontarStock(data.productoId, data.cantidad, data.id_empresa);
     }
 
     @MessagePattern({ cmd: 'get_stock_by_almacen' })
