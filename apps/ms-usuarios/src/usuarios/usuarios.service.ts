@@ -5,6 +5,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { User } from './entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { firstValueFrom } from 'rxjs';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsuariosService {
@@ -12,6 +13,10 @@ export class UsuariosService {
         @InjectRepository(User) private readonly userRepo: Repository<User>,
         @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
     ) { }
+
+    async findByEmail(email: string) {
+        return await this.userRepo.findOne({ where: { email }, relations: ['rol'] });
+    }
 
     async crearUsuario(data: any) {
         // Comunicación: Preguntar al ms-administracion usando el payload correcto { id_empresa }
@@ -23,15 +28,18 @@ export class UsuariosService {
             throw new Error('La empresa referenciada no existe en el sistema');
         }
 
-        const { rolId, ...rest } = data;
+        const { rolId, password, ...rest } = data;
         const nuevoUsuario = this.userRepo.create(rest as Partial<User>);
 
-        
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            nuevoUsuario.password = await bcrypt.hash(password, salt);
+        }
+
         if (rolId) {
             nuevoUsuario.rol = { id_rol: rolId } as Role;
         }
 
-        
         return await this.userRepo.save(nuevoUsuario);
     }
 
@@ -56,10 +64,15 @@ export class UsuariosService {
 
     async update(id: string, updateData: any) {
         const usuario = await this.findOne(id);
-        const { rolId, ...rest } = updateData;
+        const { rolId, password, ...rest } = updateData;
         
         const actualizado = Object.assign(usuario, rest);
         
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            actualizado.password = await bcrypt.hash(password, salt);
+        }
+
         if (rolId !== undefined) {
             actualizado.rol = rolId ? ({ id_rol: rolId } as Role) : null;
         }

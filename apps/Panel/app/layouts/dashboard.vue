@@ -58,6 +58,27 @@ const colorMode = useColorMode()
 function toggleTheme() {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
+
+const router = useRouter()
+const authToken = useCookie('auth_token')
+const userCookie = useCookie('user_data')
+
+function handleLogout() {
+  console.log('Logging out...')
+  authToken.value = null
+  userCookie.value = null
+  router.push('/login')
+}
+
+const dropdownItems = computed(() => [
+  [
+    { label: 'Mi perfil', icon: 'i-lucide-user', to: '/perfil', class: 'text-white' },
+    { label: 'Preferencias', icon: 'i-lucide-settings-2', to: '/preferencias', class: 'text-white' },
+  ],
+  [
+    { label: 'Cerrar sesion', icon: 'i-lucide-log-out', color: 'error' as const, click: handleLogout, onSelect: handleLogout },
+  ],
+])
 </script>
 
 <template>
@@ -119,15 +140,7 @@ function toggleTheme() {
       <template #footer="{ collapsed }">
         <div class="border-t border-white/10 p-2">
           <UDropdownMenu
-            :items="[
-              [
-                { label: 'Mi perfil', icon: 'i-lucide-user', to: '/perfil', class: 'text-white' },
-                { label: 'Preferencias', icon: 'i-lucide-settings-2', to: '/preferencias', class: 'text-white' },
-              ],
-              [
-                { label: 'Cerrar sesion', icon: 'i-lucide-log-out', color: 'error' as const, to: '/login' },
-              ],
-            ]"
+            :items="dropdownItems"
             :ui="{ content: 'bg-neutral-900 border-white/10 text-white dark' }"
           >
             <UButton

@@ -10,6 +10,7 @@ import { MsConfiguracionModule } from './modulos/ms-configuracion/ms-configuraci
 import { MsLogisticaModule } from './modulos/ms-logistica/ms-logistica.module';
 import { MsTercerosModule } from './modulos/ms-terceros/ms-terceros.module';
 import { MsVentasModule } from './modulos/ms-ventas/ms-ventas.module';
+import { AuthModule } from './modulos/auth/auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MsVentasModule } from './modulos/ms-ventas/ms-ventas.module';
     MsLogisticaModule,
     MsTercerosModule,
     MsVentasModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

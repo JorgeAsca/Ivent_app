@@ -7,6 +7,7 @@ import { envs } from './config/envs';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { RolesModule } from './roles/roles.module';
 import { PermisosModule } from './permisos/permisos.module';
+import { AuthModule } from './auth/auth.module';
 
 // Entidades para la conexión global
 import { User } from './usuarios/entities/user.entity';
@@ -32,6 +33,7 @@ import { Permission } from './permisos/entities/permission.entity';
     UsuariosModule,
     RolesModule,
     PermisosModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

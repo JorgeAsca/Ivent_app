@@ -1,13 +1,19 @@
 <script setup lang="ts">
+import { useApi } from '~/composables/useApi'
+
 // Deshabilitar el layout del dashboard para esta página
 definePageMeta({ layout: false })
 
 const router = useRouter()
 const toast = useToast()
+const { fetchApi } = useApi()
 
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
+const showPassword = ref(false)
+const authToken = useCookie('auth_token', { maxAge: 60 * 60 * 24 }) // 1 day
+const userCookie = useCookie('user_data', { maxAge: 60 * 60 * 24 })
 
 async function handleLogin() {
   if (!email.value || !password.value) {
@@ -21,19 +27,35 @@ async function handleLogin() {
 
   isLoading.value = true
 
-  // Simulamos una carga de red
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  try {
+    const response = await fetchApi<any>('/auth/login', {
+      method: 'POST',
+      body: { email: email.value, password: password.value }
+    })
 
-  isLoading.value = false
+    if (response && response.access_token) {
+      authToken.value = response.access_token
+      userCookie.value = JSON.stringify(response.usuario)
 
-  // Mensaje de éxito provisional y redirección
-  toast.add({
-    title: 'Bienvenido',
-    description: 'Has iniciado sesión correctamente.',
-    color: 'success'
-  })
-  
-  router.push('/dashboard')
+      toast.add({
+        title: 'Bienvenido',
+        description: 'Has iniciado sesión correctamente.',
+        color: 'success'
+      })
+      
+      router.push('/dashboard')
+    } else {
+      throw new Error('Credenciales inválidas')
+    }
+  } catch (error: any) {
+    toast.add({
+      title: 'Error',
+      description: error.message || 'Error al iniciar sesión. Verifica tus credenciales.',
+      color: 'error'
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -66,16 +88,25 @@ async function handleLogin() {
           </UFormField>
 
           <UFormField label="Contraseña" name="password">
-            <div class="flex items-center justify-between">
-            </div>
             <UInput 
               v-model="password" 
-              type="password" 
+              :type="showPassword ? 'text' : 'password'" 
               placeholder="••••••••" 
               icon="i-lucide-lock"
               autocomplete="current-password"
               class="w-full"
-            />
+              :ui="{ icon: { trailing: { pointer: '' } } }"
+            >
+              <template #trailing>
+                <UButton
+                  color="gray"
+                  variant="link"
+                  :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  :padded="false"
+                  @click="showPassword = !showPassword"
+                />
+              </template>
+            </UInput>
           </UFormField>
 
           <div class="flex items-center justify-between text-sm">
@@ -99,7 +130,7 @@ async function handleLogin() {
         <template #footer>
           <p class="text-center text-sm text-gray-500 dark:text-gray-400">
             ¿No tienes cuenta? 
-            <a href="#" class="font-medium text-primary hover:underline">Contacta al administrador</a>
+            <NuxtLink href="/registro" class="font-medium text-primary hover:underline">Regístrate como Empresa</NuxtLink>
           </p>
         </template>
       </UCard>
