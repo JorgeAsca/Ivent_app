@@ -9,4 +9,5 @@ export class CreateProductoDto {
     public unidadMedida?: string;
     public stockMinimo?: number;
     public proveedorId?: string;
+    public tipo?: 'SIMPLE' | 'COMPUESTO';
 }

@@ -14,6 +14,7 @@ export interface Product {
   stockMinimo?: number
   proveedorId?: string
   categoria?: any
+  tipo?: 'SIMPLE' | 'COMPUESTO'
 }
 
 export const useProducts = () => {

@@ -102,15 +102,17 @@ async function viewInventory(warehouse: Almacen) {
   isStockLoading.value = true
   try {
     const stockData = await getWarehouseStock(warehouse.id)
-    // Enrich stockData with product names
-    selectedWarehouseStock.value = (stockData || []).map(s => {
-      const prod = backendProductos.value.find(p => p.id === s.id_producto)
-      return {
-        ...s,
-        productoNombre: prod ? prod.nombre : 'Producto Desconocido',
-        productoSku: prod ? prod.sku : 'N/A'
-      }
-    })
+    // Enrich stockData with product names and filter out deleted ones
+    selectedWarehouseStock.value = (stockData || [])
+      .filter(s => backendProductos.value.some(p => p.id === s.id_producto))
+      .map(s => {
+        const prod = backendProductos.value.find(p => p.id === s.id_producto)
+        return {
+          ...s,
+          productoNombre: prod!.nombre,
+          productoSku: prod!.sku
+        }
+      })
   } catch (error) {
     toast.add({ title: 'Error al cargar inventario', color: 'error' })
     selectedWarehouseStock.value = []

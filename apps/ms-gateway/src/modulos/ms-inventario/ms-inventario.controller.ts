@@ -18,7 +18,8 @@ export class InventarioController {
 
     @Get('productos')
     findAllProductos(@Req() req: any) {
-        return this.clientInventario.send(INVENTARIO_PATTERNS.LISTAR_PRODUCTOS, { id_empresa: req.user.empresaId }).pipe(
+        const empresaId = req.user?.empresaId || '05d04ccf-1785-4db2-a9b0-a614002e2101';
+        return this.clientInventario.send(INVENTARIO_PATTERNS.LISTAR_PRODUCTOS, { id_empresa: empresaId }).pipe(
             catchError((error) => { throw new RpcException(error); }),
         );
     }
@@ -71,6 +72,31 @@ export class InventarioController {
     @Delete('categorias/:id')
     removeCategoria(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.ELIMINAR_CATEGORIA, { id, id_empresa: req.user.empresaId })
+            .pipe(catchError(err => { throw new RpcException(err) }));
+    }
+
+    // Peticiones de Recetas (BOM)
+    @Get('productos/:id/receta')
+    obtenerReceta(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+        return this.clientInventario.send({ cmd: 'obtener_receta' }, { producto_id: id, id_empresa: req.user.empresaId })
+            .pipe(catchError(err => { throw new RpcException(err) }));
+    }
+
+    @Post('productos/:id/receta')
+    guardarReceta(@Param('id', ParseUUIDPipe) id: string, @Body() data: any, @Req() req: any) {
+        return this.clientInventario.send({ cmd: 'guardar_receta' }, { producto_id: id, ...data, id_empresa: req.user.empresaId })
+            .pipe(catchError(err => { throw new RpcException(err) }));
+    }
+
+    @Get('productos/:id/rendimiento')
+    calcularRendimiento(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+        return this.clientInventario.send({ cmd: 'calcular_rendimiento' }, { producto_id: id, id_empresa: req.user.empresaId })
+            .pipe(catchError(err => { throw new RpcException(err) }));
+    }
+
+    @Post('productos/:id/fabricar')
+    fabricarProducto(@Param('id', ParseUUIDPipe) id: string, @Body() data: any, @Req() req: any) {
+        return this.clientInventario.send({ cmd: 'fabricar_producto' }, { producto_id: id, ...data, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
     }
 }

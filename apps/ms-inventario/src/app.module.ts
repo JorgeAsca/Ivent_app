@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { envs } from './config/envs'; 
 import { ProductosModule } from './productos/productos.module';
 import { CategoriasModule } from './categorias/categorias.module';
+import { RecetasModule } from './recetas/recetas.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CategoriasModule } from './categorias/categorias.module';
     // 3. Módulos de negocio
     ProductosModule,
     CategoriasModule,
+    RecetasModule,
   ],
   controllers: [],
   providers: [],

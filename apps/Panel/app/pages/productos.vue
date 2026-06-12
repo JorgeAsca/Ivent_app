@@ -53,7 +53,8 @@ const currentProduct = ref<Partial<Product>>({
   stock: 0,
   precio: 0,
   costo: 0,
-  activo: true
+  activo: true,
+  tipo: 'SIMPLE'
 })
 
 const filteredProducts = computed(() => {
@@ -69,11 +70,17 @@ const filteredProducts = computed(() => {
 const columns = [
   { accessorKey: 'sku', header: 'SKU' },
   { accessorKey: 'nombre', header: 'Nombre' },
+  { accessorKey: 'tipo', header: 'Tipo' },
   { accessorKey: 'categoria', header: 'Categoria' },
   { accessorKey: 'stock', header: 'Stock Global' },
   { accessorKey: 'costo', header: 'Costo' },
   { accessorKey: 'precio', header: 'Precio' },
   { id: 'actions', header: '' },
+]
+
+const tipoOptions = [
+  { value: 'SIMPLE', label: 'Simple (Insumo)' },
+  { value: 'COMPUESTO', label: 'Compuesto (Fabricado)' }
 ]
 
 const categoryOptions = computed(() => categorias.value.map(c => ({ value: c.id, label: c.nombre })))
@@ -98,7 +105,8 @@ function openNewProductModal() {
     precio: 0,
     activo: true,
     unidadMedida: 'Ud',
-    costo: 0
+    costo: 0,
+    tipo: 'SIMPLE'
   }
   isModalOpen.value = true
 }
@@ -119,7 +127,8 @@ async function saveProduct() {
       unidadMedida: currentProduct.value.unidadMedida,
       stock: currentProduct.value.stock,
       precio: currentProduct.value.precio,
-      costo: currentProduct.value.costo
+      costo: currentProduct.value.costo,
+      tipo: currentProduct.value.tipo
     }
 
     if (isEditMode.value && currentProduct.value.id) {
@@ -196,6 +205,13 @@ async function deleteProduct(id: string) {
             <template #nombre-cell="{ row }">
               <span class="font-medium text-default">{{ row.original.nombre }}</span>
             </template>
+            <template #tipo-cell="{ row }">
+              <UBadge
+                :color="row.original.tipo === 'COMPUESTO' ? 'primary' : 'neutral'"
+                :label="row.original.tipo === 'COMPUESTO' ? 'Compuesto' : 'Simple'"
+                variant="subtle"
+              />
+            </template>
             <template #categoria-cell="{ row }">
               <span class="text-default">{{ row.original.categoria?.nombre || '-' }}</span>
             </template>
@@ -269,7 +285,10 @@ async function deleteProduct(id: string) {
 
         <div class="grid grid-cols-2 gap-4">
           <UFormField label="Costo de producto" name="costo">
-            <UInput v-model.number="currentProduct.costo" type="number" step="0.01" icon="i-lucide-euro" />
+            <div v-if="currentProduct.tipo === 'COMPUESTO'" class="text-sm text-zinc-500 mt-2">
+              Se autocalcula según la receta
+            </div>
+            <UInput v-else v-model.number="currentProduct.costo" type="number" step="0.01" icon="i-lucide-euro" />
           </UFormField>
           <UFormField label="Precio de Venta" name="precio">
             <UInput v-model.number="currentProduct.precio" type="number" step="0.01" icon="i-lucide-euro" />

@@ -24,6 +24,9 @@ export class Producto {
     @Column('text', { unique: true })
     sku: string; 
 
+    @Column({ type: 'varchar', default: 'SIMPLE' })
+    tipo: string;
+
     @Column('int', { default: 0 })
     stockMinimo: number;
 

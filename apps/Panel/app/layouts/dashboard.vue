@@ -25,6 +25,11 @@ const mainNavItems = computed<NavigationMenuItem[]>(() => [
     to: '/movimientos',
   },
   {
+    label: 'Rendimiento / BOM',
+    icon: 'i-lucide-chef-hat',
+    to: '/rendimiento',
+  },
+  {
     label: 'Proveedores',
     icon: 'i-lucide-truck',
     to: '/proveedores',

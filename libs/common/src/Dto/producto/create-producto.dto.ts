@@ -47,4 +47,8 @@ export class CreateProductoDto {
     @IsOptional()
     @IsUUID()
     public proveedorId?: string;
+
+    @IsOptional()
+    @IsString()
+    public tipo?: 'SIMPLE' | 'COMPUESTO';
 }
