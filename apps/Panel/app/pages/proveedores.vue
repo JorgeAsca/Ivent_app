@@ -127,21 +127,31 @@ async function deleteSupplier(id: string) {
     <template #header>
       <UDashboardNavbar title="Proveedores">
         <template #right>
-          <UButton icon="i-lucide-plus" label="Nuevo Proveedor" @click="openNewModal" />
+          <div class="hidden sm:flex gap-2 items-center">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar proveedores..."
+              class="w-64"
+            />
+            <UButton icon="i-lucide-download" label="Exportar" variant="outline" color="neutral" />
+            <UButton icon="i-lucide-plus" label="Nuevo Proveedor" @click="openNewModal" />
+          </div>
         </template>
       </UDashboardNavbar>
 
-      <UDashboardToolbar>
-        <template #left>
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Buscar proveedores..."
-            class="w-64"
-          />
-        </template>
+      <UDashboardToolbar class="sm:hidden">
         <template #right>
-          <UButton icon="i-lucide-download" label="Exportar" variant="outline" color="neutral" />
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar..."
+              class="w-32 shrink-0"
+            />
+            <UButton icon="i-lucide-download" label="Exportar" variant="outline" color="neutral" class="shrink-0" />
+            <UButton icon="i-lucide-plus" label="Nuevo" @click="openNewModal" class="shrink-0" />
+          </div>
         </template>
       </UDashboardToolbar>
     </template>

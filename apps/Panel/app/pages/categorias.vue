@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useCategorias, type Categoria } from '~/composables/useCategorias'
+import { useProducts, type Product } from '~/composables/useProducts'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -9,15 +10,21 @@ const isEditMode = ref(false)
 const searchQuery = ref('')
 
 const { getCategorias, createCategoria, updateCategoria, deleteCategoria: removeCategoria } = useCategorias()
+const { getProducts } = useProducts()
 
 const categories = ref<Categoria[]>([])
+const products = ref<Product[]>([])
 
 onMounted(async () => {
   try {
-    const data = await getCategorias()
-    if (data) categories.value = data
+    const [dataCategorias, dataProducts] = await Promise.all([
+      getCategorias(),
+      getProducts()
+    ])
+    if (dataCategorias) categories.value = dataCategorias
+    if (dataProducts) products.value = dataProducts
   } catch (error) {
-    toast.add({ title: 'Error cargando categorias', color: 'error' })
+    toast.add({ title: 'Error cargando datos', color: 'error' })
   }
 })
 
@@ -96,18 +103,29 @@ async function deleteCategory(id: string) {
     <template #header>
       <UDashboardNavbar title="Categorias">
         <template #right>
-          <UButton icon="i-lucide-plus" label="Nueva Categoria" @click="openNewModal" />
+          <div class="hidden sm:flex gap-2 items-center">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar categorias..."
+              class="w-64"
+            />
+            <UButton icon="i-lucide-plus" label="Nueva Categoria" @click="openNewModal" />
+          </div>
         </template>
       </UDashboardNavbar>
 
-      <UDashboardToolbar>
-        <template #left>
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Buscar categorias..."
-            class="w-64"
-          />
+      <UDashboardToolbar class="sm:hidden">
+        <template #right>
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar..."
+              class="w-48 shrink-0"
+            />
+            <UButton icon="i-lucide-plus" label="Nueva" @click="openNewModal" class="shrink-0" />
+          </div>
         </template>
       </UDashboardToolbar>
     </template>
@@ -142,13 +160,9 @@ async function deleteCategory(id: string) {
               <h3 class="text-lg font-semibold text-default">{{ category.nombre }}</h3>
               <p class="mt-1 text-sm text-muted line-clamp-2">{{ category.descripcion || 'Sin descripción' }}</p>
             </div>
-            <div class="mt-4 flex items-center gap-2 text-sm text-muted">
-              <UBadge
-                :color="category.activo ? 'success' : 'neutral'"
-                :label="category.activo ? 'Activa' : 'Inactiva'"
-                variant="subtle"
-                size="sm"
-              />
+            <div class="mt-4 flex items-center gap-2 text-sm text-muted cursor-pointer hover:text-primary transition-colors" @click.stop="navigateTo(`/productos?category=${category.id}`)">
+              <UIcon name="i-lucide-package" class="size-4" />
+              <span>{{ products.filter(p => p.categoria?.id === category.id).length }} productos</span>
             </div>
           </UCard>
         </div>

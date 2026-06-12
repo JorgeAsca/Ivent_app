@@ -92,6 +92,7 @@ const dropdownItems = computed(() => [
       collapsible
       resizable
       class="bg-neutral-950 text-white dark border-r border-white/10"
+      :ui="{ content: 'w-[66vw] max-w-[66vw] sm:w-[66vw] sm:max-w-[66vw] bg-neutral-950 text-white dark border-r border-white/10' }"
     >
       <template #header="{ collapsed }">
         <div class="flex items-center gap-2 p-2">

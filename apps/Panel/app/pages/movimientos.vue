@@ -11,6 +11,14 @@ const isModalOpen = ref(false)
 const searchQuery = ref('')
 const filterType = ref<string | undefined>(undefined)
 const filterWarehouse = ref<string | undefined>(undefined)
+const filterDate = ref<string>('')
+
+function clearFilters() {
+  searchQuery.value = ''
+  filterType.value = undefined
+  filterWarehouse.value = undefined
+  filterDate.value = ''
+}
 
 const isDetailsModalOpen = ref(false)
 const selectedMovement = ref<any>(null)
@@ -44,8 +52,15 @@ const fetchAll = async () => {
   }
 }
 
+const route = useRoute()
+
 onMounted(() => {
   fetchAll()
+  if (route.query.action) {
+    setTimeout(() => {
+      openNewModal(route.query.action as string)
+    }, 100)
+  }
 })
 
 const movements = computed(() => {
@@ -85,7 +100,6 @@ const currentMovement = ref({
 const typeOptions = [
   { value: 'entrada', label: 'Entrada' },
   { value: 'salida', label: 'Salida' },
-  { value: 'ajuste', label: 'Ajuste' },
   { value: 'transferencia', label: 'Transferencia' },
 ]
 
@@ -119,9 +133,24 @@ const filteredMovements = computed(() => {
   return movements.value.filter((mov) => {
     const matchesSearch = mov.product.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       mov.reference.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesType = !filterType.value || mov.type === filterType.value
+      
+    let matchesType = true
+    if (filterType.value) {
+      if (filterType.value === 'transferencia') {
+        matchesType = mov.reference.toLowerCase().includes('transferencia')
+      } else {
+        matchesType = mov.type === filterType.value
+      }
+    }
+
     const matchesWarehouse = !filterWarehouse.value || mov.warehouseId === filterWarehouse.value
-    return matchesSearch && matchesType && matchesWarehouse
+    
+    let matchesDate = true
+    if (filterDate.value) {
+      matchesDate = mov.date === filterDate.value
+    }
+
+    return matchesSearch && matchesType && matchesWarehouse && matchesDate
   })
 })
 
@@ -256,6 +285,11 @@ const totalSalidas = computed(() => {
     .filter(m => m.tipo === 'SALIDA' && isToday(m.fecha_movimiento))
     .reduce((acc, curr) => acc + curr.cantidad, 0)
 })
+const totalTransferencias = computed(() => {
+  return rawMovements.value
+    .filter(m => isToday(m.fecha_movimiento) && m.referencia_externa?.toLowerCase().includes('transferencia (salida)'))
+    .length
+})
 </script>
 
 <template>
@@ -263,7 +297,7 @@ const totalSalidas = computed(() => {
     <template #header>
       <UDashboardNavbar title="Movimientos de Stock">
         <template #right>
-          <div class="flex gap-2">
+          <div class="hidden sm:flex gap-2 items-center">
             <UButton icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" />
             <UButton icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" />
             <UButton icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" />
@@ -271,30 +305,12 @@ const totalSalidas = computed(() => {
         </template>
       </UDashboardNavbar>
 
-      <UDashboardToolbar>
-        <template #left>
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Buscar movimientos..."
-            class="w-64"
-          />
-        </template>
+      <UDashboardToolbar class="sm:hidden">
         <template #right>
-          <div class="flex gap-2">
-            <USelectMenu
-              v-model="filterType"
-              :items="typeOptions"
-              value-key="value"
-              placeholder="Tipo"
-              class="w-40"
-            />
-            <USelectMenu
-              v-model="filterWarehouse"
-              :items="warehouses"
-              placeholder="Almacen"
-              class="w-44"
-            />
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UButton icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" class="shrink-0" />
+            <UButton icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" class="shrink-0" />
+            <UButton icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -303,7 +319,7 @@ const totalSalidas = computed(() => {
     <template #body>
       <div class="p-6">
         <!-- Summary Cards -->
-        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <UCard class="bg-emerald-500/10">
             <div class="flex items-center gap-3">
               <div class="rounded-lg bg-emerald-500/20 p-2">
@@ -332,23 +348,25 @@ const totalSalidas = computed(() => {
                 <UIcon name="i-lucide-arrow-right-left" class="size-5 text-blue-500" />
               </div>
               <div>
-                <p class="text-sm text-muted">Transferencias</p>
-                <p class="text-xl font-semibold text-default">12</p>
-              </div>
-            </div>
-          </UCard>
-          <UCard class="bg-purple-500/10">
-            <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-purple-500/20 p-2">
-                <UIcon name="i-lucide-scale" class="size-5 text-purple-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Ajustes</p>
-                <p class="text-xl font-semibold text-default">3</p>
+                <p class="text-sm text-muted">Transferencias Hoy</p>
+                <p class="text-xl font-semibold text-default">{{ totalTransferencias }}</p>
               </div>
             </div>
           </UCard>
         </div>
+
+        <!-- Filters Section -->
+        <UCard class="mb-6">
+          <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div class="flex flex-1 flex-wrap items-center gap-4">
+              <UInput v-model="searchQuery" icon="i-lucide-search" placeholder="Buscar producto o ref..." class="w-full sm:w-64" />
+              <USelectMenu v-model="filterType" :items="typeOptions" value-key="value" placeholder="Tipo" class="w-full sm:w-40" />
+              <USelectMenu v-model="filterWarehouse" :items="warehouses" value-key="value" placeholder="Almacén" class="w-full sm:w-48" />
+              <UInput v-model="filterDate" type="date" class="w-full sm:w-48" />
+            </div>
+            <UButton v-if="searchQuery || filterType || filterWarehouse || filterDate" variant="ghost" color="neutral" label="Limpiar Filtros" @click="clearFilters" />
+          </div>
+        </UCard>
 
         <UCard>
           <UTable :data="filteredMovements" :columns="columns">
@@ -367,8 +385,8 @@ const totalSalidas = computed(() => {
               />
             </template>
             <template #product-cell="{ row }">
-              <div>
-                <span class="font-medium text-default">{{ row.original.product }}</span>
+              <div class="cursor-pointer transition-opacity" @click="viewDetails(row.original)">
+                <span class="font-medium text-default hover:underline">{{ row.original.product }}</span>
                 <span class="ml-2 text-xs text-muted">{{ row.original.productSku }}</span>
               </div>
             </template>
@@ -399,7 +417,6 @@ const totalSalidas = computed(() => {
                 :items="[
                   [
                     { label: 'Ver detalles', icon: 'i-lucide-eye', onSelect: () => viewDetails(row.original) },
-                    { label: 'Imprimir', icon: 'i-lucide-printer' },
                   ],
                 ]"
               >

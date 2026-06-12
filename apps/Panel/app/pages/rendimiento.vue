@@ -299,12 +299,20 @@ async function deleteCompositeProduct(id: string) {
     <template #header>
       <UDashboardNavbar title="Control de Rendimiento / Recetas">
         <template #right>
-          <div class="flex gap-2">
+          <div class="hidden sm:flex gap-2">
               <UButton v-if="selectedProductId" icon="i-lucide-arrow-left" label="Volver a la lista" variant="ghost" @click="selectedProductId = null" />
               <UButton icon="i-lucide-plus" label="Nuevo Producto Compuesto" @click="openNewProductModal" />
           </div>
         </template>
       </UDashboardNavbar>
+      <UDashboardToolbar class="sm:hidden">
+        <template #right>
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+              <UButton v-if="selectedProductId" icon="i-lucide-arrow-left" label="Volver" variant="ghost" @click="selectedProductId = null" class="shrink-0" />
+              <UButton icon="i-lucide-plus" label="Nuevo Compuesto" @click="openNewProductModal" class="shrink-0" />
+          </div>
+        </template>
+      </UDashboardToolbar>
     </template>
 
     <template #body>

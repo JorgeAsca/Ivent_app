@@ -179,9 +179,19 @@ async function handleDeleteWarehouse(id: string) {
     <template #header>
       <UDashboardNavbar title="Almacenes">
         <template #right>
-          <UButton icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" />
+          <div class="hidden sm:flex gap-2 items-center">
+            <UButton icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" />
+          </div>
         </template>
       </UDashboardNavbar>
+
+      <UDashboardToolbar class="sm:hidden">
+        <template #right>
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UButton icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" class="shrink-0" />
+          </div>
+        </template>
+      </UDashboardToolbar>
     </template>
 
     <template #body>

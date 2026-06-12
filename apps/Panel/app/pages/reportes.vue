@@ -140,22 +140,40 @@ function generateReport(reportId: string) {
     <template #header>
       <UDashboardNavbar title="Reportes">
         <template #right>
-          <div class="flex gap-2">
+          <div class="hidden sm:flex gap-2">
             <USelectMenu
               v-model="selectedPeriod"
               :items="periodOptions"
               value-key="value"
-              class="w-40"
+              class="w-40 shrink-0"
             />
             <USelectMenu
               v-model="selectedWarehouse"
               :items="warehouses"
               placeholder="Todos los almacenes"
-              class="w-48"
+              class="w-48 shrink-0"
             />
           </div>
         </template>
       </UDashboardNavbar>
+      <UDashboardToolbar class="sm:hidden">
+        <template #right>
+          <div class="flex w-full overflow-x-auto gap-2 pb-1 sm:pb-0">
+            <USelectMenu
+              v-model="selectedPeriod"
+              :items="periodOptions"
+              value-key="value"
+              class="w-36 sm:w-40 shrink-0"
+            />
+            <USelectMenu
+              v-model="selectedWarehouse"
+              :items="warehouses"
+              placeholder="Todos los almacenes"
+              class="w-44 sm:w-48 shrink-0"
+            />
+          </div>
+        </template>
+      </UDashboardToolbar>
     </template>
 
     <template #body>

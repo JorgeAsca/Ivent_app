@@ -17,17 +17,25 @@ const dashboardData = ref<DashboardStats>({
 })
 
 const stats = computed(() => [
-  { label: 'Total Productos', value: dashboardData.value.totalProductos, icon: 'i-lucide-package', change: '+12%', trend: 'up' },
-  { label: 'Stock Bajo', value: dashboardData.value.lowStockCount, icon: 'i-lucide-alert-triangle', change: '-5%', trend: 'down' },
-  { label: 'Movimientos Hoy', value: dashboardData.value.movimientosHoy, icon: 'i-lucide-arrow-left-right', change: '+28%', trend: 'up' },
-  { label: 'Valor Total', value: `€${dashboardData.value.valorTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`, icon: 'i-lucide-euro', change: '+8%', trend: 'up' },
+  { label: 'Total Productos', value: dashboardData.value.totalProductos, icon: 'i-lucide-package' },
+  { label: 'Stock Bajo', value: dashboardData.value.lowStockCount, icon: 'i-lucide-alert-triangle' },
+  { label: 'Movimientos Hoy', value: dashboardData.value.movimientosHoy, icon: 'i-lucide-arrow-left-right' },
+  { label: 'Valor Total', value: `€${dashboardData.value.valorTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`, icon: 'i-lucide-euro' },
 ])
 
 onMounted(async () => {
   try {
-    const data = await getDashboardStats()
-    if (data) {
-      dashboardData.value = data
+    const data: any = await getDashboardStats()
+    if (data && data.inventario) {
+      dashboardData.value = {
+        totalProductos: data.inventario.totalProductos || 0,
+        valorTotal: data.inventario.valorTotal || 0,
+        lowStockCount: data.inventario.lowStockCount || 0,
+        lowStockProducts: data.inventario.lowStockProducts || [],
+        valorPorCategoria: data.inventario.valorPorCategoria || [],
+        movimientosHoy: data.logistica?.movimientosHoy || 0,
+        ultimosMovimientos: data.logistica?.ultimosMovimientos || []
+      }
     }
   } catch (e) {
     console.error('Error fetching dashboard stats:', e)
@@ -70,17 +78,6 @@ const lowStockColumns = [
               <div>
                 <p class="text-sm text-muted">{{ stat.label }}</p>
                 <p class="mt-1 text-2xl font-semibold text-default">{{ stat.value }}</p>
-                <div class="mt-2 flex items-center gap-1 text-sm">
-                  <UIcon
-                    :name="stat.trend === 'up' ? 'i-lucide-trending-up' : 'i-lucide-trending-down'"
-                    :class="stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'"
-                    class="size-4"
-                  />
-                  <span :class="stat.trend === 'up' ? 'text-emerald-500' : 'text-red-500'">
-                    {{ stat.change }}
-                  </span>
-                  <span class="text-muted">vs mes anterior</span>
-                </div>
               </div>
               <div class="rounded-lg bg-primary/10 p-2">
                 <UIcon :name="stat.icon" class="size-6 text-primary" />
@@ -127,7 +124,7 @@ const lowStockColumns = [
                   <UIcon name="i-lucide-alert-triangle" class="size-5 text-amber-500" />
                   <h3 class="text-lg font-semibold text-default">Productos con Stock Bajo</h3>
                 </div>
-                <UButton variant="ghost" size="sm" label="Ver todos" to="/productos?filter=low-stock" />
+                <UButton variant="ghost" size="sm" label="Ver todos" to="/stock" />
               </div>
             </template>
 
@@ -161,6 +158,7 @@ const lowStockColumns = [
               color="neutral"
               block
               class="justify-start"
+              to="/movimientos?action=entrada"
             />
             <UButton
               icon="i-lucide-package-minus"
@@ -169,14 +167,16 @@ const lowStockColumns = [
               color="neutral"
               block
               class="justify-start"
+              to="/movimientos?action=salida"
             />
             <UButton
-              icon="i-lucide-clipboard-list"
-              label="Inventario Fisico"
+              icon="i-lucide-arrow-right-left"
+              label="Transferencia"
               variant="outline"
               color="neutral"
               block
               class="justify-start"
+              to="/movimientos?action=transferencia"
             />
             <UButton
               icon="i-lucide-file-text"
@@ -185,6 +185,7 @@ const lowStockColumns = [
               color="neutral"
               block
               class="justify-start"
+              to="/reportes"
             />
           </div>
         </UCard>

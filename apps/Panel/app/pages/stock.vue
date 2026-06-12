@@ -107,17 +107,27 @@ async function saveStockAlert() {
     <template #header>
       <UDashboardNavbar title="Stock y Alertas">
         <template #right>
+          <div class="hidden sm:flex gap-2 items-center">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar productos..."
+              class="w-64"
+            />
+          </div>
         </template>
       </UDashboardNavbar>
 
-      <UDashboardToolbar>
-        <template #left>
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Buscar productos..."
-            class="w-64"
-          />
+      <UDashboardToolbar class="sm:hidden">
+        <template #right>
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar productos..."
+              class="w-full shrink-0"
+            />
+          </div>
         </template>
       </UDashboardToolbar>
     </template>

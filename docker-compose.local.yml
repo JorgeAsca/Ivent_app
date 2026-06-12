@@ -365,8 +365,8 @@ services:
       - "8080:3000"
     environment:
       - NUXT_API_BASE=http://ms-gateway:3000/api
-      - NUXT_PUBLIC_API_BASE=http://inventapp.store:3000/api
-      #- NUXT_PUBLIC_API_BASE=http://localhost:3000/api
+      #- NUXT_PUBLIC_API_BASE=http://inventapp.store:3000/api
+      - NUXT_PUBLIC_API_BASE=http://localhost:3000/api
     networks:
       - ivent-network
     depends_on:

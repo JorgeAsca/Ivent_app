@@ -6,18 +6,21 @@ definePageMeta({ layout: 'dashboard' })
 
 const toast = useToast()
 const isModalOpen = ref(false)
+const isDetailsModalOpen = ref(false)
+const selectedProductDetails = ref<any>(null)
 const isEditMode = ref(false)
 const searchQuery = ref('')
 const selectedCategory = ref<string | undefined>(undefined)
 
 const { getProducts, createProduct, updateProduct, deleteProduct: removeProduct } = useProducts()
 const { getCategorias } = useCategorias()
-const { getAlmacenes } = useAlmacenes()
+const { getAlmacenes, getWarehouseStock } = useAlmacenes()
 const { getEmpresas } = useEmpresas()
 
 const products = ref<Product[]>([])
 const categorias = ref<Categoria[]>([])
 const almacenes = ref<any[]>([])
+const stockMap = ref<Record<string, { nombre: string, cantidad: number }[]>>({})
 
 onMounted(async () => {
   try {
@@ -32,16 +35,43 @@ onMounted(async () => {
     if (empresas && empresas.length > 0) {
       const activeEmpresa = empresas[0].id_empresa
       const alms = await getAlmacenes(activeEmpresa)
-      if (alms) almacenes.value = alms
+      if (alms) {
+        almacenes.value = alms
+        
+        // Fetch stock for each warehouse to map products to their warehouses
+        for (const alm of alms) {
+          try {
+            const stock = await getWarehouseStock(alm.id)
+            if (stock) {
+              for (const s of stock) {
+                if (s.cantidad !== 0) {
+                  if (!stockMap.value[s.id_producto]) stockMap.value[s.id_producto] = []
+                  const existing = stockMap.value[s.id_producto].find(x => x.nombre === alm.nombre)
+                  if (existing) {
+                    existing.cantidad += s.cantidad
+                  } else {
+                    stockMap.value[s.id_producto].push({ nombre: alm.nombre, cantidad: s.cantidad })
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error fetching stock for warehouse', alm.id, e)
+          }
+        }
+      }
     }
   } catch (error) {
     toast.add({ title: 'Error cargando datos', color: 'error' })
   }
 
-  // Open modal if ?new=true is in the URL
+  // Query params handling
   const route = useRoute()
   if (route.query.new === 'true') {
     openNewProductModal()
+  }
+  if (route.query.category) {
+    selectedCategory.value = route.query.category as string
   }
 })
 
@@ -72,6 +102,7 @@ const columns = [
   { accessorKey: 'nombre', header: 'Nombre' },
   { accessorKey: 'tipo', header: 'Tipo' },
   { accessorKey: 'categoria', header: 'Categoria' },
+  { accessorKey: 'almacenes', header: 'Ubicaciones' },
   { accessorKey: 'stock', header: 'Stock Global' },
   { accessorKey: 'costo', header: 'Costo' },
   { accessorKey: 'precio', header: 'Precio' },
@@ -115,6 +146,11 @@ function openEditModal(product: Product) {
   isEditMode.value = true
   currentProduct.value = { ...product, categoriaId: product.categoria?.id }
   isModalOpen.value = true
+}
+
+function viewDetails(product: any) {
+  selectedProductDetails.value = product
+  isDetailsModalOpen.value = true
 }
 
 async function saveProduct() {
@@ -169,28 +205,45 @@ async function deleteProduct(id: string) {
     <template #header>
       <UDashboardNavbar title="Productos">
         <template #right>
-          <UButton icon="i-lucide-plus" label="Nuevo Producto" @click="openNewProductModal" />
+          <div class="hidden sm:flex gap-2 items-center">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar productos..."
+              class="w-64"
+            />
+            <USelectMenu
+              v-model="selectedCategory"
+              :items="categorias"
+              value-key="id"
+              label-key="nombre"
+              placeholder="Todas las categorias"
+              class="w-48"
+            />
+            <UButton icon="i-lucide-plus" label="Nuevo Producto" @click="openNewProductModal" />
+          </div>
         </template>
       </UDashboardNavbar>
 
-      <UDashboardToolbar>
-        <template #left>
-          <UInput
-            v-model="searchQuery"
-            icon="i-lucide-search"
-            placeholder="Buscar productos..."
-            class="w-64"
-          />
-        </template>
+      <UDashboardToolbar class="sm:hidden">
         <template #right>
-          <USelectMenu
-            v-model="selectedCategory"
-            :items="categorias"
-            value-key="id"
-            label-key="nombre"
-            placeholder="Todas las categorias"
-            class="w-48"
-          />
+          <div class="flex w-full overflow-x-auto gap-2 pb-1">
+            <UInput
+              v-model="searchQuery"
+              icon="i-lucide-search"
+              placeholder="Buscar..."
+              class="w-32 shrink-0"
+            />
+            <USelectMenu
+              v-model="selectedCategory"
+              :items="categorias"
+              value-key="id"
+              label-key="nombre"
+              placeholder="Categorias"
+              class="w-32 shrink-0"
+            />
+            <UButton icon="i-lucide-plus" label="Nuevo" @click="openNewProductModal" class="shrink-0" />
+          </div>
         </template>
       </UDashboardToolbar>
     </template>
@@ -203,7 +256,7 @@ async function deleteProduct(id: string) {
               <span class="font-mono text-sm text-muted">{{ row.original.sku }}</span>
             </template>
             <template #nombre-cell="{ row }">
-              <span class="font-medium text-default">{{ row.original.nombre }}</span>
+              <span class="font-medium text-default hover:underline cursor-pointer transition-colors" @click="viewDetails(row.original)">{{ row.original.nombre }}</span>
             </template>
             <template #tipo-cell="{ row }">
               <UBadge
@@ -214,6 +267,12 @@ async function deleteProduct(id: string) {
             </template>
             <template #categoria-cell="{ row }">
               <span class="text-default">{{ row.original.categoria?.nombre || '-' }}</span>
+            </template>
+            <template #almacenes-cell="{ row }">
+              <span class="text-default" v-if="stockMap[row.original.id] && stockMap[row.original.id].length > 0">
+                {{ stockMap[row.original.id].map(x => x.nombre).join(', ') }}
+              </span>
+              <span v-else class="text-muted text-sm">-</span>
             </template>
             <template #stock-cell="{ row }">
               <span class="text-default">{{ row.original.stock }} {{ row.original.unidadMedida || 'Ud' }}</span>
@@ -228,6 +287,7 @@ async function deleteProduct(id: string) {
               <UDropdownMenu
                 :items="[
                   [
+                    { label: 'Ver detalles', icon: 'i-lucide-eye', onSelect: () => viewDetails(row.original) },
                     { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) },
                   ],
                   [
@@ -269,11 +329,11 @@ async function deleteProduct(id: string) {
           </UFormField>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4" v-if="!isEditMode">
           <UFormField label="Stock Inicial" name="stock">
-            <UInput v-model.number="currentProduct.stock" type="number" :disabled="isEditMode" />
+            <UInput v-model.number="currentProduct.stock" type="number" />
           </UFormField>
-          <UFormField label="Almacén Inicial" name="almacen" v-if="!isEditMode">
+          <UFormField label="Almacén Inicial" name="almacen">
             <USelectMenu 
               v-model="currentProduct.almacenId" 
               :items="warehouseOptions"
@@ -281,6 +341,27 @@ async function deleteProduct(id: string) {
               placeholder="Seleccionar almacén" 
             />
           </UFormField>
+        </div>
+
+        <!-- Seccion de Desglose de Stock (Solo Edicion) -->
+        <div v-if="isEditMode" class="mt-2 rounded-lg border border-white/10 bg-neutral-900/50 p-4">
+          <p class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <UIcon name="i-lucide-boxes" class="size-4" />
+            Stock por Almacén
+          </p>
+          <div v-if="!stockMap[currentProduct.id!] || stockMap[currentProduct.id!].length === 0" class="text-sm text-zinc-500">
+            Este producto no tiene stock en ningún almacén.
+          </div>
+          <ul v-else class="space-y-2">
+            <li v-for="alm in stockMap[currentProduct.id!]" :key="alm.nombre" class="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+              <span class="text-zinc-300">{{ alm.nombre }}</span>
+              <span class="font-medium text-white">{{ alm.cantidad }} {{ currentProduct.unidadMedida || 'Ud' }}</span>
+            </li>
+            <li class="flex justify-between items-center text-sm pt-2 font-bold border-t border-white/10 text-primary">
+              <span>Total Global</span>
+              <span>{{ currentProduct.stock }} {{ currentProduct.unidadMedida || 'Ud' }}</span>
+            </li>
+          </ul>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -313,6 +394,84 @@ async function deleteProduct(id: string) {
       <div class="flex justify-end gap-2">
         <UButton variant="ghost" label="Cancelar" @click="isModalOpen = false" />
         <UButton :label="isEditMode ? 'Guardar Cambios' : 'Crear Producto'" @click="saveProduct" />
+      </div>
+    </template>
+  </UModal>
+
+  <!-- Details Modal -->
+  <UModal v-model:open="isDetailsModalOpen" title="Detalles del Producto">
+    <template #body>
+      <div v-if="selectedProductDetails" class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">SKU</p>
+            <p class="font-mono text-sm text-default">{{ selectedProductDetails.sku }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Nombre</p>
+            <p class="font-medium text-default">{{ selectedProductDetails.nombre }}</p>
+          </div>
+        </div>
+
+        <USeparator />
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">Categoría</p>
+            <p class="text-default">{{ selectedProductDetails.categoria?.nombre || '-' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Tipo</p>
+            <UBadge
+              :color="selectedProductDetails.tipo === 'COMPUESTO' ? 'primary' : 'neutral'"
+              :label="selectedProductDetails.tipo === 'COMPUESTO' ? 'Compuesto' : 'Simple'"
+              variant="subtle"
+              size="sm"
+            />
+          </div>
+        </div>
+
+        <USeparator />
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-muted">Costo</p>
+            <p class="text-default">€{{ Number(selectedProductDetails.costo || 0).toFixed(2) }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-muted">Precio de Venta</p>
+            <p class="text-default">€{{ Number(selectedProductDetails.precio || 0).toFixed(2) }}</p>
+          </div>
+        </div>
+
+        <USeparator />
+        
+        <!-- Stock Breakdown -->
+        <div>
+          <p class="text-sm font-medium text-white mb-3 flex items-center gap-2">
+            <UIcon name="i-lucide-boxes" class="size-4" />
+            Stock por Almacén
+          </p>
+          <div v-if="!stockMap[selectedProductDetails.id!] || stockMap[selectedProductDetails.id!].length === 0" class="text-sm text-zinc-500">
+            Este producto no tiene stock en ningún almacén.
+          </div>
+          <ul v-else class="space-y-2">
+            <li v-for="alm in stockMap[selectedProductDetails.id!]" :key="alm.nombre" class="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0 last:pb-0">
+              <span class="text-zinc-300">{{ alm.nombre }}</span>
+              <span class="font-medium text-white">{{ alm.cantidad }} {{ selectedProductDetails.unidadMedida || 'Ud' }}</span>
+            </li>
+            <li class="flex justify-between items-center text-sm pt-2 font-bold border-t border-white/10 text-primary">
+              <span>Total Global</span>
+              <span>{{ selectedProductDetails.stock }} {{ selectedProductDetails.unidadMedida || 'Ud' }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end">
+        <UButton label="Cerrar" color="neutral" variant="ghost" @click="isDetailsModalOpen = false" />
       </div>
     </template>
   </UModal>
