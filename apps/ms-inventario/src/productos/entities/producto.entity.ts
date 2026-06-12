@@ -12,6 +12,9 @@ export class Producto {
     @Column('float', { default: 0 })
     precio: number;
 
+    @Column('float', { default: 0 })
+    costo: number;
+
     @Column('int', { default: 0 })
     stock: number;
 

@@ -11,14 +11,20 @@ export class CreateProductoDto {
     @Type(() => Number) 
     public precio: number;
 
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    @Type(() => Number)
+    public costo?: number;
+
     @IsNumber()
     @Min(0)
     @Type(() => Number)
     public stock: number;
 
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    public sku: string;
+    public sku?: string;
 
     @IsUUID()
     @IsNotEmpty()

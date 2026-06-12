@@ -5,6 +5,7 @@ export interface Product {
   sku: string
   nombre: string
   precio: number
+  costo?: number
   stock: number
   activo: boolean
   categoriaId?: string

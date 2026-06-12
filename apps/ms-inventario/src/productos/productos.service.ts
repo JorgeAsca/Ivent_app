@@ -23,6 +23,12 @@ export class ProductosService {
     async create(createProductoDto: CreateProductoDto) {
         const { categoriaId, almacenId, ...datosProducto } = createProductoDto;
 
+        if (!datosProducto.sku || datosProducto.sku.trim() === '') {
+            const prefix = datosProducto.nombre ? datosProducto.nombre.substring(0, 3).toUpperCase().padEnd(3, 'X') : 'PRD';
+            const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            datosProducto.sku = `${prefix}-${randomNum}`;
+        }
+
         const categoria = await this.categoriaRepository.findOneBy({ id: categoriaId });
         if (!categoria) {
             throw new NotFoundException(`Categoría con ID ${categoriaId} no encontrada`);

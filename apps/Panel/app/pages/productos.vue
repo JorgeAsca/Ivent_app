@@ -46,6 +46,7 @@ const currentProduct = ref<Partial<Product>>({
   almacenId: '',
   stock: 0,
   precio: 0,
+  costo: 0,
   activo: true
 })
 
@@ -64,6 +65,7 @@ const columns = [
   { accessorKey: 'nombre', header: 'Nombre' },
   { accessorKey: 'categoria', header: 'Categoria' },
   { accessorKey: 'stock', header: 'Stock Global' },
+  { accessorKey: 'costo', header: 'Costo' },
   { accessorKey: 'precio', header: 'Precio' },
   { id: 'actions', header: '' },
 ]
@@ -89,7 +91,8 @@ function openNewProductModal() {
     stock: 0,
     precio: 0,
     activo: true,
-    unidadMedida: 'Ud'
+    unidadMedida: 'Ud',
+    costo: 0
   }
   isModalOpen.value = true
 }
@@ -109,7 +112,8 @@ async function saveProduct() {
       almacenId: currentProduct.value.almacenId,
       unidadMedida: currentProduct.value.unidadMedida,
       stock: currentProduct.value.stock,
-      precio: currentProduct.value.precio
+      precio: currentProduct.value.precio,
+      costo: currentProduct.value.costo
     }
 
     if (isEditMode.value && currentProduct.value.id) {
@@ -192,8 +196,11 @@ async function deleteProduct(id: string) {
             <template #stock-cell="{ row }">
               <span class="text-default">{{ row.original.stock }} {{ row.original.unidadMedida || 'Ud' }}</span>
             </template>
+            <template #costo-cell="{ row }">
+              <span class="text-default">€{{ Number(row.original.costo || 0).toFixed(2) }}</span>
+            </template>
             <template #precio-cell="{ row }">
-              <span class="text-default">${{ Number(row.original.precio).toFixed(2) }}</span>
+              <span class="text-default">€{{ Number(row.original.precio).toFixed(2) }}</span>
             </template>
             <template #actions-cell="{ row }">
               <UDropdownMenu
@@ -255,9 +262,15 @@ async function deleteProduct(id: string) {
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Precio de Venta" name="precio">
-            <UInput v-model.number="currentProduct.precio" type="number" step="0.01" icon="i-lucide-dollar-sign" />
+          <UFormField label="Costo de producto" name="costo">
+            <UInput v-model.number="currentProduct.costo" type="number" step="0.01" icon="i-lucide-euro" />
           </UFormField>
+          <UFormField label="Precio de Venta" name="precio">
+            <UInput v-model.number="currentProduct.precio" type="number" step="0.01" icon="i-lucide-euro" />
+          </UFormField>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
           <UFormField label="Unidad de Medida" name="unidadMedida">
             <USelectMenu 
               v-model="currentProduct.unidadMedida" 
