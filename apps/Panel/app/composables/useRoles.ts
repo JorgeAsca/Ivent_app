@@ -3,6 +3,9 @@ import { useApi } from './useApi'
 export interface Role {
   id_rol: string
   nombre: string
+  isSystem?: boolean
+  empresaId?: string
+  permisos?: string[]
 }
 
 export const useRoles = () => {

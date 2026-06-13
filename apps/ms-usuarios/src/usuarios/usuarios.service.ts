@@ -15,7 +15,7 @@ export class UsuariosService {
     ) { }
 
     async findByEmail(email: string) {
-        return await this.userRepo.findOne({ where: { email }, relations: ['rol'] });
+        return await this.userRepo.findOne({ where: { email }, relations: ['rol', 'rol.permisos'] });
     }
 
     async crearUsuario(data: any) {
@@ -43,12 +43,13 @@ export class UsuariosService {
         return await this.userRepo.save(nuevoUsuario);
     }
 
-    async findAll() {
-        return await this.userRepo.find({ relations: ['rol'] });
+    async findAll(empresaId?: string) {
+        const whereClause = empresaId ? { empresaId } : {};
+        return await this.userRepo.find({ where: whereClause, relations: ['rol', 'rol.permisos'] });
     }
 
     async findOne(id: string) {
-        const usuario = await this.userRepo.findOne({ where: { id_usuario: id }, relations: ['rol'] });
+        const usuario = await this.userRepo.findOne({ where: { id_usuario: id }, relations: ['rol', 'rol.permisos'] });
         if (!usuario) {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
@@ -66,6 +67,10 @@ export class UsuariosService {
         const usuario = await this.findOne(id);
         const { rolId, password, ...rest } = updateData;
         
+        if (usuario.rol?.nombre === 'SuperAdmin' && rolId !== undefined && rolId !== usuario.rol.id_rol) {
+            throw new Error('No se le puede quitar el rol de SuperAdmin al dueño de la empresa.');
+        }
+
         const actualizado = Object.assign(usuario, rest);
         
         if (password) {
@@ -82,6 +87,14 @@ export class UsuariosService {
 
     async remove(id: string) {
         const usuario = await this.findOne(id);
+        if (usuario.rol?.nombre === 'SuperAdmin') {
+            throw new Error('El usuario principal de la empresa (SuperAdmin) no puede ser eliminado. Para borrarlo, debes eliminar la empresa entera.');
+        }
         return await this.userRepo.remove(usuario);
+    }
+
+    async eliminarPorEmpresa(empresaId: string) {
+        // Borrado silencioso y nuclear sin restricciones
+        await this.userRepo.delete({ empresaId });
     }
 }

@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Inject, Post, Body, Query, Req } from '@nestjs/common';
+import { RequirePermissions } from '../../decorators/permissions.decorator';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('logistica')
@@ -14,6 +15,7 @@ export class MsLogisticaController {
   } 
 
   @Post('movimientos')
+  @RequirePermissions('movimientos:crear')
   crearMovimiento(@Body() data: any, @Req() req: any) {
     console.log('Recibiendo petición HTTP para crear movimiento de stock:', data);
     return this.natsClient.send({ cmd: 'crear_movimiento' }, { ...data, id_empresa: req.user.empresaId });
@@ -30,6 +32,7 @@ export class MsLogisticaController {
   }
 
   @Post('almacenes')
+  @RequirePermissions('almacenes:crear')
   crearAlmacen(@Body() data: any, @Req() req: any) {
     return this.natsClient.send({ cmd: 'create_almacen' }, { ...data, id_empresa: req.user.empresaId });
   }
@@ -40,11 +43,13 @@ export class MsLogisticaController {
   }
 
   @Post('almacenes/:id')
+  @RequirePermissions('almacenes:editar')
   actualizarAlmacen(@Param('id') id: string, @Body() data: any, @Req() req: any) {
     return this.natsClient.send({ cmd: 'update_almacen' }, { id, updateData: data, id_empresa: req.user.empresaId });
   }
 
   @Post('almacenes/delete/:id')
+  @RequirePermissions('almacenes:eliminar')
   eliminarAlmacen(@Param('id') id: string, @Req() req: any) {
     return this.natsClient.send({ cmd: 'delete_almacen' }, { id, id_empresa: req.user.empresaId });
   }

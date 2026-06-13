@@ -3,8 +3,11 @@ import { useMovimientos, type Movimiento as BackendMovimiento } from '~/composab
 import { useAlmacenes, type Almacen } from '~/composables/useAlmacenes'
 import { useProducts, type Product } from '~/composables/useProducts'
 import { useEmpresas, type Empresa } from '~/composables/useEmpresas'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
+
+const { hasPermission } = usePermissions()
 
 const toast = useToast()
 const isModalOpen = ref(false)
@@ -298,9 +301,9 @@ const totalTransferencias = computed(() => {
       <UDashboardNavbar title="Movimientos de Stock">
         <template #right>
           <div class="hidden sm:flex gap-2 items-center">
-            <UButton icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" />
-            <UButton icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" />
-            <UButton icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -308,9 +311,9 @@ const totalTransferencias = computed(() => {
       <UDashboardToolbar class="sm:hidden">
         <template #right>
           <div class="flex w-full overflow-x-auto gap-2 pb-1">
-            <UButton icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" class="shrink-0" />
-            <UButton icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" class="shrink-0" />
-            <UButton icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" class="shrink-0" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-package-plus" label="Entrada" color="success" variant="soft" @click="openNewModal('entrada')" class="shrink-0" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-package-minus" label="Salida" color="warning" variant="soft" @click="openNewModal('salida')" class="shrink-0" />
+            <UButton v-if="hasPermission('movimientos:crear')" icon="i-lucide-arrow-right-left" label="Transferencia" variant="soft" @click="openNewModal('transferencia')" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>

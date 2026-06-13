@@ -11,6 +11,7 @@ model Empresa {
   id_empresa       String   @id @default(uuid())
   nombre_legal     String
   nombre_comercial String?
+  email_contacto   String?
   nif_cif          String   @unique
   activo           Boolean  @default(true)
 }

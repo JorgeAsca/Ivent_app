@@ -16,8 +16,8 @@ const password = ref('')
 const isLoading = ref(false)
 const showPassword = ref(false)
 
-const authToken = useCookie('auth_token', { maxAge: 60 * 60 * 24 })
-const userCookie = useCookie('user_data', { maxAge: 60 * 60 * 24 })
+const authToken = useCookie('auth_token', { maxAge: 60 * 60 * 24, path: '/' })
+const userCookie = useCookie('user_data', { maxAge: 60 * 60 * 24, path: '/' })
 
 async function handleRegistro() {
   if (!nombre_legal.value || !nif_cif.value || !email.value || !password.value || !nombre_usuario.value) {
@@ -46,7 +46,7 @@ async function handleRegistro() {
 
     if (response && response.access_token) {
       authToken.value = response.access_token
-      userCookie.value = JSON.stringify(response.usuario)
+      userCookie.value = response.usuario
 
       toast.add({
         title: 'Empresa Registrada',

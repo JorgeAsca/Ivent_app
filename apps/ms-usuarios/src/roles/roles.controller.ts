@@ -7,18 +7,18 @@ export class RolesController {
     constructor(private readonly rolesService: RolesService) { }
 
     @MessagePattern({ cmd: 'crear_rol' })
-    crear(@Payload() data: { nombre: string; permisos: string[] }) {
+    crear(@Payload() data: { nombre: string; permisos: string[]; empresaId: string }) {
         return this.rolesService.crear(data);
     }
 
     @MessagePattern({ cmd: 'actualizar_rol' })
-    actualizar(@Payload() data: { id: string; nombre?: string; permisos?: string[] }) {
+    actualizar(@Payload() data: { id: string; nombre?: string; permisos?: string[]; empresaId: string }) {
         return this.rolesService.actualizar(data.id, data);
     }
 
     @MessagePattern({ cmd: 'eliminar_rol' })
-    eliminar(@Payload() id: string) {
-        return this.rolesService.eliminar(id);
+    eliminar(@Payload() data: { id: string; empresaId: string }) {
+        return this.rolesService.eliminar(data.id, data.empresaId);
     }
 
     @MessagePattern({ cmd: 'asignar_permiso_a_rol' })
@@ -27,7 +27,7 @@ export class RolesController {
     }
 
     @MessagePattern({ cmd: 'listar_roles' })
-    listar() {
-        return this.rolesService.listar();
+    listar(@Payload() data: { empresaId: string }) {
+        return this.rolesService.listar(data?.empresaId);
     }
 }

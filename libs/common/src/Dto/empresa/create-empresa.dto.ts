@@ -10,6 +10,10 @@ export class CreateEmpresaDto {
   nombre_comercial?: string;
 
   @IsString()
+  @IsOptional()
+  email_contacto?: string;
+
+  @IsString()
   @IsNotEmpty()
   nif_cif: string;
 }

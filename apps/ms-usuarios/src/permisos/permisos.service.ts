@@ -20,6 +20,21 @@ const DEFAULT_PERMISSIONS = [
     { nombre: 'productos:crear', descripcion: 'Crear productos' },
     { nombre: 'productos:editar', descripcion: 'Editar productos' },
     { nombre: 'productos:eliminar', descripcion: 'Eliminar productos' },
+    { nombre: 'almacenes:leer', descripcion: 'Ver lista de almacenes' },
+    { nombre: 'almacenes:crear', descripcion: 'Crear nuevos almacenes' },
+    { nombre: 'almacenes:editar', descripcion: 'Editar almacenes' },
+    { nombre: 'almacenes:eliminar', descripcion: 'Eliminar almacenes' },
+    { nombre: 'categorias:leer', descripcion: 'Ver categorías' },
+    { nombre: 'categorias:crear', descripcion: 'Crear categorías' },
+    { nombre: 'categorias:editar', descripcion: 'Editar categorías' },
+    { nombre: 'categorias:eliminar', descripcion: 'Eliminar categorías' },
+    { nombre: 'proveedores:leer', descripcion: 'Ver proveedores' },
+    { nombre: 'proveedores:crear', descripcion: 'Crear proveedores' },
+    { nombre: 'proveedores:editar', descripcion: 'Editar proveedores' },
+    { nombre: 'proveedores:eliminar', descripcion: 'Eliminar proveedores' },
+    { nombre: 'movimientos:leer', descripcion: 'Ver historial de movimientos' },
+    { nombre: 'movimientos:crear', descripcion: 'Crear movimientos manuales' },
+    { nombre: 'reportes:leer', descripcion: 'Ver reportes y analíticas' },
 ];
 
 @Injectable()
@@ -35,7 +50,7 @@ export class PermisosService implements OnModuleInit {
         await this.seedPermissions();
     }
 
-    private async seedPermissions() {
+    public async seedPermissions() {
         this.logger.log('Comprobando permisos base (Seed)...');
         for (const perm of DEFAULT_PERMISSIONS) {
             const exists = await this.permisoRepo.findOne({ where: { nombre: perm.nombre } });

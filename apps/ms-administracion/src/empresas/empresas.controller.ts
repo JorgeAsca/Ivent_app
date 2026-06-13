@@ -19,8 +19,8 @@ export class EmpresasController {
   }
 
   @MessagePattern({ cmd: 'listar_empresas' })
-  async findAll() {
-    return this.empresasService.findAll();
+  async findAll(@Payload() data: { empresaId: string }) {
+    return this.empresasService.findAll(data?.empresaId);
   }
 
   @MessagePattern({ cmd: 'actualizar_empresa' })

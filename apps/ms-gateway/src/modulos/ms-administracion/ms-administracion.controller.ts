@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post, Get, Param, Patch, Delete } from '@nestjs/common';
+import { Body, Controller, Inject, Post, Get, Param, Patch, Delete, Req, ForbiddenException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ADMIN_PATTERNS } from '@app/common';
 
@@ -16,8 +16,9 @@ export class AdministracionController {
   }
 
   @Get('empresas')
-  listarEmpresas() {
-    return this.natsClient.send({ cmd: 'listar_empresas' }, {});
+  listarEmpresas(@Req() req: any) {
+    const empresaId = req.user?.empresaId;
+    return this.natsClient.send({ cmd: 'listar_empresas' }, { empresaId });
   }
 
   @Patch('empresas/:id')
@@ -26,7 +27,11 @@ export class AdministracionController {
   }
 
   @Delete('empresas/:id')
-  eliminarEmpresa(@Param('id') id: string) {
+  eliminarEmpresa(@Param('id') id: string, @Req() req: any) {
+    const rolNombre = req.user?.rolNombre?.toLowerCase();
+    if (rolNombre !== 'superadmin' && rolNombre !== 'admin') {
+      throw new ForbiddenException('Solo los administradores pueden eliminar la empresa');
+    }
     return this.natsClient.send({ cmd: 'eliminar_empresa' }, id);
   }
 }

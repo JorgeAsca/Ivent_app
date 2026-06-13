@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { useProducts, type Product } from '~/composables/useProducts'
 import { useCategorias, type Categoria } from '~/composables/useCategorias'
+import { useAlmacenes } from '~/composables/useAlmacenes'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
 
+const { hasPermission } = usePermissions()
 const toast = useToast()
 const isModalOpen = ref(false)
 const isDetailsModalOpen = ref(false)
@@ -220,7 +224,7 @@ async function deleteProduct(id: string) {
               placeholder="Todas las categorias"
               class="w-48"
             />
-            <UButton icon="i-lucide-plus" label="Nuevo Producto" @click="openNewProductModal" />
+            <UButton v-if="hasPermission('productos:crear')" icon="i-lucide-plus" label="Nuevo Producto" @click="openNewProductModal" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -242,7 +246,7 @@ async function deleteProduct(id: string) {
               placeholder="Categorias"
               class="w-32 shrink-0"
             />
-            <UButton icon="i-lucide-plus" label="Nuevo" @click="openNewProductModal" class="shrink-0" />
+            <UButton v-if="hasPermission('productos:crear')" icon="i-lucide-plus" label="Nuevo" @click="openNewProductModal" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -288,11 +292,9 @@ async function deleteProduct(id: string) {
                 :items="[
                   [
                     { label: 'Ver detalles', icon: 'i-lucide-eye', onSelect: () => viewDetails(row.original) },
-                    { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) },
+                    ...(hasPermission('productos:editar') ? [{ label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) }] : []),
                   ],
-                  [
-                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteProduct(row.original.id) },
-                  ],
+                  ...(hasPermission('productos:eliminar') ? [[{ label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteProduct(row.original.id) }]] : []),
                 ]"
               >
                 <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="sm" />

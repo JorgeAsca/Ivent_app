@@ -4,6 +4,7 @@ export interface Empresa {
   id_empresa: string
   nombre_legal: string
   nombre_comercial: string
+  email_contacto?: string
   nif_cif: string
 }
 

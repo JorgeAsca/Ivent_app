@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useProveedores, type Proveedor } from '~/composables/useProveedores'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
+
+const { hasPermission } = usePermissions()
 
 const toast = useToast()
 const isModalOpen = ref(false)
@@ -58,7 +61,7 @@ const columns = [
   { accessorKey: 'codigo', header: 'Codigo' },
   { accessorKey: 'razon_social', header: 'Proveedor' },
   { accessorKey: 'contacto_nombre', header: 'Contacto' },
-  { accessorKey: 'activo', header: 'Estado' },
+  { accessorKey: 'direccion', header: 'Direccion' },
   { id: 'actions', header: '' },
 ]
 
@@ -135,7 +138,7 @@ async function deleteSupplier(id: string) {
               class="w-64"
             />
             <UButton icon="i-lucide-download" label="Exportar" variant="outline" color="neutral" />
-            <UButton icon="i-lucide-plus" label="Nuevo Proveedor" @click="openNewModal" />
+            <UButton v-if="hasPermission('proveedores:crear')" icon="i-lucide-plus" label="Nuevo Proveedor" @click="openNewModal" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -150,7 +153,7 @@ async function deleteSupplier(id: string) {
               class="w-32 shrink-0"
             />
             <UButton icon="i-lucide-download" label="Exportar" variant="outline" color="neutral" class="shrink-0" />
-            <UButton icon="i-lucide-plus" label="Nuevo" @click="openNewModal" class="shrink-0" />
+            <UButton v-if="hasPermission('proveedores:crear')" icon="i-lucide-plus" label="Nuevo" @click="openNewModal" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -175,22 +178,14 @@ async function deleteSupplier(id: string) {
                 <p class="text-xs text-muted">{{ row.original.telefono || '-' }}</p>
               </div>
             </template>
-            <template #activo-cell="{ row }">
-              <UBadge
-                :color="row.original.activo ? 'success' : 'neutral'"
-                :label="row.original.activo ? 'Activo' : 'Inactivo'"
-                variant="subtle"
-              />
+            <template #direccion-cell="{ row }">
+              <span class="text-sm text-default">{{ row.original.direccion || '-' }}</span>
             </template>
             <template #actions-cell="{ row }">
               <UDropdownMenu
                 :items="[
-                  [
-                    { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) },
-                  ],
-                  [
-                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteSupplier(row.original.id) },
-                  ],
+                  ...(hasPermission('proveedores:editar') ? [[{ label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(row.original) }]] : []),
+                  ...(hasPermission('proveedores:eliminar') ? [[{ label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteSupplier(row.original.id) }]] : []),
                 ]"
               >
                 <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="sm" />

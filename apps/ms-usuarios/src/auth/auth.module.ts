@@ -4,11 +4,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsuariosModule } from '../usuarios/usuarios.module';
+import { RolesModule } from '../roles/roles.module';
 import { NatsModule } from '@app/common';
 
 @Module({
   imports: [
     UsuariosModule,
+    RolesModule,
     NatsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

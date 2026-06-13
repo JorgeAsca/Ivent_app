@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useCategorias, type Categoria } from '~/composables/useCategorias'
 import { useProducts, type Product } from '~/composables/useProducts'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
+
+const { hasPermission } = usePermissions()
 
 const toast = useToast()
 const isModalOpen = ref(false)
@@ -110,7 +113,7 @@ async function deleteCategory(id: string) {
               placeholder="Buscar categorias..."
               class="w-64"
             />
-            <UButton icon="i-lucide-plus" label="Nueva Categoria" @click="openNewModal" />
+            <UButton v-if="hasPermission('categorias:crear')" icon="i-lucide-plus" label="Nueva Categoria" @click="openNewModal" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -124,7 +127,7 @@ async function deleteCategory(id: string) {
               placeholder="Buscar..."
               class="w-48 shrink-0"
             />
-            <UButton icon="i-lucide-plus" label="Nueva" @click="openNewModal" class="shrink-0" />
+            <UButton v-if="hasPermission('categorias:crear')" icon="i-lucide-plus" label="Nueva" @click="openNewModal" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -145,12 +148,10 @@ async function deleteCategory(id: string) {
               <UDropdownMenu
                 :items="[
                   [
-                    { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(category) },
+                    ...(hasPermission('categorias:editar') ? [{ label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(category) }] : []),
                     { label: 'Ver productos', icon: 'i-lucide-package', to: `/productos?category=${category.id}` },
                   ],
-                  [
-                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteCategory(category.id) },
-                  ],
+                  ...(hasPermission('categorias:eliminar') ? [[{ label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteCategory(category.id) }]] : []),
                 ]"
               >
                 <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="xs" />

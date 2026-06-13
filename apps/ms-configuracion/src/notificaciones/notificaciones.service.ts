@@ -34,6 +34,16 @@ export class NotificacionesService {
   }
 
   async procesarAlertaStockBajo(data: any) {
+    const configEmail = await this.configRepo.findOneBy({ clave: 'NOTIFICACIONES_EMAIL' });
+    const configStock = await this.configRepo.findOneBy({ clave: 'NOTIFICACIONES_ALERTAS_STOCK' });
+    
+    // If not explicitly set to true, assume disabled (or if you want opt-out, change logic)
+    // We'll require it to be true to send emails
+    if (configEmail?.valor !== 'true' || configStock?.valor !== 'true') {
+      this.logger.log(`Notificaciones de email o stock deshabilitadas. Saltando envío de alerta para ${data.nombre}.`);
+      return;
+    }
+
     const { transporter, user } = await this.getTransporter();
 
     if (data.proveedorId) {

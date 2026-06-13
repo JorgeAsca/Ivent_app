@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, ParseUUIDPipe, Req } from '@nestjs/common';
+import { RequirePermissions } from '../../decorators/permissions.decorator';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { CreateProductoDto, UpdateProductoDto, CreateCategoriaDto, UpdateCategoriaDto, INVENTARIO_PATTERNS } from '@app/common';
@@ -10,6 +11,7 @@ export class InventarioController {
     ) { }
 
     @Post('productos')
+    @RequirePermissions('productos:crear')
     createProducto(@Body() createProductoDto: CreateProductoDto, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.CREAR_PRODUCTO, { ...createProductoDto, id_empresa: req.user.empresaId }).pipe(
             catchError((error) => { throw new RpcException(error); }),
@@ -31,12 +33,14 @@ export class InventarioController {
     }
 
     @Patch('productos/:id')
+    @RequirePermissions('productos:editar')
     updateProducto(@Param('id', ParseUUIDPipe) id: string, @Body() updateProductoDto: UpdateProductoDto, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.ACTUALIZAR_PRODUCTO, { id, ...updateProductoDto, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
     }
 
     @Delete('productos/:id')
+    @RequirePermissions('productos:eliminar')
     removeProducto(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.ELIMINAR_PRODUCTO, { id, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
@@ -44,6 +48,7 @@ export class InventarioController {
 
     // Peticiones de categoria 
     @Post('categorias')
+    @RequirePermissions('categorias:crear')
     createCategoria(@Body() createCategoriaDto: CreateCategoriaDto, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.CREAR_CATEGORIA, { ...createCategoriaDto, id_empresa: req.user.empresaId }).pipe(
             catchError((error) => { throw new RpcException(error); }),
@@ -64,12 +69,14 @@ export class InventarioController {
     }
 
     @Patch('categorias/:id')
+    @RequirePermissions('categorias:editar')
     updateCategoria(@Param('id', ParseUUIDPipe) id: string, @Body() updateCategoriaDto: UpdateCategoriaDto, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.ACTUALIZAR_CATEGORIA, { id, ...updateCategoriaDto, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
     }
 
     @Delete('categorias/:id')
+    @RequirePermissions('categorias:eliminar')
     removeCategoria(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.ELIMINAR_CATEGORIA, { id, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
@@ -83,6 +90,7 @@ export class InventarioController {
     }
 
     @Post('productos/:id/receta')
+    @RequirePermissions('productos:editar')
     guardarReceta(@Param('id', ParseUUIDPipe) id: string, @Body() data: any, @Req() req: any) {
         return this.clientInventario.send({ cmd: 'guardar_receta' }, { producto_id: id, ...data, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));
@@ -95,6 +103,7 @@ export class InventarioController {
     }
 
     @Post('productos/:id/fabricar')
+    @RequirePermissions('productos:editar')
     fabricarProducto(@Param('id', ParseUUIDPipe) id: string, @Body() data: any, @Req() req: any) {
         return this.clientInventario.send({ cmd: 'fabricar_producto' }, { producto_id: id, ...data, id_empresa: req.user.empresaId })
             .pipe(catchError(err => { throw new RpcException(err) }));

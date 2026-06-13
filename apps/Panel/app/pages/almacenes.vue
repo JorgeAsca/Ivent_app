@@ -2,8 +2,11 @@
 import { useAlmacenes, type Almacen } from '~/composables/useAlmacenes'
 import { useEmpresas } from '~/composables/useEmpresas'
 import { useProducts } from '~/composables/useProducts'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
+
+const { hasPermission } = usePermissions()
 
 const toast = useToast()
 const { getAlmacenes, createAlmacen, updateAlmacen, deleteAlmacen, getWarehouseStock } = useAlmacenes()
@@ -67,6 +70,18 @@ const fetchAll = async () => {
     if (empresas && empresas.length > 0) {
       activeEmpresa.value = empresas[0].id_empresa
       const alms = await getAlmacenes(activeEmpresa.value)
+      
+      if (alms) {
+        await Promise.all(alms.map(async (w) => {
+          try {
+            const stock = await getWarehouseStock(w.id)
+            w.productCount = Array.isArray(stock) ? stock.length : 0
+          } catch (e) {
+            w.productCount = 0
+          }
+        }))
+      }
+      
       backendAlmacenes.value = alms || []
     }
   } catch (error) {
@@ -180,7 +195,7 @@ async function handleDeleteWarehouse(id: string) {
       <UDashboardNavbar title="Almacenes">
         <template #right>
           <div class="hidden sm:flex gap-2 items-center">
-            <UButton icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" />
+            <UButton v-if="hasPermission('almacenes:crear')" icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -188,7 +203,7 @@ async function handleDeleteWarehouse(id: string) {
       <UDashboardToolbar class="sm:hidden">
         <template #right>
           <div class="flex w-full overflow-x-auto gap-2 pb-1">
-            <UButton icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" class="shrink-0" />
+            <UButton v-if="hasPermission('almacenes:crear')" icon="i-lucide-plus" label="Nuevo Almacen" @click="openNewModal" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -238,12 +253,10 @@ async function handleDeleteWarehouse(id: string) {
               <UDropdownMenu
                 :items="[
                   [
-                    { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(warehouse) },
+                    ...(hasPermission('almacenes:editar') ? [{ label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditModal(warehouse) }] : []),
                     { label: 'Ver inventario', icon: 'i-lucide-package', onSelect: () => viewInventory(warehouse) },
                   ],
-                  [
-                    { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => handleDeleteWarehouse(warehouse.id) },
-                  ],
+                  ...(hasPermission('almacenes:eliminar') ? [[{ label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => handleDeleteWarehouse(warehouse.id) }]] : []),
                 ]"
               >
                 <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="xs" />

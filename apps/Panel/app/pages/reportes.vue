@@ -1,5 +1,17 @@
 <script setup lang="ts">
+import { useProducts, type Product } from '~/composables/useProducts'
+import { useMovimientos, type Movimiento } from '~/composables/useMovimientos'
+import { useAlmacenes, type Almacen } from '~/composables/useAlmacenes'
+import { useCategorias, type Categoria } from '~/composables/useCategorias'
+import { useEmpresas } from '~/composables/useEmpresas'
+import { useConfiguracion } from '~/composables/useConfiguracion'
+
+import jsPDF from 'jspdf'
+import jspdfAutotable from 'jspdf-autotable'
+
 definePageMeta({ layout: 'dashboard' })
+
+const toast = useToast()
 
 const selectedPeriod = ref('month')
 const selectedWarehouse = ref<string | undefined>(undefined)
@@ -8,44 +20,182 @@ const periodOptions = [
   { value: 'week', label: 'Esta Semana' },
   { value: 'month', label: 'Este Mes' },
   { value: 'quarter', label: 'Este Trimestre' },
-  { value: 'year', label: 'Este Ano' },
+  { value: 'year', label: 'Este Año' },
 ]
 
-const warehouses = ['Almacen Principal', 'Refrigerado', 'Congelados', 'Materia Prima']
+const { getProducts } = useProducts()
+const { getMovimientos } = useMovimientos()
+const { getAlmacenes } = useAlmacenes()
+const { getCategorias } = useCategorias()
+const { getEmpresas } = useEmpresas()
+const { getGlobalConfigs } = useConfiguracion()
 
-// Mock data for reports
-const inventoryValue = {
-  total: 125400,
-  change: 8.5,
-  byCategory: [
-    { name: 'Lacteos', value: 35200, percentage: 28 },
-    { name: 'Carnes', value: 28600, percentage: 23 },
-    { name: 'Aceites', value: 22100, percentage: 18 },
-    { name: 'Panaderia', value: 18500, percentage: 15 },
-    { name: 'Otros', value: 21000, percentage: 16 },
-  ],
-}
+const products = ref<Product[]>([])
+const globalDefaultMinStock = ref(10)
+const movimientos = ref<Movimiento[]>([])
+const almacenes = ref<Almacen[]>([])
+const categorias = ref<Categoria[]>([])
 
-const movementStats = {
-  entries: { count: 245, value: 45600 },
-  exits: { count: 312, value: 38900 },
-  adjustments: { count: 18, value: -2300 },
-}
+const isLoading = ref(true)
 
-const topProducts = [
-  { rank: 1, name: 'Queso Mozzarella 500g', sku: 'QUE-001', movements: 156, value: 13260 },
-  { rank: 2, name: 'Harina de Trigo 1kg', sku: 'HAR-001', movements: 142, value: 3550 },
-  { rank: 3, name: 'Aceite de Oliva 1L', sku: 'ACE-001', movements: 128, value: 15360 },
-  { rank: 4, name: 'Salsa de Tomate 500ml', sku: 'SAL-001', movements: 115, value: 3680 },
-  { rank: 5, name: 'Jamon Serrano', sku: 'JAM-001', movements: 98, value: 24500 },
-]
+onMounted(async () => {
+  try {
+    const empresas = await getEmpresas()
+    let empresaId = undefined
+    if (empresas && empresas.length > 0) {
+      empresaId = empresas[0].id_empresa
+    }
 
-const lowStockAlerts = [
-  { name: 'Levadura Fresca', stock: 5, minStock: 20, daysToZero: 2 },
-  { name: 'Jamon Serrano', stock: 3, minStock: 10, daysToZero: 1 },
-  { name: 'Pimientos Rojos', stock: 8, minStock: 25, daysToZero: 4 },
-  { name: 'Anchoas', stock: 2, minStock: 15, daysToZero: 1 },
-]
+    const [prods, movs, alms, cats, configs] = await Promise.all([
+      getProducts(),
+      getMovimientos(empresaId),
+      getAlmacenes(empresaId),
+      getCategorias(),
+      getGlobalConfigs()
+    ])
+    
+    if (configs) {
+      const defaultStockConfig = configs.find((c: any) => c.clave === 'STOCK_MINIMO_DEFECTO')
+      if (defaultStockConfig) {
+        globalDefaultMinStock.value = parseInt(defaultStockConfig.valor, 10)
+      }
+    }
+    
+    if (prods) products.value = prods
+    if (movs) movimientos.value = movs
+    if (alms) almacenes.value = alms
+    if (cats) categorias.value = cats
+
+  } catch (e) {
+    toast.add({ title: 'Error cargando datos', color: 'error' })
+  } finally {
+    isLoading.value = false
+  }
+})
+
+const warehouseOptions = computed(() => {
+  return [
+    { label: 'Todos los almacenes', value: undefined },
+    ...almacenes.value.map(a => ({ label: a.nombre, value: a.id }))
+  ]
+})
+
+const filteredMovements = computed(() => {
+  const now = new Date()
+  let startDate = new Date(0)
+  
+  if (selectedPeriod.value === 'week') {
+    startDate = new Date(now)
+    startDate.setDate(now.getDate() - now.getDay())
+  }
+  if (selectedPeriod.value === 'month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+  }
+  if (selectedPeriod.value === 'quarter') {
+    startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+  }
+  if (selectedPeriod.value === 'year') {
+    startDate = new Date(now.getFullYear(), 0, 1)
+  }
+
+  return movimientos.value.filter(mov => {
+    const movDate = new Date(mov.fecha_movimiento)
+    const matchesDate = movDate >= startDate
+    const matchesWarehouse = !selectedWarehouse.value || mov.id_almacen === selectedWarehouse.value
+    
+    return matchesDate && matchesWarehouse
+  })
+})
+
+const inventoryValue = computed(() => {
+  let total = 0
+  const catTotals: Record<string, number> = {}
+  
+  products.value.forEach(p => {
+    const value = (p.stock || 0) * (p.precio || 0)
+    total += value
+    
+    const catName = p.categoria?.nombre || categorias.value.find(c => c.id === p.categoriaId)?.nombre || 'Otros'
+    catTotals[catName] = (catTotals[catName] || 0) + value
+  })
+
+  const byCategory = Object.entries(catTotals).map(([name, value]) => ({
+    name,
+    value,
+    percentage: total > 0 ? Math.round((value / total) * 100) : 0
+  })).sort((a, b) => b.value - a.value)
+
+  return {
+    total,
+    change: 0, 
+    byCategory
+  }
+})
+
+const movementStats = computed(() => {
+  let entriesCount = 0
+  let entriesValue = 0
+  let exitsCount = 0
+  let exitsValue = 0
+
+  filteredMovements.value.forEach(mov => {
+    const product = products.value.find(p => p.id === mov.id_producto)
+    const value = mov.cantidad * (product?.precio || 0)
+    
+    if (mov.tipo === 'ENTRADA') {
+      entriesCount++
+      entriesValue += value
+    } else if (mov.tipo === 'SALIDA') {
+      exitsCount++
+      exitsValue += value
+    }
+  })
+
+  return {
+    entries: { count: entriesCount, value: entriesValue },
+    exits: { count: exitsCount, value: exitsValue },
+  }
+})
+
+const topProducts = computed(() => {
+  const counts: Record<string, { movements: number, value: number }> = {}
+  
+  filteredMovements.value.forEach(mov => {
+    const product = products.value.find(p => p.id === mov.id_producto)
+    const value = mov.cantidad * (product?.precio || 0)
+    if (!counts[mov.id_producto]) {
+      counts[mov.id_producto] = { movements: 0, value: 0 }
+    }
+    counts[mov.id_producto].movements++
+    counts[mov.id_producto].value += value
+  })
+
+  return Object.entries(counts)
+    .map(([id, data]) => {
+      const product = products.value.find(p => p.id === id)
+      return {
+        sku: product?.sku || 'N/A',
+        name: product?.nombre || 'Desconocido',
+        movements: data.movements,
+        value: data.value
+      }
+    })
+    .sort((a, b) => b.movements - a.movements)
+    .map((p, index) => ({ ...p, rank: index + 1 }))
+    .slice(0, 5)
+})
+
+const lowStockAlerts = computed(() => {
+  return products.value
+    .filter(p => p.stock <= (p.stockMinimo || globalDefaultMinStock.value))
+    .map(p => ({
+      name: p.nombre,
+      categoria: categorias.value.find(c => c.id === p.categoriaId)?.nombre || '-',
+      stock: p.stock,
+      minStock: p.stockMinimo || globalDefaultMinStock.value,
+      daysToZero: '-' 
+    }))
+})
 
 const reportTypes = [
   { id: 'inventory', label: 'Inventario General (Valoración)', icon: 'i-lucide-package', description: 'Valor del inventario por categoría' },
@@ -53,36 +203,17 @@ const reportTypes = [
   { id: 'low-stock', label: 'Alerta Stock Bajo', icon: 'i-lucide-alert-triangle', description: 'Productos por debajo del mínimo' },
 ]
 
-import jsPDF from 'jspdf'
-import jspdfAutotable from 'jspdf-autotable'
-import { useAnalytics, type DashboardStats } from '~/composables/useAnalytics'
-
-const { getDashboardStats } = useAnalytics()
-const dashboardData = ref<DashboardStats | null>(null)
-
-onMounted(async () => {
-  try {
-    const data = await getDashboardStats()
-    if (data) dashboardData.value = data
-  } catch (e) {
-    console.error('Error fetching data for reports', e)
-  }
-})
-
 function applyAutoTable(doc: any, options: any) {
   if (typeof jspdfAutotable === 'function') {
     jspdfAutotable(doc, options)
   } else if (jspdfAutotable && typeof (jspdfAutotable as any).default === 'function') {
     (jspdfAutotable as any).default(doc, options)
   } else {
-    // Fallback if it somehow attached to doc
     doc.autoTable(options)
   }
 }
 
 function generateReport(reportId: string) {
-  if (!dashboardData.value) return;
-
   const doc = new jsPDF();
   const dateStr = new Date().toLocaleDateString();
   
@@ -92,11 +223,11 @@ function generateReport(reportId: string) {
   doc.text(`Fecha: ${dateStr}`, 14, 30);
 
   if (reportId === 'inventory') {
-    doc.text('Resumen de Valoración:', 14, 40);
+    doc.text(`Valor Total: €${inventoryValue.value.total.toFixed(2)}`, 14, 40);
     applyAutoTable(doc, {
       startY: 45,
       head: [['Categoría', 'Valor Total', 'Porcentaje']],
-      body: dashboardData.value.valorPorCategoria.map(c => [
+      body: inventoryValue.value.byCategory.map(c => [
         c.name, 
         `€${c.value.toFixed(2)}`, 
         `${c.percentage}%`
@@ -108,25 +239,28 @@ function generateReport(reportId: string) {
     applyAutoTable(doc, {
       startY: 45,
       head: [['Producto', 'Categoría', 'Stock', 'Stock Mínimo']],
-      body: dashboardData.value.lowStockProducts.map(p => [
-        p.nombre, 
-        p.categoria?.nombre || '-', 
+      body: lowStockAlerts.value.map(p => [
+        p.name, 
+        p.categoria, 
         p.stock.toString(), 
-        p.stockMinimo.toString()
+        p.minStock.toString()
       ]),
     });
     doc.save(`Reporte_Stock_Bajo_${dateStr}.pdf`);
   } else if (reportId === 'movements') {
-    doc.text('Últimos Movimientos:', 14, 40);
+    doc.text(`Últimos Movimientos (${periodOptions.find(p => p.value === selectedPeriod.value)?.label}):`, 14, 40);
     applyAutoTable(doc, {
       startY: 45,
-      head: [['Fecha', 'Tipo', 'Cantidad', 'ID Producto']],
-      body: dashboardData.value.ultimosMovimientos.map(m => [
-        new Date(m.fecha_movimiento).toLocaleDateString(),
-        m.tipo,
-        m.cantidad.toString(),
-        m.id_producto
-      ]),
+      head: [['Fecha', 'Tipo', 'Cantidad', 'Producto']],
+      body: filteredMovements.value.map(m => {
+        const prod = products.value.find(p => p.id === m.id_producto)
+        return [
+          new Date(m.fecha_movimiento).toLocaleDateString(),
+          m.tipo,
+          m.cantidad.toString(),
+          prod ? prod.nombre : m.id_producto
+        ]
+      }),
     });
     doc.save(`Reporte_Movimientos_${dateStr}.pdf`);
   } else {
@@ -149,7 +283,8 @@ function generateReport(reportId: string) {
             />
             <USelectMenu
               v-model="selectedWarehouse"
-              :items="warehouses"
+              :items="warehouseOptions"
+              value-key="value"
               placeholder="Todos los almacenes"
               class="w-48 shrink-0"
             />
@@ -167,7 +302,8 @@ function generateReport(reportId: string) {
             />
             <USelectMenu
               v-model="selectedWarehouse"
-              :items="warehouses"
+              :items="warehouseOptions"
+              value-key="value"
               placeholder="Todos los almacenes"
               class="w-44 sm:w-48 shrink-0"
             />
@@ -177,17 +313,20 @@ function generateReport(reportId: string) {
     </template>
 
     <template #body>
-      <div class="flex flex-col gap-6 p-6">
+      <div v-if="isLoading" class="flex justify-center p-12">
+        <UIcon name="i-lucide-loader-2" class="size-8 animate-spin text-primary" />
+      </div>
+      <div v-else class="flex flex-col gap-6 p-6">
         <!-- Summary Stats -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <UCard>
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm text-muted">Valor del Inventario</p>
-                <p class="mt-1 text-2xl font-semibold text-default">${{ inventoryValue.total.toLocaleString() }}</p>
+                <p class="mt-1 text-2xl font-semibold text-default">€{{ inventoryValue.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
                 <div class="mt-2 flex items-center gap-1 text-sm">
                   <UIcon name="i-lucide-trending-up" class="size-4 text-emerald-500" />
-                  <span class="text-emerald-500">+{{ inventoryValue.change }}%</span>
+                  <span class="text-emerald-500">Actual</span>
                 </div>
               </div>
               <div class="rounded-lg bg-emerald-500/10 p-3">
@@ -201,7 +340,7 @@ function generateReport(reportId: string) {
               <div>
                 <p class="text-sm text-muted">Entradas</p>
                 <p class="mt-1 text-2xl font-semibold text-default">{{ movementStats.entries.count }}</p>
-                <p class="mt-2 text-sm text-muted">${{ movementStats.entries.value.toLocaleString() }}</p>
+                <p class="mt-2 text-sm text-muted">€{{ movementStats.entries.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
               </div>
               <div class="rounded-lg bg-blue-500/10 p-3">
                 <UIcon name="i-lucide-package-plus" class="size-6 text-blue-500" />
@@ -214,7 +353,7 @@ function generateReport(reportId: string) {
               <div>
                 <p class="text-sm text-muted">Salidas</p>
                 <p class="mt-1 text-2xl font-semibold text-default">{{ movementStats.exits.count }}</p>
-                <p class="mt-2 text-sm text-muted">${{ movementStats.exits.value.toLocaleString() }}</p>
+                <p class="mt-2 text-sm text-muted">€{{ movementStats.exits.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
               </div>
               <div class="rounded-lg bg-amber-500/10 p-3">
                 <UIcon name="i-lucide-package-minus" class="size-6 text-amber-500" />
@@ -227,7 +366,10 @@ function generateReport(reportId: string) {
               <div>
                 <p class="text-sm text-muted">Alertas Stock</p>
                 <p class="mt-1 text-2xl font-semibold text-red-500">{{ lowStockAlerts.length }}</p>
-                <p class="mt-2 text-sm text-muted">productos criticos</p>
+                <NuxtLink to="/stock" class="mt-2 flex w-max items-center text-sm text-red-500/80 hover:text-red-500 hover:underline transition-colors cursor-pointer">
+                  Ver productos
+                  <UIcon name="i-lucide-arrow-right" class="ml-1 size-3" />
+                </NuxtLink>
               </div>
               <div class="rounded-lg bg-red-500/10 p-3">
                 <UIcon name="i-lucide-alert-triangle" class="size-6 text-red-500" />
@@ -240,15 +382,18 @@ function generateReport(reportId: string) {
           <!-- Inventory by Category -->
           <UCard>
             <template #header>
-              <h3 class="text-lg font-semibold text-default">Valor por Categoria</h3>
+              <h3 class="text-lg font-semibold text-default">Valor por Categoría</h3>
             </template>
             <div class="space-y-4">
               <div v-for="category in inventoryValue.byCategory" :key="category.name" class="space-y-2">
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-default">{{ category.name }}</span>
-                  <span class="font-semibold text-default">${{ category.value.toLocaleString() }}</span>
+                  <span class="font-semibold text-default">€{{ category.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                 </div>
                 <UProgress :value="category.percentage" color="primary" size="sm" />
+              </div>
+              <div v-if="inventoryValue.byCategory.length === 0" class="text-sm text-muted py-2">
+                No hay productos con valor.
               </div>
             </div>
           </UCard>
@@ -274,6 +419,9 @@ function generateReport(reportId: string) {
                   <p class="text-xs text-muted">movimientos</p>
                 </div>
               </div>
+              <div v-if="topProducts.length === 0" class="text-sm text-muted py-2">
+                No hay movimientos en este periodo.
+              </div>
             </div>
           </UCard>
         </div>
@@ -293,16 +441,11 @@ function generateReport(reportId: string) {
                   <p class="font-medium text-default">{{ alert.name }}</p>
                   <p class="text-sm text-muted">Stock: {{ alert.stock }} / {{ alert.minStock }}</p>
                 </div>
-                <UBadge color="error" :label="`${alert.daysToZero}d`" variant="subtle" />
+                <UBadge color="error" label="Bajo" variant="subtle" />
               </div>
-              <UButton
-                class="mt-3"
-                size="xs"
-                icon="i-lucide-shopping-cart"
-                label="Crear pedido"
-                variant="outline"
-                block
-              />
+            </div>
+            <div v-if="lowStockAlerts.length === 0" class="col-span-full text-sm text-muted py-2">
+              No hay productos con stock crítico.
             </div>
           </div>
         </UCard>

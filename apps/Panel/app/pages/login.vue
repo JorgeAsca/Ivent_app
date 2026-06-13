@@ -12,8 +12,8 @@ const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
 const showPassword = ref(false)
-const authToken = useCookie('auth_token', { maxAge: 60 * 60 * 24 }) // 1 day
-const userCookie = useCookie('user_data', { maxAge: 60 * 60 * 24 })
+const authToken = useCookie('auth_token', { maxAge: 60 * 60 * 24, path: '/' }) // 1 day
+const userCookie = useCookie('user_data', { maxAge: 60 * 60 * 24, path: '/' })
 
 async function handleLogin() {
   if (!email.value || !password.value) {
@@ -35,7 +35,7 @@ async function handleLogin() {
 
     if (response && response.access_token) {
       authToken.value = response.access_token
-      userCookie.value = JSON.stringify(response.usuario)
+      userCookie.value = response.usuario
 
       toast.add({
         title: 'Bienvenido',

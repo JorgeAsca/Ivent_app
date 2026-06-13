@@ -333,7 +333,6 @@ async function deleteCompositeProduct(id: string) {
                 <div class="flex items-center justify-between">
                   <UIcon name="i-lucide-package-open" class="size-8 text-primary" />
                   <div class="flex items-center gap-2">
-                    <UBadge color="primary" variant="subtle" size="sm">Compuesto</UBadge>
                     <UDropdownMenu
                       :items="[
                         [

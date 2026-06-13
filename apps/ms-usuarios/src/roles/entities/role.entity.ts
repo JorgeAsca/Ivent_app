@@ -10,6 +10,12 @@ export class Role {
     @Column()
     nombre: string;
 
+    @Column({ nullable: true })
+    empresaId: string;
+
+    @Column({ default: false })
+    isSystem: boolean;
+
     @ManyToMany(() => Permission, (permission) => permission.roles, { cascade: true })
     @JoinTable({ name: 'roles_permisos' })
     permisos: Permission[];
