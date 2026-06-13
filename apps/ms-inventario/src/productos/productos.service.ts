@@ -36,7 +36,7 @@ export class ProductosService {
 
         let almacen: any = null;
         if (almacenId) {
-            almacen = await firstValueFrom(this.natsClient.send({ cmd: 'find_one_almacen' }, almacenId)).catch(() => null);
+            almacen = await firstValueFrom(this.natsClient.send({ cmd: 'find_one_almacen' }, { id: almacenId, id_empresa })).catch(() => null);
             if (!almacen) {
                 throw new NotFoundException(`Almacén con ID ${almacenId} no encontrado en logística`);
             }
@@ -58,12 +58,12 @@ export class ProductosService {
                 almacenId: almacenId || null
             });
 
-            // Registrar movimiento inicial si hay stock
-            if (productoGuardado.stock > 0 && almacen) {
+            // Registrar movimiento inicial si hay almacén
+            if (almacen) {
                 this.natsClient.send({ cmd: 'crear_movimiento' }, {
                     id_producto: productoGuardado.id,
                     id_almacen: almacen.id,
-                    id_empresa: almacen.id_empresa,
+                    id_empresa: id_empresa,
                     tipo: 'ENTRADA',
                     cantidad: productoGuardado.stock,
                     referencia_externa: 'CREACION_INICIAL'

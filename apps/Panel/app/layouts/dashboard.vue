@@ -55,7 +55,12 @@ const settingsNavItems = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Configuracion',
     icon: 'i-lucide-settings',
-    to: '/configuracion',
+    children: [
+      { label: 'General', icon: 'i-lucide-settings', to: '/configuracion?section=general' },
+      { label: 'Inventario', icon: 'i-lucide-package', to: '/configuracion?section=inventory' },
+      { label: 'Notificaciones', icon: 'i-lucide-bell', to: '/configuracion?section=notifications' },
+      { label: 'Integraciones', icon: 'i-lucide-plug', to: '/configuracion?section=integrations' },
+    ]
   },
 ])
 
@@ -78,7 +83,7 @@ function handleLogout() {
 const dropdownItems = computed(() => [
   [
     { label: 'Mi perfil', icon: 'i-lucide-user', to: '/perfil', class: 'text-white' },
-    { label: 'Preferencias', icon: 'i-lucide-settings-2', to: '/preferencias', class: 'text-white' },
+    { label: 'Usuarios', icon: 'i-lucide-users', to: '/preferencias', class: 'text-white' },
   ],
   [
     { label: 'Cerrar sesion', icon: 'i-lucide-log-out', color: 'error' as const, click: handleLogout, onSelect: handleLogout },
@@ -99,7 +104,7 @@ const dropdownItems = computed(() => [
           <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <UIcon name="i-lucide-box" class="size-5" />
           </div>
-          <span v-if="!collapsed" class="font-semibold text-white">InventoryPro</span>
+          <span v-if="!collapsed" class="font-semibold text-white">Inventapp</span>
         </div>
       </template>
 
@@ -121,7 +126,10 @@ const dropdownItems = computed(() => [
             orientation="vertical"
             :ui="{ 
               link: [collapsed ? 'justify-center' : undefined, 'text-zinc-400 hover:text-white hover:bg-white/5'],
-              linkActive: 'text-white bg-white/10'
+              linkActive: 'text-white bg-white/10',
+              childList: 'bg-transparent border-l border-white/10 ml-4',
+              childLink: 'text-zinc-400 hover:text-white hover:bg-white/5',
+              childLinkActive: 'text-white bg-white/10'
             }"
           />
 

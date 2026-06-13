@@ -414,24 +414,24 @@ async function deleteCompositeProduct(id: string) {
             <!-- Modo Edición -->
             <div v-else class="flex flex-col gap-4">
                <ul class="divide-y divide-white/10">
-                <li v-for="item in editableIngredientes" :key="item.ingrediente_id" class="flex items-center justify-between py-3">
-                  <div class="flex items-center gap-3">
-                    <div class="flex size-8 items-center justify-center rounded-lg bg-neutral-800">
+                <li v-for="item in editableIngredientes" :key="item.ingrediente_id" class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-3">
+                  <div class="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                    <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-neutral-800">
                       <UIcon name="i-lucide-package" class="size-4 text-zinc-400" />
                     </div>
-                    <p class="font-medium text-white">{{ getProductName(item.ingrediente_id) }}</p>
+                    <p class="font-medium text-white truncate">{{ getProductName(item.ingrediente_id) }}</p>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <USelectMenu v-model="item.id_almacen" :items="warehouseOptions" value-key="value" label-key="label" placeholder="Almacén" class="w-40" />
-                    <UInput v-model.number="item.cantidad_necesaria" type="number" step="0.01" class="w-24" />
-                    <span class="text-sm text-zinc-400">{{ getProductUnit(item.ingrediente_id) }}</span>
+                  <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+                    <USelectMenu v-model="item.id_almacen" :items="warehouseOptions" value-key="value" label-key="label" placeholder="Almacén" class="flex-1 sm:flex-none sm:w-40 min-w-[120px]" />
+                    <UInput v-model.number="item.cantidad_necesaria" type="number" step="0.01" class="w-20" />
+                    <span class="text-sm text-zinc-400 w-8">{{ getProductUnit(item.ingrediente_id) }}</span>
                     <UButton icon="i-lucide-trash" color="error" variant="ghost" size="sm" @click="removeIngredient(item.ingrediente_id)" />
                   </div>
                 </li>
               </ul>
 
-              <div class="mt-4 flex items-end gap-2 rounded-lg border border-white/10 bg-neutral-900/50 p-4">
-                <UFormField label="Ingrediente" class="flex-1">
+              <div class="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-neutral-900/50 p-4">
+                <UFormField label="Ingrediente" class="w-full sm:flex-1 min-w-[200px]">
                   <USelectMenu
                     v-model="newIngredientId"
                     :items="ingredientOptions"
@@ -441,19 +441,21 @@ async function deleteCompositeProduct(id: string) {
                     placeholder="Buscar..."
                   />
                 </UFormField>
-                <UFormField label="Almacén" class="w-40">
-                  <USelectMenu
-                    v-model="newIngredientAlmacenId"
-                    :items="warehouseOptions"
-                    value-key="value"
-                    label-key="label"
-                    placeholder="Almacén"
-                  />
-                </UFormField>
-                <UFormField label="Cant." class="w-24">
-                  <UInput v-model.number="newIngredientQty" type="number" step="0.01" min="0.01" />
-                </UFormField>
-                <UButton icon="i-lucide-plus" color="primary" @click="addIngredientToRecipe" />
+                <div class="flex flex-wrap items-end gap-2 w-full sm:w-auto">
+                  <UFormField label="Almacén" class="flex-1 sm:w-40 min-w-[120px]">
+                    <USelectMenu
+                      v-model="newIngredientAlmacenId"
+                      :items="warehouseOptions"
+                      value-key="value"
+                      label-key="label"
+                      placeholder="Almacén"
+                    />
+                  </UFormField>
+                  <UFormField label="Cant." class="w-20">
+                    <UInput v-model.number="newIngredientQty" type="number" step="0.01" min="0.01" />
+                  </UFormField>
+                  <UButton icon="i-lucide-plus" color="primary" class="shrink-0" @click="addIngredientToRecipe" />
+                </div>
               </div>
 
               <div class="mt-4 flex justify-end gap-2">

@@ -48,14 +48,12 @@ onMounted(async () => {
             const stock = await getWarehouseStock(alm.id)
             if (stock) {
               for (const s of stock) {
-                if (s.cantidad !== 0) {
-                  if (!stockMap.value[s.id_producto]) stockMap.value[s.id_producto] = []
-                  const existing = stockMap.value[s.id_producto].find(x => x.nombre === alm.nombre)
-                  if (existing) {
-                    existing.cantidad += s.cantidad
-                  } else {
-                    stockMap.value[s.id_producto].push({ nombre: alm.nombre, cantidad: s.cantidad })
-                  }
+                if (!stockMap.value[s.id_producto]) stockMap.value[s.id_producto] = []
+                const existing = stockMap.value[s.id_producto].find(x => x.nombre === alm.nombre)
+                if (existing) {
+                  existing.cantidad += s.cantidad
+                } else {
+                  stockMap.value[s.id_producto].push({ nombre: alm.nombre, cantidad: s.cantidad })
                 }
               }
             }
@@ -182,6 +180,15 @@ async function saveProduct() {
       const created = await createProduct(payload)
       if (created) {
         products.value.push(created)
+        
+        // Update stockMap to instantly reflect the chosen warehouse
+        if (payload.almacenId) {
+          const alm = almacenes.value.find(a => a.id === payload.almacenId)
+          if (alm) {
+            if (!stockMap.value[created.id]) stockMap.value[created.id] = []
+            stockMap.value[created.id].push({ nombre: alm.nombre, cantidad: payload.stock || 0 })
+          }
+        }
       }
       toast.add({ title: 'Producto creado', icon: 'i-lucide-check', color: 'success' })
     }

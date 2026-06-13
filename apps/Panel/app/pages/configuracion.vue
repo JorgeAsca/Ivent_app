@@ -43,6 +43,12 @@ const barcodeEnabled = ref(true)
 const emailNotifications = ref(true)
 const stockAlertEmail = ref(true)
 const alertUserIds = ref<string[]>([])
+const selectedAlertUsers = computed({
+  get: () => usuarios.value.filter(u => alertUserIds.value.includes(u.id_usuario)),
+  set: (users) => {
+    alertUserIds.value = users.map(u => u.id_usuario)
+  }
+})
 const dailyReport = ref(false)
 const weeklyReport = ref(true)
 
@@ -50,28 +56,19 @@ const settingsSections = [
   { id: 'general', label: 'General', icon: 'i-lucide-settings' },
   { id: 'inventory', label: 'Inventario', icon: 'i-lucide-package' },
   { id: 'notifications', label: 'Notificaciones', icon: 'i-lucide-bell' },
-  { id: 'users', label: 'Usuarios', icon: 'i-lucide-users' },
   { id: 'integrations', label: 'Integraciones', icon: 'i-lucide-plug' },
 ]
 
-const activeSection = ref('general')
+const route = useRoute()
+const router = useRouter()
+
+const activeSection = computed(() => (route.query.section as string) || 'general')
 
 // Users Logic
 const usuarios = ref<Usuario[]>([])
 const rolesList = ref<Role[]>([])
 const empresas = ref<Empresa[]>([])
-const isUserModalOpen = ref(false)
-const isLoadingUsers = ref(false)
 
-const newUser = ref({
-  nombre: '',
-  email: '',
-  password: '',
-  rolId: '',
-  empresaId: ''
-})
-
-const showPassword = ref(false)
 
 const isDeleteCompanyModalOpen = ref(false)
 const deleteCompanyNameInput = ref('')
@@ -105,7 +102,6 @@ async function confirmDeleteCompany() {
 }
 
 async function loadUsersAndRoles() {
-  isLoadingUsers.value = true
   try {
     const [dataUsers, dataRoles, dataEmpresas] = await Promise.all([
       getUsuarios(),
@@ -123,9 +119,7 @@ async function loadUsersAndRoles() {
     }
   } catch (error) {
     console.error('Error cargando usuarios/roles/empresas:', error)
-    toast.add({ title: 'Error cargando datos de usuarios', color: 'error' })
-  } finally {
-    isLoadingUsers.value = false
+    toast.add({ title: 'Error cargando datos', color: 'error' })
   }
 }
 
@@ -152,45 +146,6 @@ onMounted(() => {
   loadConfigs();
   loadUsersAndRoles(); // Load users always so we can show them in the notifications tab
 })
-
-function openNewUserModal() {
-  showPassword.value = false
-  newUser.value = {
-    nombre: '',
-    email: '',
-    password: '',
-    rolId: '',
-    empresaId: empresas.value[0]?.id_empresa || usuarios.value[0]?.empresaId || ''
-  }
-  isUserModalOpen.value = true
-}
-
-
-async function inviteUser() {
-  try {
-    const created = await createUsuario(newUser.value)
-    if (created) {
-      await loadUsersAndRoles()
-      toast.add({ title: 'Usuario creado exitosamente', icon: 'i-lucide-check', color: 'success' })
-      isUserModalOpen.value = false
-    }
-  } catch (error: any) {
-    console.error('Error creando usuario:', error)
-    toast.add({ title: 'Error al crear usuario', description: error.message || 'Verifica que el ID Empresa exista.', color: 'error' })
-  }
-}
-
-async function removeUser(id: string) {
-  if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return
-  try {
-    await deleteUsuario(id)
-    usuarios.value = usuarios.value.filter(u => u.id_usuario !== id)
-    toast.add({ title: 'Usuario eliminado', icon: 'i-lucide-trash', color: 'warning' })
-  } catch (error) {
-    console.error('Error eliminando usuario:', error)
-    toast.add({ title: 'Error al eliminar usuario', color: 'error' })
-  }
-}
 
 async function saveSettings() {
   if (activeSection.value === 'notifications') {
@@ -233,22 +188,6 @@ async function saveSettings() {
 
     <template #body>
       <div class="flex min-h-full">
-        <!-- Sidebar Navigation -->
-        <div class="w-64 border-r border-default bg-elevated p-4">
-          <nav class="space-y-1">
-            <button
-              v-for="section in settingsSections"
-              :key="section.id"
-              class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors"
-              :class="activeSection === section.id ? 'bg-primary/10 text-primary' : 'text-muted hover:bg-muted hover:text-default'"
-              @click="activeSection = section.id"
-            >
-              <UIcon :name="section.icon" class="size-5" />
-              <span>{{ section.label }}</span>
-            </button>
-          </nav>
-        </div>
-
         <!-- Content Area -->
         <div class="flex-1 p-6">
           <!-- General Settings -->
@@ -366,9 +305,8 @@ async function saveSettings() {
 
                 <UFormField v-if="stockAlertEmail" label="Usuarios que reciben las alertas" name="alertUserIds" description="Selecciona a los usuarios que seran notificados">
                   <USelectMenu 
-                    v-model="alertUserIds" 
+                    v-model="selectedAlertUsers" 
                     :items="usuarios" 
-                    value-key="id_usuario" 
                     label-key="nombre" 
                     multiple 
                     placeholder="Seleccionar usuarios" 
@@ -393,54 +331,6 @@ async function saveSettings() {
                     <p class="text-sm text-muted">Resumen semanal de inventario</p>
                   </div>
                   <USwitch v-model="weeklyReport" :disabled="!emailNotifications" />
-                </div>
-              </div>
-            </UCard>
-          </div>
-
-          <!-- Users Settings -->
-          <div v-if="activeSection === 'users'" class="max-w-2xl space-y-6">
-            <div>
-              <h2 class="text-lg font-semibold text-default">Usuarios</h2>
-              <p class="text-sm text-muted">Gestiona los usuarios del sistema</p>
-            </div>
-
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-default">Usuarios Activos</span>
-                  <UButton icon="i-lucide-user-plus" label="Invitar Usuario" size="sm" @click="openNewUserModal" />
-                </div>
-              </template>
-              
-              <div v-if="isLoadingUsers" class="flex justify-center p-4">
-                <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-primary" />
-              </div>
-              
-              <div v-else-if="usuarios.length === 0" class="p-4 text-center text-sm text-muted">
-                No hay usuarios creados.
-              </div>
-
-              <div v-else class="space-y-4">
-                <div v-for="user in usuarios" :key="user.id_usuario" class="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-                  <div class="flex items-center gap-3">
-                    <UAvatar :src="`https://api.dicebear.com/9.x/avataaars/svg?seed=${user.nombre}`" :alt="user.nombre" size="sm" />
-                    <div>
-                      <p class="font-medium text-default">{{ user.nombre }}</p>
-                      <p class="text-sm text-muted">{{ user.email }}</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <UBadge :label="user.rol?.nombre || 'Sin Rol'" color="primary" variant="subtle" />
-                    <UButton
-                      v-if="user.email !== 'admin@ivent.app'"
-                      icon="i-lucide-trash"
-                      variant="ghost"
-                      color="error"
-                      size="sm"
-                      @click="removeUser(user.id_usuario)"
-                    />
-                  </div>
                 </div>
               </div>
             </UCard>
@@ -521,69 +411,6 @@ async function saveSettings() {
     </template>
   </UDashboardPanel>
 
-  <!-- User Invitation Modal -->
-  <UModal v-model:open="isUserModalOpen" title="Invitar Nuevo Usuario">
-    <template #body>
-      <div class="flex flex-col gap-4">
-        <UFormField label="Nombre Completo" name="nombre">
-          <UInput v-model="newUser.nombre" placeholder="Ej: Carlos Rodriguez" />
-        </UFormField>
-
-        <UFormField label="Email" name="email">
-          <UInput v-model="newUser.email" type="email" placeholder="carlos@miempresa.com" />
-        </UFormField>
-
-        <UFormField label="Contraseña" name="password">
-          <UInput 
-            v-model="newUser.password" 
-            :type="showPassword ? 'text' : 'password'" 
-            placeholder="Contraseña temporal" 
-            :ui="{ icon: { trailing: { pointer: '' } } }"
-          >
-            <template #trailing>
-              <UButton
-                color="gray"
-                variant="link"
-                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                :padded="false"
-                @click="showPassword = !showPassword"
-              />
-            </template>
-          </UInput>
-        </UFormField>
-
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Rol" name="rolId">
-            <USelectMenu 
-              v-model="newUser.rolId" 
-              :items="rolesList" 
-              value-key="id_rol"
-              label-key="nombre"
-              placeholder="Seleccionar Rol" 
-            />
-          </UFormField>
-          
-          <UFormField label="Empresa" name="empresaId">
-            <USelectMenu 
-              v-model="newUser.empresaId" 
-              :items="empresas" 
-              value-key="id_empresa"
-              label-key="nombre_comercial"
-              placeholder="Seleccionar Empresa" 
-            />
-          </UFormField>
-
-        </div>
-      </div>
-    </template>
-
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <UButton variant="ghost" label="Cancelar" @click="isUserModalOpen = false" />
-        <UButton label="Crear Usuario" @click="inviteUser" />
-      </div>
-    </template>
-  </UModal>
 
   <!-- Delete Company Modal -->
   <UModal v-model:open="isDeleteCompanyModalOpen" title="¿Estás completamente seguro?">

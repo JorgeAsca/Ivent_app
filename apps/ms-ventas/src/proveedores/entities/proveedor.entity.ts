@@ -1,6 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique } from 'typeorm';
 
 @Entity('proveedores')
+@Unique(['codigo', 'id_empresa'])
+@Unique(['identificacion_fiscal', 'id_empresa'])
 export class Proveedor {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -8,7 +10,7 @@ export class Proveedor {
     @Column({ type: 'uuid' })
     id_empresa: string; // Propietaria de este registro (ms-administracion)
 
-    @Column({ unique: true })
+    @Column()
     codigo: string;
 
     @Column()
@@ -26,7 +28,7 @@ export class Proveedor {
     @Column('text', { nullable: true })
     direccion: string;
 
-    @Column({ unique: true, nullable: true })
+    @Column({ nullable: true })
     identificacion_fiscal: string;
 
     @Column({ default: true })
