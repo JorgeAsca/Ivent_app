@@ -48,11 +48,16 @@ export const useProducts = () => {
     })
   }
 
+  const getPosStock = async () => {
+    return await fetchApi<Product[]>('/inventario/pos/stock')
+  }
+
   return {
     getProducts,
     getProduct,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getPosStock
   }
 }

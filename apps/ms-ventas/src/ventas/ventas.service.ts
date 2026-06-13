@@ -24,7 +24,8 @@ export class VentasService {
             productoId: ventaGuardada.productoId,
             cantidad: ventaGuardada.cantidad,
             ventaId: ventaGuardada.id,
-            id_empresa: ventaGuardada.id_empresa
+            id_empresa: ventaGuardada.id_empresa,
+            ticket_id: ventaGuardada.ticket_id
         });
 
         return ventaGuardada;

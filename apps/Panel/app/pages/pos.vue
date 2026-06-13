@@ -1,43 +1,38 @@
 <script setup lang="ts">
+import { useProducts, type Product } from '~/composables/useProducts'
+import { useVentas } from '~/composables/useVentas'
+
 definePageMeta({ layout: false })
 
-interface Product {
-  id: number
-  sku: string
-  name: string
-  category: string
-  stock: number
-  price: number
-}
+const { getPosStock } = useProducts()
+const { createVenta } = useVentas()
+const toast = useToast()
 
-// Datos de ejemplo basados en tus productos actuales
-const products = ref<Product[]>([
-  { id: 1, sku: 'HAR-001', name: 'Harina de Trigo 1kg', category: 'Panaderia', stock: 150, price: 2.50 },
-  { id: 2, sku: 'SAL-001', name: 'Salsa de Tomate 500ml', category: 'Salsas', stock: 80, price: 3.20 },
-  { id: 3, sku: 'QUE-001', name: 'Queso Mozzarella 500g', category: 'Lacteos', stock: 45, price: 8.50 },
-  { id: 4, sku: 'ACE-001', name: 'Aceite de Oliva 1L', category: 'Aceites', stock: 60, price: 12.00 },
-  { id: 5, sku: 'LEV-001', name: 'Levadura Fresca', category: 'Panaderia', stock: 5, price: 1.50 },
-  { id: 6, sku: 'JAM-001', name: 'Jamón Serrano', category: 'Embutidos', stock: 3, price: 25.00 },
-  { id: 7, sku: 'PIM-001', name: 'Pimientos Rojos', category: 'Verduras', stock: 8, price: 4.00 },
-  { id: 8, sku: 'ORE-001', name: 'Orégano 100g', category: 'Especias', stock: 200, price: 2.00 },
-  { id: 9, sku: 'PAN-001', name: 'Pan de Molde', category: 'Panaderia', stock: 30, price: 2.00 },
-  { id: 10, sku: 'LECH-001', name: 'Leche Entera 1L', category: 'Lacteos', stock: 120, price: 1.20 },
-  { id: 11, sku: 'YOG-001', name: 'Yogurt Natural', category: 'Lacteos', stock: 50, price: 0.80 },
-  { id: 12, sku: 'AJO-001', name: 'Ajos Malla', category: 'Verduras', stock: 40, price: 1.50 },
-  { id: 13, sku: 'CEB-001', name: 'Cebolla Blanca 1kg', category: 'Verduras', stock: 60, price: 1.80 },
-  { id: 14, sku: 'TOM-001', name: 'Tomate Pera 1kg', category: 'Verduras', stock: 80, price: 2.10 },
-  { id: 15, sku: 'MAH-001', name: 'Mayonesa', category: 'Salsas', stock: 45, price: 2.50 },
-  { id: 16, sku: 'VIN-001', name: 'Vinagre de Manzana', category: 'Aceites', stock: 25, price: 1.90 },
-])
+const products = ref<Product[]>([])
+const isLoading = ref(true)
 
-const categories = ['Todos', ...new Set(products.value.map(p => p.category))]
+onMounted(async () => {
+  try {
+    products.value = await getPosStock()
+  } catch (error) {
+    console.error('Error fetching POS stock:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+const categories = computed(() => {
+  const catSet = new Set(products.value.map(p => p.categoria?.nombre || 'Sin Categoria'))
+  return ['Todos', ...catSet]
+})
 const selectedCategory = ref('Todos')
 const searchQuery = ref('')
 
 const filteredProducts = computed(() => {
   return products.value.filter(p => {
-    const matchCategory = selectedCategory.value === 'Todos' || p.category === selectedCategory.value
-    const matchSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const catName = p.categoria?.nombre || 'Sin Categoria'
+    const matchCategory = selectedCategory.value === 'Todos' || catName === selectedCategory.value
+    const matchSearch = p.nombre.toLowerCase().includes(searchQuery.value.toLowerCase())
     return matchCategory && matchSearch
   })
 })
@@ -58,18 +53,62 @@ const orderTaxes = computed(() => {
 })
 
 function addToOrder(product: Product) {
+  if (product.stock <= 0) return
+  
   const existing = order.value.find(item => item.product.id === product.id)
   if (existing) {
-    existing.quantity++
+    if (existing.quantity < product.stock) {
+      existing.quantity++
+    } else {
+      toast.add({ title: 'Stock insuficiente', description: `Solo hay ${product.stock} disponibles.`, color: 'warning' })
+    }
   } else {
     order.value.push({ product, quantity: 1 })
   }
 }
 
 function updateQuantity(item: OrderItem, delta: number) {
-  item.quantity += delta
+  const newQty = item.quantity + delta
+  if (newQty > item.product.stock) {
+    toast.add({ title: 'Stock insuficiente', description: `Solo hay ${item.product.stock} disponibles.`, color: 'warning' })
+    return
+  }
+  
+  item.quantity = newQty
   if (item.quantity <= 0) {
     order.value = order.value.filter(i => i.product.id !== item.product.id)
+  }
+}
+
+const isProcessing = ref(false)
+
+async function processPayment() {
+  if (order.value.length === 0) return
+  isProcessing.value = true
+
+  const ticket_id = `TKT-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+  
+  try {
+    for (const item of order.value) {
+      await createVenta({
+        clienteId: '00000000-0000-0000-0000-000000000000', // Default customer ID
+        productoId: item.product.id,
+        cantidad: item.quantity,
+        total: item.product.precio * item.quantity,
+        ticket_id
+      })
+    }
+    
+    // Success
+    toast.add({ title: 'Venta registrada', description: `Ticket: ${ticket_id}`, color: 'success' })
+    order.value = []
+    // Refetch stock
+    products.value = await getPosStock()
+  } catch (error) {
+    console.error(error)
+    toast.add({ title: 'Error', description: 'Hubo un error procesando la venta', color: 'error' })
+  } finally {
+    isProcessing.value = false
   }
 }
 
@@ -138,11 +177,11 @@ function getCategoryColor(category: string) {
           class="flex flex-col p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 border border-transparent hover:border-gray-200 dark:hover:border-gray-800 transition-colors cursor-pointer group"
         >
           <div class="flex justify-between font-medium text-[15px]">
-            <span class="truncate pr-2 text-gray-900 dark:text-white">{{ item.product.name }}</span>
-            <span class="text-gray-900 dark:text-white">€{{ (item.product.price * item.quantity).toFixed(2) }}</span>
+            <span class="truncate pr-2 text-gray-900 dark:text-white">{{ item.product.nombre }}</span>
+            <span class="text-gray-900 dark:text-white">€{{ (item.product.precio * item.quantity).toFixed(2) }}</span>
           </div>
           <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            <span>{{ item.quantity }} Unid. a €{{ item.product.price.toFixed(2) }} / Unid.</span>
+            <span>{{ item.quantity }} Unid. a €{{ item.product.precio.toFixed(2) }} / Unid.</span>
           </div>
           <!-- Controles de cantidad al pasar el ratón -->
           <div class="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -194,7 +233,9 @@ function getCategoryColor(category: string) {
           block 
           color="success" 
           class="h-14 text-lg shadow-md mt-2 font-bold" 
-          :disabled="order.length === 0"
+          :disabled="order.length === 0 || isProcessing"
+          :loading="isProcessing"
+          @click="processPayment"
         />
       </div>
     </div>
@@ -243,31 +284,39 @@ function getCategoryColor(category: string) {
           <button 
             v-for="product in filteredProducts" 
             :key="product.id"
-            @click="addToOrder(product)"
-            class="relative flex flex-col h-32 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:ring-2 hover:ring-primary-500/50 transition-all active:scale-95 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left group focus:outline-none focus:ring-2 focus:ring-primary-500"
+            @click="product.stock > 0 ? addToOrder(product) : null"
+            :disabled="product.stock <= 0"
+            :class="[
+              'relative flex flex-col h-32 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border text-left group focus:outline-none focus:ring-2 focus:ring-primary-500',
+              product.stock > 0 ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 active:scale-95 hover:ring-2 hover:ring-primary-500/50 cursor-pointer' : 'border-red-300 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 cursor-not-allowed opacity-70 grayscale-[0.5]'
+            ]"
           >
             <!-- Etiqueta de Precio -->
-            <div class="absolute top-2 right-2 z-10">
-              <UBadge color="primary" variant="solid" class="shadow-sm font-semibold opacity-90 group-hover:opacity-100">
-                €{{ product.price.toFixed(2) }}
+            <div class="absolute top-2 right-2 z-10 flex gap-1">
+              <UBadge v-if="product.stock <= 0" color="error" variant="solid" class="shadow-sm font-semibold px-1">
+                Agotado
+              </UBadge>
+              <UBadge v-else color="primary" variant="solid" class="shadow-sm font-semibold opacity-90 group-hover:opacity-100">
+                €{{ product.precio.toFixed(2) }}
               </UBadge>
             </div>
             
             <!-- Representación visual de la categoría (reemplaza la imagen) -->
-            <div :class="['h-16 w-full flex items-center justify-center border-b p-2 transition-colors', getCategoryColor(product.category)]">
+            <div :class="['h-16 w-full flex items-center justify-center border-b p-2 transition-colors', product.stock <= 0 ? 'bg-red-100/50 dark:bg-red-900/20 text-red-500 border-red-200 dark:border-red-900/30' : getCategoryColor(product.categoria?.nombre || '')]">
               <!-- Iniciales como marcador de posición para la imagen -->
               <span class="text-2xl font-bold opacity-60 uppercase tracking-wider drop-shadow-sm">
-                {{ product.name.substring(0, 2) }}
+                {{ product.nombre.substring(0, 2) }}
               </span>
             </div>
             
             <!-- Información del Producto -->
-            <div class="p-2.5 flex-1 flex flex-col justify-between bg-white dark:bg-gray-900">
-              <span class="text-sm font-medium line-clamp-2 leading-tight text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                {{ product.name }}
+            <div :class="['p-2.5 flex-1 flex flex-col justify-between', product.stock > 0 ? 'bg-white dark:bg-gray-900' : 'bg-red-50/50 dark:bg-red-950/10']">
+              <span :class="['text-sm font-medium line-clamp-2 leading-tight transition-colors', product.stock > 0 ? 'text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400' : 'text-red-900 dark:text-red-200 line-through']">
+                {{ product.nombre }}
               </span>
-              <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 uppercase font-bold tracking-wider">
-                {{ product.category }}
+              <span class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 uppercase font-bold tracking-wider flex justify-between">
+                <span>{{ product.categoria?.nombre || 'Sin Cat' }}</span>
+                <span v-if="product.stock > 0" class="text-primary-500 lowercase">{{ product.stock }} {{product.unidadMedida || 'Ud'}}</span>
               </span>
             </div>
           </button>
@@ -275,7 +324,7 @@ function getCategoryColor(category: string) {
       </div>
     </div>
   </div>
-  </div>
+</div>
 </template>
 
 <style scoped>

@@ -158,11 +158,11 @@ const dropdownItems = computed(() => [
               ]"
             >
               <UAvatar
-                src="https://api.dicebear.com/9.x/avataaars/svg?seed=admin"
-                alt="Admin"
+                :src="`https://api.dicebear.com/9.x/avataaars/svg?seed=${userCookie?.nombre || 'admin'}`"
+                :alt="userCookie?.nombre || 'Usuario'"
                 size="xs"
               />
-              <span v-if="!collapsed" class="truncate text-white">Administrador</span>
+              <span v-if="!collapsed" class="truncate text-white">{{ userCookie?.nombre || 'Usuario' }}</span>
               <UIcon v-if="!collapsed" name="i-lucide-chevron-down" class="ml-auto size-4" />
             </UButton>
           </UDropdownMenu>

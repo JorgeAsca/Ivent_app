@@ -26,6 +26,14 @@ export class InventarioController {
         );
     }
 
+    @Get('pos/stock')
+    getPosStock(@Req() req: any) {
+        const empresaId = req.user?.empresaId || '05d04ccf-1785-4db2-a9b0-a614002e2101';
+        return this.clientInventario.send({ cmd: 'get_pos_stock' }, { id_empresa: empresaId }).pipe(
+            catchError((error) => { throw new RpcException(error); }),
+        );
+    }
+
     @Get('productos/:id')
     findOneProducto(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
         return this.clientInventario.send(INVENTARIO_PATTERNS.BUSCAR_PRODUCTO, { id, id_empresa: req.user.empresaId })

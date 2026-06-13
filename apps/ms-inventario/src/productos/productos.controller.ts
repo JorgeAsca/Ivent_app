@@ -23,6 +23,11 @@ export class ProductosController {
         return this.productosService.findAll(payload.id_empresa);
     }
 
+    @MessagePattern({ cmd: 'get_pos_stock' })
+    getPosStock(@Payload() payload: { id_empresa: string }) {
+        return this.productosService.getPosStock(payload.id_empresa);
+    }
+
     @MessagePattern(INVENTARIO_PATTERNS.BUSCAR_PRODUCTO)
     findOne(@Payload() payload: { id: string, id_empresa: string }) {
         return this.productosService.findOne(payload.id, payload.id_empresa);

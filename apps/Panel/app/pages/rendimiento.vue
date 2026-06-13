@@ -4,8 +4,11 @@ import { useProducts, type Product } from '~/composables/useProducts'
 import { useCategorias, type Categoria } from '~/composables/useCategorias'
 import { useAlmacenes } from '~/composables/useAlmacenes'
 import { useEmpresas } from '~/composables/useEmpresas'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({ layout: 'dashboard' })
+
+const { hasPermission } = usePermissions()
 
 const toast = useToast()
 const { obtenerReceta, guardarReceta, calcularRendimiento, fabricarProducto } = useRecetas()
@@ -301,7 +304,7 @@ async function deleteCompositeProduct(id: string) {
         <template #right>
           <div class="hidden sm:flex gap-2">
               <UButton v-if="selectedProductId" icon="i-lucide-arrow-left" label="Volver a la lista" variant="ghost" @click="selectedProductId = null" />
-              <UButton icon="i-lucide-plus" label="Nuevo Producto Compuesto" @click="openNewProductModal" />
+              <UButton v-if="hasPermission('productos:crear')" icon="i-lucide-plus" label="Nuevo Producto Compuesto" @click="openNewProductModal" />
           </div>
         </template>
       </UDashboardNavbar>
@@ -309,7 +312,7 @@ async function deleteCompositeProduct(id: string) {
         <template #right>
           <div class="flex w-full overflow-x-auto gap-2 pb-1">
               <UButton v-if="selectedProductId" icon="i-lucide-arrow-left" label="Volver" variant="ghost" @click="selectedProductId = null" class="shrink-0" />
-              <UButton icon="i-lucide-plus" label="Nuevo Compuesto" @click="openNewProductModal" class="shrink-0" />
+              <UButton v-if="hasPermission('productos:crear')" icon="i-lucide-plus" label="Nuevo Compuesto" @click="openNewProductModal" class="shrink-0" />
           </div>
         </template>
       </UDashboardToolbar>
@@ -335,12 +338,8 @@ async function deleteCompositeProduct(id: string) {
                   <div class="flex items-center gap-2">
                     <UDropdownMenu
                       :items="[
-                        [
-                          { label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditProductModal(prod) },
-                        ],
-                        [
-                          { label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteCompositeProduct(prod.id) },
-                        ],
+                        ...(hasPermission('productos:editar') ? [[{ label: 'Editar', icon: 'i-lucide-pencil', onSelect: () => openEditProductModal(prod) }]] : []),
+                        ...(hasPermission('productos:eliminar') ? [[{ label: 'Eliminar', icon: 'i-lucide-trash', color: 'error' as const, onSelect: () => deleteCompositeProduct(prod.id) }]] : []),
                       ]"
                     >
                       <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" color="neutral" size="sm" @click.stop />
@@ -370,7 +369,7 @@ async function deleteCompositeProduct(id: string) {
                 </div>
                 <div class="flex gap-2">
                   <UButton
-                    v-if="!isEditing"
+                    v-if="!isEditing && hasPermission('productos:editar')"
                     icon="i-lucide-settings"
                     color="neutral"
                     variant="soft"
@@ -378,7 +377,7 @@ async function deleteCompositeProduct(id: string) {
                     @click="openEditProductModal(selectedProduct!)"
                   />
                   <UButton
-                    v-if="!isEditing"
+                    v-if="!isEditing && hasPermission('productos:editar')"
                     icon="i-lucide-pencil"
                     color="primary"
                     variant="soft"
@@ -478,6 +477,7 @@ async function deleteCompositeProduct(id: string) {
                   </div>
                 </div>
                 <UButton
+                  v-if="hasPermission('movimientos:crear')"
                   icon="i-lucide-hammer"
                   color="primary"
                   label="Fabricar"

@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsPositive, IsUUID } from 'class-validator';
+import { IsString, IsNumber, IsPositive, IsUUID, IsOptional } from 'class-validator';
 
 export class CreateVentaDto {
   @IsUUID()
@@ -14,4 +14,8 @@ export class CreateVentaDto {
   @IsNumber()
   @IsPositive()
   total: number;
+
+  @IsString()
+  @IsOptional()
+  ticket_id?: string;
 }

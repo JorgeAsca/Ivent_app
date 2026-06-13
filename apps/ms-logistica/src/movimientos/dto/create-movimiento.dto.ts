@@ -21,6 +21,14 @@ export class CreateMovimientoDto {
     referencia_externa?: string;
 
     @IsOptional()
+    @IsString()
+    ticket_id?: string;
+
+    @IsOptional()
+    @IsString()
+    motivo?: string;
+
+    @IsOptional()
     @IsUUID()
     id_usuario?: string;
 }

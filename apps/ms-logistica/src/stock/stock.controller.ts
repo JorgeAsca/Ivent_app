@@ -1,10 +1,14 @@
-import { Controller } from '@nestjs/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import { Controller, Inject } from '@nestjs/common';
+import { EventPattern, MessagePattern, Payload, ClientProxy } from '@nestjs/microservices';
 import { StockService } from './stock.service';
+import { firstValueFrom } from 'rxjs';
 
 @Controller()
 export class StockController {
-    constructor(private readonly stockService: StockService) { }
+    constructor(
+        private readonly stockService: StockService,
+        @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
+    ) { }
 
     @MessagePattern({ cmd: 'get_stock_by_producto' })
     async getByProducto(@Payload() data: { id_producto: string }) {
@@ -21,11 +25,64 @@ export class StockController {
     }
 
     @EventPattern('venta_realizada')
-    async handleVentaRealizada(@Payload() data: { productoId: string, cantidad: number, ventaId: string, id_empresa: string }) {
-        console.log(`[ms-logistica] Evento atrapado: Se vendieron ${data.cantidad} unidades del producto ${data.productoId}`);
+    async handleVentaRealizada(@Payload() data: { productoId: string, cantidad: number, ventaId: string, id_empresa: string, ticket_id?: string }) {
+        console.log(`[ms-logistica] Evento atrapado: Se vendieron ${data.cantidad} unidades del producto ${data.productoId} (Ticket: ${data.ticket_id})`);
 
-        // Llamamos a nuestro servicio para actualizar la base de datos de logística
-        await this.stockService.descontarStock(data.productoId, data.cantidad, data.id_empresa);
+        try {
+            // 1. Obtener información del producto para saber si es COMPUESTO
+            const producto = await firstValueFrom(this.natsClient.send({ cmd: 'buscar_producto' }, {
+                id: data.productoId,
+                id_empresa: data.id_empresa
+            }));
+
+            if (producto && producto.tipo === 'COMPUESTO') {
+                console.log(`[ms-logistica] El producto ${data.productoId} es COMPUESTO. Descontando ingredientes...`);
+                // 2. Obtener receta
+                const receta = await firstValueFrom(this.natsClient.send({ cmd: 'obtener_receta' }, {
+                    producto_id: data.productoId,
+                    id_empresa: data.id_empresa
+                }));
+
+                if (receta && receta.length > 0) {
+                    for (const item of receta) {
+                        const cantidadADescontar = item.cantidad_necesaria * data.cantidad;
+                        const stockItem = await this.stockService.getStockPorProducto(item.ingrediente_id);
+                        const id_almacen = item.id_almacen || (stockItem.length > 0 ? stockItem[0].id_almacen : '00000000-0000-0000-0000-000000000000');
+                        
+                        await firstValueFrom(this.natsClient.send({ cmd: 'crear_movimiento' }, {
+                            id_producto: item.ingrediente_id,
+                            id_almacen: id_almacen,
+                            cantidad: cantidadADescontar,
+                            tipo: 'SALIDA',
+                            id_empresa: data.id_empresa,
+                            referencia_externa: data.ventaId,
+                            ticket_id: data.ticket_id,
+                            motivo: 'SALIDA (VENTA)'
+                        }));
+                    }
+                    return; // Terminamos aquí para compuestos
+                } else {
+                    console.warn(`[ms-logistica] Producto compuesto ${data.productoId} no tiene receta configurada. Se descontará el producto en sí.`);
+                }
+            }
+
+            // Si es SIMPLE o no tiene receta, registrar movimiento normal
+            const stockActual = await this.stockService.getStockPorProducto(data.productoId);
+            const id_almacen = stockActual.length > 0 ? stockActual[0].id_almacen : '00000000-0000-0000-0000-000000000000';
+
+            await firstValueFrom(this.natsClient.send({ cmd: 'crear_movimiento' }, {
+                id_producto: data.productoId,
+                id_almacen: id_almacen,
+                cantidad: data.cantidad,
+                tipo: 'SALIDA',
+                id_empresa: data.id_empresa,
+                referencia_externa: data.ventaId,
+                ticket_id: data.ticket_id,
+                motivo: 'SALIDA (VENTA)'
+            }));
+        } catch (error) {
+            console.error(`[ms-logistica] Error al procesar venta_realizada: ${error.message}`);
+        }
     }
 
     @MessagePattern({ cmd: 'get_stock_by_almacen' })

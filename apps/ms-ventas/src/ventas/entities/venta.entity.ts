@@ -22,4 +22,7 @@ export class Venta {
 
   @CreateDateColumn()
   fechaVenta: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  ticket_id?: string;
 }

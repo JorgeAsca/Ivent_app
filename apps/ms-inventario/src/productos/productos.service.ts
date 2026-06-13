@@ -209,4 +209,26 @@ export class ProductosService {
             valorPorCategoria: byCategory
         };
     }
+
+    async getPosStock(id_empresa: string) {
+        const productos = await this.productoRepository.find({
+            where: { activo: true, id_empresa },
+            relations: ['categoria'],
+        });
+
+        const productosCompletos = await Promise.all(productos.map(async (p) => {
+            if (p.tipo === 'COMPUESTO') {
+                try {
+                    const rendimiento = await firstValueFrom(this.natsClient.send({ cmd: 'calcular_rendimiento' }, { producto_id: p.id, id_empresa }));
+                    return { ...p, stock: rendimiento?.maxProduccion || 0 };
+                } catch (error) {
+                    this.logger.error(`Error al calcular rendimiento para producto compuesto ${p.id}:`, error);
+                    return { ...p, stock: 0 };
+                }
+            }
+            return p;
+        }));
+
+        return productosCompletos;
+    }
 }
