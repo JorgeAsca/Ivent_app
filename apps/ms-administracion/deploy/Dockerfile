@@ -44,6 +44,7 @@ ENV APP_NAME=${MICROSERVICIO}
 WORKDIR /app
 
 COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
