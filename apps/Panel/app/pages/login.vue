@@ -68,7 +68,7 @@ async function handleLogin() {
         <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
           <UIcon name="i-lucide-box" class="size-7" />
         </div>
-        <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">InventoryPro</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">InventApp</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Ingresa a tu cuenta para continuar</p>
       </div>
 

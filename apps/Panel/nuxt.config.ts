@@ -19,7 +19,10 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'InventoryPro - Sistema de Gestion de Inventarios',
+      title: 'InventApp - Sistema de Gestion de Inventarios',
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/icono.png' }
+      ],
       meta: [
         { name: 'description', content: 'Sistema ERP para gestion de inventarios y almacen' },
       ],
