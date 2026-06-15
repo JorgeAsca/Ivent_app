@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateRendimientoDto {
     @IsString()
@@ -7,7 +7,7 @@ export class CreateRendimientoDto {
     @IsString()
     operacion: string;
 
-    @IsInt()
+    @IsNumber()
     latencia_ms: number;
 
     @IsOptional()

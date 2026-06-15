@@ -5,10 +5,10 @@ export class IndicadorInventario {
     @PrimaryColumn('uuid')
     id_producto: string;
 
-    @Column({ type: 'int', default: 0 })
+    @Column({ type: 'float', default: 0 })
     stock_actual: number;
 
-    @Column({ type: 'int', default: 0 })
+    @Column({ type: 'float', default: 0 })
     stock_reservado: number; 
 
     @Column({ type: 'uuid' })

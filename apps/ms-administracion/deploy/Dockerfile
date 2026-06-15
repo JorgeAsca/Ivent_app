@@ -48,6 +48,8 @@ COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/apps/${APP_NAME}/deploy/start.sh ./start.sh
+COPY --from=build /app/apps/${APP_NAME}/prisma ./prisma
+COPY --from=build /app/apps/${APP_NAME}/prisma.config.ts ./prisma.config.ts
 
 RUN chmod +x ./start.sh
 ENV NODE_ENV=production

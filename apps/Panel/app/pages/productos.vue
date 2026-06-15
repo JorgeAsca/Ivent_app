@@ -340,7 +340,7 @@ async function deleteProduct(id: string) {
 
         <div class="grid grid-cols-2 gap-4" v-if="!isEditMode">
           <UFormField label="Stock Inicial" name="stock">
-            <UInput v-model.number="currentProduct.stock" type="number" />
+            <UInput v-model.number="currentProduct.stock" type="number" step="any" />
           </UFormField>
           <UFormField label="Almacén Inicial" name="almacen">
             <USelectMenu 

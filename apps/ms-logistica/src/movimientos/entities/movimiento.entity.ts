@@ -14,7 +14,7 @@ export class Movimiento {
     @Column({ type: 'enum', enum: ['ENTRADA', 'SALIDA'] })
     tipo: string;
 
-    @Column({ type: 'int' })
+    @Column({ type: 'float' })
     cantidad: number;
 
     @Column({ nullable: true })

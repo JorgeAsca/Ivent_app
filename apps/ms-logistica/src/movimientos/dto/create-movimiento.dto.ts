@@ -1,4 +1,4 @@
-import { IsUUID, IsEnum, IsInt, IsString, IsOptional } from 'class-validator';
+import { IsUUID, IsEnum, IsNumber, IsString, IsOptional } from 'class-validator';
 
 export class CreateMovimientoDto {
     @IsUUID()
@@ -13,7 +13,7 @@ export class CreateMovimientoDto {
     @IsEnum(['ENTRADA', 'SALIDA'])
     tipo: string;
 
-    @IsInt()
+    @IsNumber()
     cantidad: number;
 
     @IsOptional()

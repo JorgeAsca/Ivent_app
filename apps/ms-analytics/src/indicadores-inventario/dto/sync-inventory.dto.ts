@@ -1,4 +1,4 @@
-import { IsUUID, IsInt, IsNotEmpty } from 'class-validator';
+import { IsUUID, IsNumber, IsNotEmpty } from 'class-validator';
 
 export class SyncInventoryDto {
     @IsUUID()
@@ -7,6 +7,6 @@ export class SyncInventoryDto {
     @IsUUID()
     id_empresa: string;
 
-    @IsInt()
+    @IsNumber()
     stock_actual: number;
 }

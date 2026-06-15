@@ -179,7 +179,7 @@ async function saveStockAlert() {
         </div>
 
         <UFormField label="Stock Mínimo" name="stockMinimo" description="El sistema te alertará o hará pedido si el stock global baja de este límite.">
-          <UInput v-model.number="currentProduct.stockMinimo" type="number" min="0" />
+          <UInput v-model.number="currentProduct.stockMinimo" type="number" step="any" min="0" />
         </UFormField>
 
         <UFormField label="Proveedor por Defecto" name="proveedorId" description="Proveedor al cual se le hará el pedido de reabastecimiento automáticamente.">

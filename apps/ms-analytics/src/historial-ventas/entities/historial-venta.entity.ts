@@ -14,7 +14,7 @@ export class HistorialVenta {
     @Column({ type: 'uuid' })
     id_empresa: string;
 
-    @Column({ type: 'int' })
+    @Column({ type: 'float' })
     cantidad: number;
 
     @Column({ type: 'decimal', precision: 10, scale: 2 })

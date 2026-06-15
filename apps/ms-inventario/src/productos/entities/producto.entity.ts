@@ -15,7 +15,7 @@ export class Producto {
     @Column('float', { default: 0 })
     costo: number;
 
-    @Column('int', { default: 0 })
+    @Column('float', { default: 0 })
     stock: number;
 
     @Column({ default: 'Ud' })
@@ -27,7 +27,7 @@ export class Producto {
     @Column({ type: 'varchar', default: 'SIMPLE' })
     tipo: string;
 
-    @Column('int', { default: 0 })
+    @Column('float', { default: 0 })
     stockMinimo: number;
 
     @Column('uuid', { nullable: true })

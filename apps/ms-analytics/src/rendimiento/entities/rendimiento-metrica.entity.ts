@@ -11,7 +11,7 @@ export class RendimientoMetrica {
     @Column()
     operacion: string; // ej: 'crear_producto'
 
-    @Column({ type: 'int' })
+    @Column({ type: 'float' })
     latencia_ms: number;
 
     @Column({ type: 'uuid', nullable: true })

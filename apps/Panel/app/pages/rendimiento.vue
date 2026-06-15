@@ -575,7 +575,7 @@ async function deleteCompositeProduct(id: string) {
 
         <div class="grid grid-cols-2 gap-4">
           <UFormField label="Stock Inicial" name="stock">
-            <UInput v-model.number="currentProduct.stock" type="number" :disabled="isProductEditMode" />
+            <UInput v-model.number="currentProduct.stock" type="number" step="any" :disabled="isProductEditMode" />
           </UFormField>
           <UFormField label="Almacén Inicial" name="almacen" v-if="!isProductEditMode">
             <USelectMenu 

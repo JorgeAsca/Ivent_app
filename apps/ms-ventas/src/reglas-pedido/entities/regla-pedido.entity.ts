@@ -14,10 +14,10 @@ export class ReglaPedido {
     @Column({ type: 'uuid' })
     id_proveedor: string; // Referencia interna a tabla proveedores
 
-    @Column({ type: 'int' })
+    @Column({ type: 'float' })
     stock_minimo: number;
 
-    @Column({ type: 'int' })
+    @Column({ type: 'float' })
     cantidad_a_pedir: number;
 
     @Column({ default: true })

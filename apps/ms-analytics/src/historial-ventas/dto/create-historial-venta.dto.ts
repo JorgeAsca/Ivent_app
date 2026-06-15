@@ -1,4 +1,4 @@
-import { IsUUID, IsInt, IsNumber, IsNotEmpty } from 'class-validator';
+import { IsUUID, IsNumber, IsNotEmpty } from 'class-validator';
 
 export class CreateHistorialVentaDto {
     @IsUUID()
@@ -10,7 +10,7 @@ export class CreateHistorialVentaDto {
     @IsUUID()
     id_empresa: string;
 
-    @IsInt()
+    @IsNumber()
     cantidad: number;
 
     @IsNumber()
