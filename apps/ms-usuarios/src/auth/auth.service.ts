@@ -98,7 +98,7 @@ export class AuthService {
       rolId: superAdminRole?.id_rol,
     };
 
-    const usuario = await this.usuariosService.crearUsuario(usuarioData);
+    const usuario = await this.usuariosService.crearUsuario(usuarioData, true);
 
     // 4. Autologuear al usuario
     return this.login({ email: usuario.email, password: registroDto.password });

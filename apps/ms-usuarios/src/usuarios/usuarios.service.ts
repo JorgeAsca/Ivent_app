@@ -6,19 +6,21 @@ import { User } from './entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { firstValueFrom } from 'rxjs';
 import * as bcrypt from 'bcryptjs';
+import { RolesService } from '../roles/roles.service';
 
 @Injectable()
 export class UsuariosService {
     constructor(
         @InjectRepository(User) private readonly userRepo: Repository<User>,
         @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
+        private readonly rolesService: RolesService,
     ) { }
 
     async findByEmail(email: string) {
         return await this.userRepo.findOne({ where: { email }, relations: ['rol', 'rol.permisos'] });
     }
 
-    async crearUsuario(data: any) {
+    async crearUsuario(data: any, isInternalRegistration = false) {
         // Comunicación: Preguntar al ms-administracion usando el payload correcto { id_empresa }
         const empresa = await firstValueFrom(
             this.natsClient.send({ cmd: 'validar_empresa' }, { id_empresa: data.empresaId })
@@ -37,6 +39,10 @@ export class UsuariosService {
         }
 
         if (rolId) {
+            const roleToAssign = await this.rolesService.findSystemRoleByName('SuperAdmin');
+            if (roleToAssign && roleToAssign.id_rol === rolId && !isInternalRegistration) {
+                throw new Error('El rol de SuperAdmin está reservado para el creador del sistema y no puede ser asignado manualmente.');
+            }
             nuevoUsuario.rol = { id_rol: rolId } as Role;
         }
 
@@ -78,7 +84,11 @@ export class UsuariosService {
             actualizado.password = await bcrypt.hash(password, salt);
         }
 
-        if (rolId !== undefined) {
+        if (rolId !== undefined && rolId !== usuario.rol?.id_rol) {
+            const roleToAssign = await this.rolesService.findSystemRoleByName('SuperAdmin');
+            if (roleToAssign && roleToAssign.id_rol === rolId) {
+                throw new Error('El rol de SuperAdmin está reservado y no puede ser asignado manualmente a otro usuario.');
+            }
             actualizado.rol = rolId ? ({ id_rol: rolId } as Role) : null;
         }
         

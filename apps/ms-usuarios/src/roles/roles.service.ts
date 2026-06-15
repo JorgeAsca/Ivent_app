@@ -27,22 +27,34 @@ export class RolesService implements OnModuleInit {
         ];
 
         for (const r of systemRoles) {
-            const exists = await this.roleRepo.findOne({ where: { nombre: r.nombre, isSystem: true } });
-            if (!exists) {
-                const newRole = this.roleRepo.create(r);
-                if (r.nombre === 'SuperAdmin') {
-                    // SuperAdmin obtiene todos los permisos
-                    newRole.permisos = await this.permRepo.find();
-                } else if (r.nombre === 'Admin') {
-                    // Admin no puede borrar empresas
-                    const allPerms = await this.permRepo.find();
-                    newRole.permisos = allPerms.filter(p => p.nombre !== 'empresas:eliminar');
-                } else if (r.nombre === 'Empleado') {
-                    const allPerms = await this.permRepo.find();
-                    newRole.permisos = allPerms.filter(p => !p.nombre.includes('eliminar') && !p.nombre.includes('roles:') && !p.nombre.includes('empresas:'));
-                }
-                await this.roleRepo.save(newRole);
+            let role = await this.roleRepo.findOne({ 
+                where: { nombre: r.nombre, isSystem: true },
+                relations: ['permisos']
+            });
+            let isNew = false;
+            
+            if (!role) {
+                role = this.roleRepo.create(r);
+                isNew = true;
+            }
+
+            // Sync permissions for system roles on every boot to avoid race conditions
+            if (r.nombre === 'SuperAdmin') {
+                role.permisos = await this.permRepo.find();
+            } else if (r.nombre === 'Admin') {
+                const allPerms = await this.permRepo.find();
+                role.permisos = allPerms.filter(p => p.nombre !== 'empresas:eliminar');
+            } else if (r.nombre === 'Empleado') {
+                const allPerms = await this.permRepo.find();
+                role.permisos = allPerms.filter(p => !p.nombre.includes('eliminar') && !p.nombre.includes('roles:') && !p.nombre.includes('empresas:'));
+            }
+
+            await this.roleRepo.save(role);
+            
+            if (isNew) {
                 this.logger.log(`Rol de sistema creado: ${r.nombre}`);
+            } else {
+                this.logger.log(`Permisos sincronizados para el rol de sistema: ${r.nombre}`);
             }
         }
     }
