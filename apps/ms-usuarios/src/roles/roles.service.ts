@@ -127,13 +127,16 @@ export class RolesService implements OnModuleInit {
     }
 
     async listar(empresaId: string) {
-        return await this.roleRepo.find({ 
+        const roles = await this.roleRepo.find({ 
             where: [
                 { isSystem: true },
                 { empresaId: empresaId }
             ],
             relations: ['permisos'] 
         });
+        
+        // Ocultar SuperAdmin para que no aparezca en las opciones del frontend
+        return roles.filter(r => r.nombre !== 'SuperAdmin');
     }
 
     async findSystemRoleByName(nombre: string) {
