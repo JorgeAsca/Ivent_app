@@ -68,7 +68,8 @@ export class PermisosService implements OnModuleInit {
     }
 
     async listar() {
-        return await this.permisoRepo.find();
+        const permisos = await this.permisoRepo.find();
+        return permisos.filter(p => p.nombre !== 'empresas:eliminar');
     }
 
     async obtenerUno(id_permiso: string) {

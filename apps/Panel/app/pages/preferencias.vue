@@ -91,7 +91,7 @@ function openNewUserModal() {
 function openEditUserModal(user: Usuario) {
   isEditingUser.value = true
   showPassword.value = false
-  currentUserForm.value = { ...user, rolId: user.rol?.id_rol || user.rolId }
+  currentUserForm.value = { ...user, rolId: user.rol?.id_rol || user.rolId, password: '' }
   isUserModalOpen.value = true
 }
 

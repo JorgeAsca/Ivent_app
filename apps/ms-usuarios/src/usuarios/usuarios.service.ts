@@ -51,15 +51,23 @@ export class UsuariosService {
 
     async findAll(empresaId?: string) {
         const whereClause = empresaId ? { empresaId } : {};
-        return await this.userRepo.find({ where: whereClause, relations: ['rol', 'rol.permisos'] });
+        const usuarios = await this.userRepo.find({ where: whereClause, relations: ['rol', 'rol.permisos'] });
+        return usuarios.map(u => {
+            const { password, ...safeUser } = u;
+            return safeUser as User;
+        });
     }
 
     async findOne(id: string) {
-        const usuario = await this.userRepo.findOne({ where: { id_usuario: id }, relations: ['rol', 'rol.permisos'] });
+        const usuario = await this.userRepo.findOne({
+            where: { id_usuario: id },
+            relations: ['rol', 'rol.permisos']
+        });
         if (!usuario) {
             throw new Error(`Usuario con ID ${id} no encontrado`);
         }
-        return usuario;
+        const { password, ...safeUser } = usuario;
+        return safeUser as User;
     }
 
     async findByIds(ids: string[]) {
